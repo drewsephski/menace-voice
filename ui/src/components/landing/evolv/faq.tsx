@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+
 import styles from "./faq.module.css";
 import { SectionLabel } from "./primitives";
 

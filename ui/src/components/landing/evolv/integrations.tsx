@@ -1,29 +1,7 @@
 import Image from "next/image";
+
 import styles from "./integrations.module.css";
 import { ArrowIcon, SectionLabel, SparkleIcon } from "./primitives";
-
-const integrations = [
-  "apple",
-  "sheets",
-  "calendar",
-  "outlook",
-  "linkedin",
-  "telegram",
-  "slack",
-  "google",
-  "notion",
-  "github",
-  "snowflake",
-  "drive",
-  "discord",
-  "youtube",
-  "trello",
-  "excel",
-  "asana",
-  "monday",
-  "salesforce",
-  "hubspot",
-] as const;
 
 const integrationSources = {
   apple: "/templates/evolv-ai/apple.png",
@@ -46,9 +24,10 @@ const integrationSources = {
   monday: "/templates/evolv-ai/monday.png",
   salesforce: "/templates/evolv-ai/salesforce.png",
   hubspot: "/templates/evolv-ai/hubspot.png",
-} satisfies Record<(typeof integrations)[number], string>;
+} as const;
 
-type CellKind = (typeof integrations)[number] | "sparkle" | "stripe";
+type IntegrationName = keyof typeof integrationSources;
+type CellKind = IntegrationName | "sparkle" | "stripe";
 
 const cells: Array<{ id: string; kind: CellKind }> = [
   { id: "north-west", kind: "stripe" },

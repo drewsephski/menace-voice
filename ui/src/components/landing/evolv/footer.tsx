@@ -1,6 +1,7 @@
 "use client";
 
 import { type FormEvent, useState } from "react";
+
 import styles from "./footer.module.css";
 import { Brand } from "./primitives";
 

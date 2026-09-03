@@ -7,6 +7,14 @@ import logger from '@/lib/logger';
 import type { AuthUser, LocalUser } from '../types';
 import { AuthContext } from './AuthProvider';
 
+const PUBLIC_PATHS = ['/', '/auth/login', '/auth/signup', '/embed'];
+
+export function isPublicAuthPath(pathname: string) {
+  return PUBLIC_PATHS.some(
+    (path) => pathname === path || pathname.startsWith(`${path}/`),
+  );
+}
+
 export function LocalProviderWrapper({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<LocalUser | null>(null);
   const [loading, setLoading] = useState(true);
@@ -24,8 +32,7 @@ export function LocalProviderWrapper({ children }: { children: React.ReactNode }
           setUser(data.user);
           logger.info('OSS auth initialized', { user: data.user });
         } else if (response.status === 401) {
-          // No token - redirect to login (but not if already on auth pages)
-          if (!window.location.pathname.startsWith('/auth/')) {
+          if (!isPublicAuthPath(window.location.pathname)) {
             window.location.href = '/auth/login';
             return;
           }

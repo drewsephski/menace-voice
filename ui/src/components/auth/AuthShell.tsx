@@ -7,6 +7,7 @@
 // centered so tall (sign-up) forms never clip on short viewports. Palette is the
 // app's blacks/greys with one warm CTA accent.
 
+import Link from "next/link";
 import type { ReactNode } from "react";
 
 import { BrandLogo } from "@/components/BrandLogo";
@@ -33,7 +34,9 @@ export function AuthShell({
           <div className="w-full max-w-md space-y-6 rounded-2xl border border-border/60 bg-card p-6 shadow-lg sm:p-8">
             {/* Mobile-only wordmark (brand panel is hidden) */}
             <div className="lg:hidden">
-              <BrandLogo className="h-7" />
+              <Link href="/" aria-label="Back to Menace Voice home">
+                <BrandLogo className="h-7" />
+              </Link>
             </div>
             {children}
           </div>
@@ -50,7 +53,9 @@ export function AuthShell({
         />
 
         <div className="relative">
-          <BrandLogo inverse className="h-8" />
+          <Link href="/" aria-label="Back to Menace Voice home">
+            <BrandLogo inverse className="h-8" />
+          </Link>
         </div>
 
         <div className="relative max-w-md space-y-5">

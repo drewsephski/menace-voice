@@ -6,5 +6,6 @@ interface LandingPageProps {
 }
 
 export function LandingPage(_props: LandingPageProps) {
+  void _props;
   return <EvolvAiLanding />;
 }
