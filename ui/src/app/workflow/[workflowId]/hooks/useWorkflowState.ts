@@ -1,12 +1,13 @@
 import {
     applyEdgeChanges,
     applyNodeChanges,
+    EdgeChange,
+    NodeChange,
     OnConnect,
     OnEdgesChange,
     OnNodesChange,
     ReactFlowInstance,
 } from "@xyflow/react";
-import { EdgeChange, NodeChange } from "@xyflow/system";
 import { useRouter } from "next/navigation";
 import posthog from "posthog-js";
 import { useCallback, useEffect, useRef, useState } from "react";
