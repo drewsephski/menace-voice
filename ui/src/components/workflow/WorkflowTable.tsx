@@ -18,6 +18,7 @@ import {
     updateWorkflowStatusApiV1WorkflowWorkflowIdStatusPut,
 } from '@/client/sdk.gen';
 import type { FolderResponse } from '@/client/types.gen';
+import { DeleteConfirmationDialog } from '@/components/DeleteConfirmationDialog';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import {
@@ -71,6 +72,7 @@ export function WorkflowTable({
     const [isPending, startTransition] = useTransition();
     const [loadingWorkflowId, setLoadingWorkflowId] = useState<number | null>(null);
     const [movingWorkflowId, setMovingWorkflowId] = useState<number | null>(null);
+    const [archiveTarget, setArchiveTarget] = useState<Workflow | null>(null);
 
     const handleEdit = (id: number) => {
         router.push(`/workflow/${id}`);
@@ -97,13 +99,17 @@ export function WorkflowTable({
                 startTransition(() => {
                     router.refresh();
                 });
+                return true;
             }
         } catch (error) {
             console.error(`Error ${action.toLowerCase()}ing workflow:`, error);
             toast.error(`Failed to ${action.toLowerCase()} workflow`);
+            return false;
         } finally {
             setLoadingWorkflowId(null);
         }
+
+        return false;
     };
 
     const handleMove = async (id: number, folderId: number | null) => {
@@ -131,9 +137,10 @@ export function WorkflowTable({
     };
 
     return (
-        <Card className="overflow-hidden">
-            <CardContent className="p-0">
-                <Table>
+        <>
+            <Card className="overflow-hidden">
+                <CardContent className="p-0">
+                    <Table>
                     <TableHeader>
                         <TableRow>
                             <TableHead className="font-semibold">ID</TableHead>
@@ -223,7 +230,13 @@ export function WorkflowTable({
                                         <Button
                                             variant={showArchived ? "default" : "outline"}
                                             size="sm"
-                                            onClick={() => handleArchiveToggle(workflow.id, workflow.status)}
+                                            onClick={() => {
+                                                if (workflow.status === 'active') {
+                                                    setArchiveTarget(workflow);
+                                                } else {
+                                                    void handleArchiveToggle(workflow.id, workflow.status);
+                                                }
+                                            }}
                                             disabled={loadingWorkflowId === workflow.id || isPending}
                                             className="flex items-center gap-2"
                                         >
@@ -253,8 +266,23 @@ export function WorkflowTable({
                             </TableRow>
                         ))}
                     </TableBody>
-                </Table>
-            </CardContent>
-        </Card>
+                    </Table>
+                </CardContent>
+            </Card>
+            <DeleteConfirmationDialog
+                open={!!archiveTarget}
+                onOpenChange={(open) => !open && setArchiveTarget(null)}
+                title="Archive workflow?"
+                description="This workflow will be moved to Archived and can be restored later."
+                onConfirm={async () => {
+                    if (!archiveTarget) return;
+                    const archived = await handleArchiveToggle(archiveTarget.id, archiveTarget.status);
+                    if (archived) setArchiveTarget(null);
+                }}
+                isDeleting={archiveTarget ? loadingWorkflowId === archiveTarget.id : false}
+                confirmLabel="Archive workflow"
+                pendingLabel="Archiving..."
+            />
+        </>
     );
 }

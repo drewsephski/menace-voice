@@ -19,16 +19,7 @@ import {
     renameFolderApiV1FolderFolderIdPut,
 } from '@/client/sdk.gen';
 import type { FolderResponse, WorkflowListResponse } from '@/client/types.gen';
-import {
-    AlertDialog,
-    AlertDialogAction,
-    AlertDialogCancel,
-    AlertDialogContent,
-    AlertDialogDescription,
-    AlertDialogFooter,
-    AlertDialogHeader,
-    AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
+import { DeleteConfirmationDialog } from '@/components/DeleteConfirmationDialog';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -222,32 +213,20 @@ export function FolderSection({
                         submitLabel="Rename"
                         onSubmit={handleRename}
                     />
-                    <AlertDialog open={confirmDelete} onOpenChange={setConfirmDelete}>
-                        <AlertDialogContent>
-                            <AlertDialogHeader>
-                                <AlertDialogTitle>Delete “{folder.name}”?</AlertDialogTitle>
-                                <AlertDialogDescription>
-                                    The {count} agent{count === 1 ? '' : 's'} in this folder
-                                    won’t be deleted - they’ll move to Uncategorized.
-                                </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                                <AlertDialogCancel disabled={isDeleting}>
-                                    Cancel
-                                </AlertDialogCancel>
-                                <AlertDialogAction
-                                    onClick={(e) => {
-                                        e.preventDefault();
-                                        handleDelete();
-                                    }}
-                                    disabled={isDeleting}
-                                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                                >
-                                    {isDeleting ? 'Deleting...' : 'Delete folder'}
-                                </AlertDialogAction>
-                            </AlertDialogFooter>
-                        </AlertDialogContent>
-                    </AlertDialog>
+                    <DeleteConfirmationDialog
+                        open={confirmDelete}
+                        onOpenChange={setConfirmDelete}
+                        title={`Delete “${folder.name}”?`}
+                        description={
+                            <>
+                                The {count} agent{count === 1 ? '' : 's'} in this folder
+                                won’t be deleted - they’ll move to Uncategorized.
+                            </>
+                        }
+                        onConfirm={handleDelete}
+                        isDeleting={isDeleting}
+                        confirmLabel="Delete folder"
+                    />
                 </>
             )}
         </div>

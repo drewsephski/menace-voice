@@ -28,21 +28,12 @@ import type {
   PhoneNumberResponse,
   TelephonyConfigurationDetail,
 } from "@/client/types.gen";
+import { DeleteConfirmationDialog } from "@/components/DeleteConfirmationDialog";
 import { ConfigFormDialog } from "@/components/telephony/ConfigFormDialog";
 import { PhoneNumberDialog } from "@/components/telephony/PhoneNumberDialog";
 import { SetupChecklistCard } from "@/components/telephony/SetupChecklistCard";
 import { SipConnectivityCard } from "@/components/telephony/SipConnectivityCard";
 import { TrunkCard } from "@/components/telephony/TrunkCard";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -590,24 +581,18 @@ export default function TelephonyConfigurationDetailPage() {
         onSaved={fetchAll}
       />
 
-      <AlertDialog
+      <DeleteConfirmationDialog
         open={!!phoneDeleteTarget}
         onOpenChange={(o) => !o && setPhoneDeleteTarget(null)}
-      >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Delete phone number?</AlertDialogTitle>
-            <AlertDialogDescription>
-              {phoneDeleteTarget?.address} will no longer accept inbound calls or be
-              available as a caller ID for this configuration.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={onConfirmDeletePhone}>Delete</AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+        title="Delete phone number?"
+        description={
+          <>
+            {phoneDeleteTarget?.address} will no longer accept inbound calls or be
+            available as a caller ID for this configuration.
+          </>
+        }
+        onConfirm={onConfirmDeletePhone}
+      />
     </div>
   );
 }

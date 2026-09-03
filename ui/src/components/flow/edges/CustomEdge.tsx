@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 
 import { useWorkflow, useWorkflowOptional } from "@/app/workflow/[workflowId]/contexts/WorkflowContext";
 import { useWorkflowStore } from "@/app/workflow/[workflowId]/stores/workflowStore";
+import { DeleteConfirmationDialog } from "@/components/DeleteConfirmationDialog";
 import { StaticTextWarning, TextOrAudioInput } from "@/components/flow/TextOrAudioInput";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -157,6 +158,7 @@ export default function CustomEdge(props: CustomEdgeProps) {
     const updateEdge = useWorkflowStore((state) => state.updateEdge);
     const deleteEdge = useWorkflowStore((state) => state.deleteEdge);
     const [open, setOpen] = useState(false);
+    const [confirmDelete, setConfirmDelete] = useState(false);
     const [isHovered, setIsHovered] = useState(false);
 
     const parallel = getEdges().filter(
@@ -259,6 +261,7 @@ export default function CustomEdge(props: CustomEdgeProps) {
 
     const handleDeleteEdge = useCallback(() => {
         deleteEdge(id);
+        setConfirmDelete(false);
     }, [id, deleteEdge]);
 
     return (
@@ -328,7 +331,7 @@ export default function CustomEdge(props: CustomEdgeProps) {
                                         variant="ghost"
                                         size="icon"
                                         className="h-6 w-6 p-0 hover:bg-destructive/10 hover:text-destructive text-muted-foreground"
-                                        onClick={handleDeleteEdge}
+                                        onClick={() => setConfirmDelete(true)}
                                     >
                                         <Trash2 className="h-3 w-3" />
                                     </Button>
@@ -368,6 +371,13 @@ export default function CustomEdge(props: CustomEdgeProps) {
                 onOpenChange={setOpen}
                 data={data}
                 onSave={handleSaveEdgeData}
+            />
+            <DeleteConfirmationDialog
+                open={confirmDelete}
+                onOpenChange={setConfirmDelete}
+                title="Delete connection?"
+                description="This connection and its condition will be removed from the workflow."
+                onConfirm={handleDeleteEdge}
             />
         </>
     );

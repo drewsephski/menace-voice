@@ -14,20 +14,11 @@ import type {
   TelephonyConfigurationDetail,
   TrunkResponse,
 } from "@/client/types.gen";
+import { DeleteConfirmationDialog } from "@/components/DeleteConfirmationDialog";
 import {
   trunkProviderUi,
   type TrunkSettings,
 } from "@/components/telephony/trunkProviders";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -361,25 +352,20 @@ export function TrunkCard({
         </DialogContent>
       </Dialog>
 
-      <AlertDialog
+      <DeleteConfirmationDialog
         open={!!deleteTarget}
         onOpenChange={(next) => !next && setDeleteTarget(null)}
-      >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Delete trunk?</AlertDialogTitle>
-            <AlertDialogDescription>
-              {deleteTarget?.name} will be deactivated with{" "}
-              {configuration.provider} and calls will stop routing over it. Numbers
-              still assigned to it must be moved first.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete}>Delete</AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+        title="Delete trunk?"
+        description={
+          <>
+            {deleteTarget?.name} will be deactivated with {configuration.provider} and
+            calls will stop routing over it. Numbers still assigned to it must be moved
+            first.
+          </>
+        }
+        onConfirm={handleDelete}
+        isDeleting={submitting}
+      />
     </>
   );
 }

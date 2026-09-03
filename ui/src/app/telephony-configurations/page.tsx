@@ -27,17 +27,8 @@ import type {
   TelephonyConfigurationDetail,
   TelephonyConfigurationListItem,
 } from "@/client/types.gen";
+import { DeleteConfirmationDialog } from "@/components/DeleteConfirmationDialog";
 import { ConfigFormDialog } from "@/components/telephony/ConfigFormDialog";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -70,6 +61,7 @@ export default function TelephonyConfigurationsPage() {
   const [editOpen, setEditOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] =
     useState<TelephonyConfigurationListItem | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const fetchItems = useCallback(async () => {
     if (authLoading || !user) return;
@@ -161,6 +153,7 @@ export default function TelephonyConfigurationsPage() {
 
   const onConfirmDelete = async () => {
     if (!deleteTarget) return;
+    setIsDeleting(true);
     try {
       const token = await getAccessToken();
       const res = await deleteTelephonyConfigurationApiV1OrganizationsTelephonyConfigsConfigIdDelete(
@@ -175,6 +168,8 @@ export default function TelephonyConfigurationsPage() {
       fetchItems();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to delete configuration");
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -397,25 +392,20 @@ export default function TelephonyConfigurationsPage() {
         onSaved={onSaved}
       />
 
-      <AlertDialog
+      <DeleteConfirmationDialog
         open={!!deleteTarget}
         onOpenChange={(o) => !o && setDeleteTarget(null)}
-      >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Delete configuration?</AlertDialogTitle>
-            <AlertDialogDescription>
-              {deleteTarget?.name} and all of its phone numbers will be removed. Any
-              campaigns that reference this configuration will block the deletion until
-              they are reassigned.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={onConfirmDelete}>Delete</AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+        title="Delete configuration?"
+        description={
+          <>
+            {deleteTarget?.name} and all of its phone numbers will be removed. Any
+            campaigns that reference this configuration will block the deletion until
+            they are reassigned.
+          </>
+        }
+        onConfirm={onConfirmDelete}
+        isDeleting={isDeleting}
+      />
     </div>
   );
 }

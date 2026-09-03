@@ -1,8 +1,9 @@
 import { Slot } from "@radix-ui/react-slot";
 import { useNodeId, useReactFlow } from "@xyflow/react";
 import { EllipsisVertical, Trash } from "lucide-react";
-import { forwardRef, HTMLAttributes, ReactNode,useCallback } from "react";
+import { forwardRef, HTMLAttributes, ReactNode, useCallback, useState } from "react";
 
+import { DeleteConfirmationDialog } from "@/components/DeleteConfirmationDialog";
 import { Button } from "@/components/ui/button";
 import {
     DropdownMenu,
@@ -178,15 +179,26 @@ NodeHeaderMenuAction.displayName = "NodeHeaderMenuAction";
 export const NodeHeaderDeleteAction = () => {
     const id = useNodeId();
     const { setNodes } = useReactFlow();
+    const [confirmDelete, setConfirmDelete] = useState(false);
 
-    const handleClick = useCallback(() => {
+    const handleDelete = useCallback(() => {
         setNodes((prevNodes) => prevNodes.filter((node) => node.id !== id));
+        setConfirmDelete(false);
     }, [id, setNodes]);
 
     return (
-        <NodeHeaderAction onClick={handleClick} label="Delete node">
-            <Trash />
-        </NodeHeaderAction>
+        <>
+            <NodeHeaderAction onClick={() => setConfirmDelete(true)} label="Delete node">
+                <Trash />
+            </NodeHeaderAction>
+            <DeleteConfirmationDialog
+                open={confirmDelete}
+                onOpenChange={setConfirmDelete}
+                title="Delete node?"
+                description="This node and its connections will be removed from the workflow."
+                onConfirm={handleDelete}
+            />
+        </>
     );
 };
 
