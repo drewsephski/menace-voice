@@ -4,6 +4,7 @@ import {
   ArrowLeft,
   ArrowRight,
   BookOpen,
+  CalendarClock,
   Check,
   CheckCircle2,
   CloudSun,
@@ -16,8 +17,10 @@ import {
   Puzzle,
   Search,
   SlidersHorizontal,
+  Star,
   Target,
   UploadCloud,
+  Wrench,
   X,
 } from "lucide-react";
 import Link from "next/link";
@@ -68,6 +71,9 @@ type TemplateId =
   | "lead-qualifier"
   | "support-desk"
   | "technical-docs"
+  | "appointment-coordinator"
+  | "service-dispatcher"
+  | "feedback-interviewer"
   | "custom";
 
 type TemplateOption = {
@@ -76,6 +82,7 @@ type TemplateOption = {
   description: string;
   useCase: string;
   activityDescription: string;
+  workflowStages?: readonly [string, string, string];
   icon: typeof Headphones;
   recommendedMcpPresetIds?: McpPresetId[];
 };
@@ -107,6 +114,11 @@ const TEMPLATE_OPTIONS: TemplateOption[] = [
     useCase: "Front desk receptionist",
     activityDescription:
       "Greet callers, answer common questions, route them to the right person, and capture messages when nobody is available.",
+    workflowStages: [
+      "Welcome the caller, identify why they called, and answer front-desk questions from available knowledge.",
+      "Resolve the request, route to the right person, or collect a complete message when a transfer is unavailable.",
+      "Read back names, numbers, and next steps, then confirm the caller has nothing else they need before closing.",
+    ],
     icon: Headphones,
   },
   {
@@ -116,6 +128,11 @@ const TEMPLATE_OPTIONS: TemplateOption[] = [
     useCase: "Lead qualification",
     activityDescription:
       "Qualify new leads by learning about their needs, timeline, and budget, then summarize the conversation for the sales team.",
+    workflowStages: [
+      "Understand the prospect's goal, current situation, and reason for considering a change.",
+      "Qualify fit by gathering the agreed criteria without sounding like an interrogation or inventing product claims.",
+      "Summarize the opportunity and either arrange the approved next step or explain the human follow-up clearly.",
+    ],
     icon: Target,
   },
   {
@@ -125,6 +142,11 @@ const TEMPLATE_OPTIONS: TemplateOption[] = [
     useCase: "Customer support",
     activityDescription:
       "Help customers troubleshoot common issues, find answers in the knowledge base, and escalate requests that need a human.",
+    workflowStages: [
+      "Identify the customer, the affected product or service, the symptoms, and the outcome they need.",
+      "Guide one safe troubleshooting step at a time using available knowledge, checking the result before continuing.",
+      "Confirm the resolution or create a complete escalation summary with attempted steps, impact, and the promised next action.",
+    ],
     icon: MessageCircle,
   },
   {
@@ -135,8 +157,58 @@ const TEMPLATE_OPTIONS: TemplateOption[] = [
     useCase: "Technical documentation assistant",
     activityDescription:
       "Help developers understand modern libraries and frameworks, explain APIs with concise examples, clarify version differences, and use connected documentation sources before relying on memory.",
+    workflowStages: [
+      "Clarify the library, version, environment, and specific implementation goal or error.",
+      "Retrieve current documentation with connected sources and explain the relevant API with a focused example.",
+      "Check the answer against the caller's constraints, summarize the implementation, and label any remaining uncertainty.",
+    ],
     icon: BookOpen,
     recommendedMcpPresetIds: ["context7", "deepwiki"],
+  },
+  {
+    id: "appointment-coordinator",
+    label: "Appointment coordinator",
+    description:
+      "Schedule, change, and confirm appointments without overpromising.",
+    useCase: "Appointment scheduling and coordination",
+    activityDescription:
+      "Help callers schedule, reschedule, or cancel appointments. Learn the service they need, collect the required contact details, confirm their timezone and preferred times, and answer scheduling-policy questions from the available knowledge. Use connected scheduling tools to check availability and make changes only after the caller confirms the details. Never promise a time that a tool or staff member has not confirmed. If scheduling is unavailable or the request needs an exception, capture a precise callback request and explain the next step.",
+    workflowStages: [
+      "Identify whether the caller is booking, changing, or canceling, then collect the service, contact details, timezone, and constraints.",
+      "Check policies and connected scheduling tools, offer only confirmed options, and obtain approval before making a change.",
+      "Read back the appointment details and confirmation, or capture a precise staff callback request when the action cannot be completed.",
+    ],
+    icon: CalendarClock,
+  },
+  {
+    id: "service-dispatcher",
+    label: "Service dispatcher",
+    description:
+      "Triage service calls and hand technicians a complete job brief.",
+    useCase: "Field service intake and dispatch",
+    activityDescription:
+      "Handle incoming field-service requests from initial triage through dispatch or staff handoff. Collect the caller's name, callback number, service address, equipment or service involved, symptoms, timing, and access constraints. Distinguish routine requests from immediate safety hazards; when someone may be in danger, direct them to local emergency services or the appropriate utility instead of troubleshooting. Use connected tools to check coverage, availability, and create a job only after the caller confirms the details. End with a concise recap, reference number when available, expected next step, and any technician access notes.",
+    workflowStages: [
+      "Screen for immediate danger and urgency before gathering routine service details or attempting troubleshooting.",
+      "Build a complete job brief, check coverage and availability, and confirm the address, access, and service window with the caller.",
+      "Dispatch or escalate through connected tools, then provide the reference, expected response, safety reminder, and concise recap.",
+    ],
+    icon: Wrench,
+  },
+  {
+    id: "feedback-interviewer",
+    label: "Feedback interviewer",
+    description:
+      "Run respectful interviews that turn conversations into clear insights.",
+    useCase: "Customer feedback and experience interviews",
+    activityDescription:
+      "Conduct permission-based customer feedback interviews after a service or purchase. Introduce the purpose, confirm the person has time to participate, and ask one clear question at a time. Capture an overall rating, the reason behind it, what worked, what could improve, and whether the customer wants follow-up. Use neutral follow-up questions without defending the company or steering the answer. Let people skip any question, end the interview, or request no further calls immediately. Summarize their feedback accurately, distinguish direct comments from your interpretation, and flag unresolved problems or recovery requests for a human.",
+    workflowStages: [
+      "State the purpose, identify the relevant experience, obtain permission to continue, and honor any opt-out immediately.",
+      "Run the interview one neutral question at a time, adapting follow-ups to clarify ratings, strengths, and problems.",
+      "Reflect back the key feedback, confirm whether follow-up is wanted, and flag unresolved issues without promising an outcome.",
+    ],
+    icon: Star,
   },
   {
     id: "custom",
@@ -592,13 +664,28 @@ export default function AgentOnboardingPage() {
       ]
         .filter(Boolean)
         .join(" ");
+      const workflowStructure = selectedTemplateOption?.workflowStages
+        ? [
+            "Build the workflow with exactly three role-specific agent nodes in this order:",
+            ...selectedTemplateOption.workflowStages.map(
+              (stage, index) => `${index + 1}. ${stage}`,
+            ),
+            "Give each node a prompt scoped to its stage and a clear transition to the next stage. Preserve explicit escalation, opt-out, and tool-confirmation boundaries from the job description.",
+          ].join("\n")
+        : "";
       const response =
         await createWorkflowFromTemplateApiV1WorkflowCreateTemplatePost({
           body: {
             call_type: callType,
             name: agentName.trim(),
             use_case: useCase.trim() || "Custom voice agent",
-            activity_description: `${activityDescription.trim()}\n\n${configurationSummary}`,
+            activity_description: [
+              activityDescription.trim(),
+              workflowStructure,
+              configurationSummary,
+            ]
+              .filter(Boolean)
+              .join("\n\n"),
             tool_uuids: mcpServers.map((server) => server.toolUuid),
             document_uuids: selectedDocumentUuids,
           },
