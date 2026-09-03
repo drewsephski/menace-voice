@@ -1,7 +1,6 @@
 "use client";
 
 import { useId, useState } from "react";
-
 import styles from "./platform.module.css";
 import { SectionLabel } from "./primitives";
 
@@ -19,17 +18,17 @@ const FEATURES = [
   {
     title: "Tools, knowledge, and MCP",
     description:
-      "Ground answers in your knowledge base, call APIs during the conversation, and let coding agents safely author workflows through MCP.",
+      "Ground answers in your knowledge base, call APIs during the conversation, and let coding agents author workflows through MCP.",
   },
   {
     title: "Phone, SIP, and WebRTC",
     description:
-      "Handle inbound and outbound calls, browser conversations, campaigns, and human transfers across the telephony stack you choose.",
+      "Handle inbound and outbound calls, browser conversations, campaigns, and human transfers across your telephony stack.",
   },
   {
     title: "QA and complete call records",
     description:
-      "Review transcripts, recordings, extracted data, cost, and automated QA so every production conversation can be improved.",
+      "Review transcripts, recordings, extracted data, cost, and automated QA so every production conversation can improve.",
   },
 ] as const;
 
@@ -47,7 +46,7 @@ export function Platform() {
   const baseId = useId();
 
   return (
-    <section className={styles.section} id="platform">
+    <section className={styles.section}>
       <div className={styles.intro}>
         <SectionLabel>Platform</SectionLabel>
         <h2>The complete production stack for voice agents</h2>
@@ -96,7 +95,7 @@ export function Platform() {
           })}
         </div>
 
-        <aside className={styles.proof} aria-label="Menace Voice platform summary">
+        <aside className={styles.proof} aria-label="Customer outcome">
           <blockquote>
             “Own the conversation from the first word to the final action,
             without giving up control of your models, providers, or data.”

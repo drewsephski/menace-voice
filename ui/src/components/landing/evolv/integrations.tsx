@@ -1,7 +1,29 @@
 import Image from "next/image";
-
 import styles from "./integrations.module.css";
 import { ArrowIcon, SectionLabel, SparkleIcon } from "./primitives";
+
+const integrations = [
+  "apple",
+  "sheets",
+  "calendar",
+  "outlook",
+  "linkedin",
+  "telegram",
+  "slack",
+  "google",
+  "notion",
+  "github",
+  "snowflake",
+  "drive",
+  "discord",
+  "youtube",
+  "trello",
+  "excel",
+  "asana",
+  "monday",
+  "salesforce",
+  "hubspot",
+] as const;
 
 const integrationSources = {
   apple: "/templates/evolv-ai/apple.png",
@@ -24,10 +46,9 @@ const integrationSources = {
   monday: "/templates/evolv-ai/monday.png",
   salesforce: "/templates/evolv-ai/salesforce.png",
   hubspot: "/templates/evolv-ai/hubspot.png",
-} as const;
+} satisfies Record<(typeof integrations)[number], string>;
 
-type IntegrationName = keyof typeof integrationSources;
-type CellKind = IntegrationName | "sparkle" | "stripe";
+type CellKind = (typeof integrations)[number] | "sparkle" | "stripe";
 
 const cells: Array<{ id: string; kind: CellKind }> = [
   { id: "north-west", kind: "stripe" },
@@ -62,7 +83,7 @@ export function Integrations() {
     <section className={styles.section} id="integrations">
       <div className={styles.heading}>
         <SectionLabel>Integrations</SectionLabel>
-        <h2>Connect every conversation to the systems behind it.</h2>
+        <h2>Connect AI agents to your entire operating stack.</h2>
       </div>
       <div className={styles.grid}>
         {cells.map(({ id, kind }) => {
@@ -92,11 +113,8 @@ export function Integrations() {
           );
         })}
       </div>
-      <a
-        className={styles.action}
-        href="https://docs.dograh.com/integrations/telephony/overview"
-      >
-        Explore integrations <ArrowIcon />
+      <a className={styles.action} href="#integrations">
+        Explore Integrations <ArrowIcon />
       </a>
     </section>
   );

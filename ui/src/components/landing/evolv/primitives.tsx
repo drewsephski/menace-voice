@@ -1,20 +1,11 @@
 import { ArrowUpRight } from "lucide-react";
-import Image from "next/image";
 import type { ReactNode } from "react";
-
 import styles from "./primitives.module.css";
 
 export function Brand({ compact = false }: { compact?: boolean }) {
   return (
     <span className={styles.brand}>
-      <Image
-        alt=""
-        aria-hidden="true"
-        className={styles.brandMark}
-        height={18}
-        src="/menace-mark.png"
-        width={18}
-      />
+      <span aria-hidden="true" className={styles.brandMark} />
       {compact ? null : <span>Menace Voice</span>}
     </span>
   );

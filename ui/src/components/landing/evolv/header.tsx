@@ -1,25 +1,19 @@
 "use client";
 
 import { useEffect, useId, useRef, useState } from "react";
-
 import styles from "./header.module.css";
 import { Brand } from "./primitives";
 
 const NAV_LINKS = [
-  { href: "#platform", label: "Platform" },
-  { href: "#use-cases", label: "Use cases" },
-  { href: "#product-walkthrough", label: "Product" },
-  { href: "#integrations", label: "Integrations" },
-  { href: "#faq", label: "FAQ" },
+  "Platform",
+  "Use cases",
+  "Product",
+  "Integrations",
+  "FAQ",
+  "Docs",
 ] as const;
 
-interface HeaderProps {
-  loginHref: string;
-  signupEnabled: boolean;
-  signupHref: string;
-}
-
-export function Header({ loginHref, signupEnabled, signupHref }: HeaderProps) {
+export function Header() {
   const [menuOpen, setMenuOpen] = useState(false);
   const menuId = useId();
   const menuButtonRef = useRef<HTMLButtonElement>(null);
@@ -78,30 +72,28 @@ export function Header({ loginHref, signupEnabled, signupHref }: HeaderProps) {
         <a
           aria-label="Menace Voice home"
           className={styles.logo}
-          href="#menace-voice-top"
+          href="#evolv-ai-top"
         >
           <Brand />
         </a>
 
         <nav aria-label="Primary navigation" className={styles.desktopNav}>
           <ul>
-            {NAV_LINKS.map(({ href, label }) => (
-              <li key={href}>
-                <a href={href}>{label}</a>
+            {NAV_LINKS.map((label) => (
+              <li key={label}>
+                <a href="#evolv-ai-top">{label}</a>
               </li>
             ))}
           </ul>
         </nav>
 
         <div className={styles.actions}>
-          <a className={styles.contact} href={loginHref}>
+          <a className={styles.contact} href="#demo">
             Sign in
           </a>
-          {signupEnabled ? (
-            <a className={styles.waitlist} href={signupHref}>
-              Start building
-            </a>
-          ) : null}
+          <a className={styles.waitlist} href="#start">
+            Start building
+          </a>
           <button
             aria-controls={menuId}
             aria-expanded={menuOpen}
@@ -129,10 +121,10 @@ export function Header({ loginHref, signupEnabled, signupHref }: HeaderProps) {
         <div className={styles.menuPanel} id={menuId} ref={menuPanelRef}>
           <nav aria-label="Mobile navigation" className={styles.mobileNav}>
             <ul>
-              {NAV_LINKS.map(({ href, label }, index) => (
-                <li key={href}>
+              {NAV_LINKS.map((label, index) => (
+                <li key={label}>
                   <a
-                    href={href}
+                    href="#evolv-ai-top"
                     ref={index === 0 ? firstLinkRef : undefined}
                   >
                     {label}
@@ -140,11 +132,8 @@ export function Header({ loginHref, signupEnabled, signupHref }: HeaderProps) {
                 </li>
               ))}
             </ul>
-            <a
-              className={styles.demoButton}
-              href={signupEnabled ? signupHref : loginHref}
-            >
-              {signupEnabled ? "Start building" : "Sign in"}
+            <a className={styles.demoButton} href="#demo">
+              Start building
             </a>
           </nav>
         </div>

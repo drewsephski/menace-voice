@@ -112,7 +112,7 @@ function CaseIcon({ name }: { name: IconName }) {
 
 export function UseCases() {
   return (
-    <section className={styles.section} id="use-cases">
+    <section className={styles.section}>
       <header className={styles.header}>
         <div className={styles.label}>
           <SectionLabel>Use cases</SectionLabel>

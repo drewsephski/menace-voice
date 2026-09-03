@@ -8,10 +8,11 @@
 }
 
 .brandMark {
-  width: 18px;
-  height: 18px;
-  object-fit: contain;
-  filter: brightness(0) invert(1);
+  width: 16px;
+  height: 16px;
+  border: 4px solid #32dc8b;
+  border-radius: 50%;
+  box-shadow: 0 0 16px rgb(50 220 139 / 30%);
 }
 
 .label {

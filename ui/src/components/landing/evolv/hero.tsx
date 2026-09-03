@@ -1,6 +1,5 @@
 import Image from "next/image";
 import type { CSSProperties } from "react";
-
 import styles from "./hero.module.css";
 import { ArrowIcon, SectionLabel } from "./primitives";
 
@@ -63,19 +62,13 @@ function LogoGroup({ duplicate = false }: { duplicate?: boolean }) {
   );
 }
 
-interface HeroProps {
-  loginHref: string;
-  signupEnabled: boolean;
-  signupHref: string;
-}
-
-export function Hero({ loginHref, signupEnabled, signupHref }: HeroProps) {
+export function Hero() {
   return (
     <>
       <section className={styles.hero}>
         <div className={styles.content}>
           <div className={styles.eyebrow}>
-            <SectionLabel>VOICE AI · OPEN SOURCE · PRODUCTION READY</SectionLabel>
+            <SectionLabel>VOICE AI | OPEN SOURCE PLATFORM</SectionLabel>
           </div>
           <h1>Build voice agents people want to talk to</h1>
           <p className={styles.description}>
@@ -83,25 +76,16 @@ export function Hero({ loginHref, signupEnabled, signupHref }: HeroProps) {
             or WebRTC from one visual workspace.
           </p>
           <div className={styles.actions}>
-            <a
-              className={styles.primaryAction}
-              href={signupEnabled ? signupHref : loginHref}
-              id="start"
-            >
-              {signupEnabled ? "Build your first agent" : "Sign in to build"}
+            <a className={styles.primaryAction} href="#start" id="start">
+              Build your first agent
               <ArrowIcon />
             </a>
-            <a
-              className={styles.secondaryAction}
-              href="https://docs.dograh.com"
-              id="docs"
-            >
-              Explore the docs
+            <a className={styles.secondaryAction} href="#demo" id="demo">
+              Explore the platform
             </a>
           </div>
           <p className={styles.note}>
-            Start with managed models or bring your own LLM, speech, and
-            telephony providers.
+            Use managed models or bring your own voice AI stack.
           </p>
         </div>
       </section>

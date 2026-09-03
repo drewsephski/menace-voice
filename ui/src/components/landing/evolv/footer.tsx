@@ -1,94 +1,103 @@
+"use client";
+
+import { type FormEvent, useState } from "react";
 import styles from "./footer.module.css";
 import { Brand } from "./primitives";
 
 const groups = [
   {
-    title: "Explore",
+    title: "Pages",
     links: [
-      { href: "#platform", label: "Platform" },
-      { href: "#use-cases", label: "Use cases" },
-      { href: "#product-walkthrough", label: "Product walkthrough" },
-      { href: "#integrations", label: "Integrations" },
+      "About",
+      "Blog",
+      "Blog Details",
+      "Changelog",
+      "Contact",
+      "Customers",
+      "Customers Details",
+      "Integrations",
     ],
   },
   {
-    title: "Build",
+    title: "Company",
     links: [
-      { href: "https://docs.dograh.com/getting-started/first-agent", label: "First agent" },
-      { href: "https://docs.dograh.com/getting-started/connect-telephony", label: "Connect telephony" },
-      { href: "https://docs.dograh.com/getting-started/add-tools-and-knowledge-base", label: "Tools & knowledge" },
-      { href: "https://docs.dograh.com/integrations/mcp", label: "Build with MCP" },
+      "About",
+      "Customers",
+      "Integrations",
+      "Blog",
+      "Contact",
+      "Overview",
+      "Pricing",
     ],
   },
   {
-    title: "Developers",
+    title: "Resources",
     links: [
-      { href: "https://docs.dograh.com", label: "Documentation" },
-      { href: "https://docs.dograh.com/api-reference/overview", label: "API reference" },
-      { href: "https://docs.dograh.com/sdks/introduction", label: "SDKs" },
-      { href: "https://docs.dograh.com/developer/workflow-schema", label: "Workflow schema" },
+      "Documentation",
+      "Help Center",
+      "Community",
+      "API Reference",
+      "Status",
     ],
   },
-  {
-    title: "Open source",
-    links: [
-      { href: "https://github.com/drewsephski/menace-voice", label: "GitHub" },
-      { href: "https://docs.dograh.com/deployment/introduction", label: "Self-hosting" },
-      { href: "https://docs.dograh.com/deployment/scaling", label: "Scaling" },
-      { href: "https://docs.dograh.com/contribution/setup", label: "Contributing" },
-    ],
-  },
+  { title: "Legal", links: ["Privacy", "Terms", "Security", "Cookies"] },
 ] as const;
 
-function FooterBadge({
-  href,
-  label,
-  children,
-}: {
-  href: string;
-  label: string;
-  children: string;
-}) {
+function SocialIcon({ label, children }: { label: string; children: string }) {
   return (
-    <a aria-label={label} className={styles.social} href={href}>
+    <a aria-label={label} className={styles.social} href="#evolv-ai-top">
       {children}
     </a>
   );
 }
 
-interface FooterProps {
-  loginHref: string;
-  signupEnabled: boolean;
-  signupHref: string;
-}
+export function Footer() {
+  const [submitted, setSubmitted] = useState(false);
 
-export function Footer({ loginHref, signupEnabled, signupHref }: FooterProps) {
+  function submit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setSubmitted(true);
+  }
+
   return (
     <footer className={styles.footer}>
       <div className={styles.primary}>
         <div className={styles.brandColumn}>
           <Brand />
           <p>
-            Build, test, and deploy voice agents across phone and WebRTC, with
-            your models, your tools, and your infrastructure.
+            Your AI agents, working behind every task. From planning to
+            execution, automated end-to-end.
           </p>
           <div className={styles.subscribe}>
-            <span>Start a conversation</span>
-            <div className={styles.footerActions}>
-              <a href={signupEnabled ? signupHref : loginHref}>
-                {signupEnabled ? "Build your first agent" : "Sign in"}
-              </a>
-              <a href="https://docs.dograh.com">Read the docs</a>
-            </div>
+            <span>Subscribe to updates</span>
+            {submitted ? (
+              <p className={styles.thanks} role="status">
+                Thanks — you’re on the list.
+              </p>
+            ) : (
+              <form onSubmit={submit}>
+                <label className={styles.srOnly} htmlFor="evolv-ai-email">
+                  Email address
+                </label>
+                <input
+                  id="evolv-ai-email"
+                  name="email"
+                  placeholder="you@example.com"
+                  required
+                  type="email"
+                />
+                <button type="submit">Join</button>
+              </form>
+            )}
           </div>
         </div>
         <nav aria-label="Footer" className={styles.groups}>
           {groups.map((group) => (
             <div key={group.title}>
               <h3>{group.title}</h3>
-              {group.links.map(({ href, label }) => (
-                <a href={href} key={href}>
-                  {label}
+              {group.links.map((link) => (
+                <a href="#evolv-ai-top" key={link}>
+                  {link}
                 </a>
               ))}
             </div>
@@ -96,17 +105,12 @@ export function Footer({ loginHref, signupEnabled, signupHref }: FooterProps) {
         </nav>
       </div>
       <div className={styles.bottom}>
-        <p>© 2026 Menace Voice. Built by Menace.</p>
+        <p>© 2026 Evolv Ai. All rights reserved.</p>
         <div className={styles.socials}>
-          <FooterBadge href="https://docs.dograh.com" label="Documentation">
-            DOC
-          </FooterBadge>
-          <FooterBadge
-            href="https://github.com/drewsephski/menace-voice"
-            label="GitHub"
-          >
-            GH
-          </FooterBadge>
+          <SocialIcon label="X">𝕏</SocialIcon>
+          <SocialIcon label="LinkedIn">in</SocialIcon>
+          <SocialIcon label="GitHub">⌘</SocialIcon>
+          <SocialIcon label="YouTube">▶</SocialIcon>
         </div>
       </div>
     </footer>

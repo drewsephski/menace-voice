@@ -33,47 +33,40 @@
   text-transform: uppercase;
 }
 
-.footerActions {
+.subscribe form {
   display: flex;
   max-width: 385px;
+  height: 46px;
   margin-top: 14px;
-  gap: 8px;
+  border: 1px solid rgb(255 255 255 / 12%);
 }
 
-.footerActions a {
-  display: inline-flex;
-  min-height: 42px;
-  align-items: center;
-  justify-content: center;
-  padding: 10px 14px;
-  border: 1px solid rgb(255 255 255 / 16%);
-  color: #d8d8d8;
+.subscribe input {
+  min-width: 0;
+  flex: 1;
+  padding: 0 14px;
+  border: 0;
+  outline: 0;
+  background: transparent;
   font-size: 13px;
-  transition:
-    border-color 160ms ease,
-    background-color 160ms ease,
-    color 160ms ease;
 }
 
-.footerActions a:first-child {
-  border-color: #f5f5f5;
+.subscribe button {
+  width: 72px;
+  border: 0;
   background: #f5f5f5;
   color: #111;
+  font-size: 12px;
+  cursor: pointer;
 }
 
-.footerActions a:hover,
-.footerActions a:focus-visible {
-  border-color: rgb(255 255 255 / 36%);
-  background: rgb(255 255 255 / 7%);
-  color: #fff;
-  outline: none;
-}
-
-.footerActions a:first-child:hover,
-.footerActions a:first-child:focus-visible {
-  border-color: #dedede;
-  background: #dedede;
-  color: #111;
+.thanks {
+  width: fit-content;
+  margin: 14px 0 0;
+  padding: 12px 14px;
+  border: 1px solid rgb(49 220 139 / 25%);
+  color: #8fe9b9;
+  font-size: 13px;
 }
 
 .groups {
@@ -171,11 +164,6 @@
 
   .brandColumn > p {
     margin: 24px 0 40px;
-  }
-
-  .footerActions {
-    align-items: stretch;
-    flex-direction: column;
   }
 
   .groups {
