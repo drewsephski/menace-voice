@@ -117,9 +117,7 @@ export function Header({ navigation }: { navigation: LandingNavigation }) {
               </li>
             ))}
             <li>
-              <a href={navigation.docs} rel="noreferrer" target="_blank">
-                Docs
-              </a>
+              <a href={navigation.docs}>Docs</a>
             </li>
           </ul>
         </nav>
@@ -170,9 +168,7 @@ export function Header({ navigation }: { navigation: LandingNavigation }) {
                 </li>
               ))}
               <li>
-                <a href={navigation.docs} rel="noreferrer" target="_blank">
-                  Docs
-                </a>
+                <a href={navigation.docs}>Docs</a>
               </li>
             </ul>
             <a className={styles.demoButton} href={navigation.startBuilding}>

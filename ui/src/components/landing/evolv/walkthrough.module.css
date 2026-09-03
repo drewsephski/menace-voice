@@ -454,44 +454,181 @@
   min-height: 405px;
 }
 
-.workflowRail {
-  margin: 0;
-  padding: 35px 34px;
-  border-inline-end: 1px solid rgb(255 255 255 / 7%);
-  list-style: none;
-}
-
-.workflowStep {
+.flowCanvas {
   position: relative;
-  display: grid;
-  grid-template-columns: 42px 1fr 24px;
-  min-height: 78px;
-  align-items: center;
-  gap: 16px;
+  min-width: 0;
+  border-inline-end: 1px solid rgb(255 255 255 / 7%);
+  background: rgb(5 8 8 / 54%);
 }
 
-.workflowStep > i {
+.flowCanvas :global(.react-flow) {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  color: #dedede;
+}
+
+.flowCanvas :global(.react-flow__container) {
   position: absolute;
-  bottom: -12px;
-  left: 20px;
-  width: 1px;
-  height: 30px;
-  background: rgb(255 255 255 / 10%);
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
 }
 
-.stepIcon {
+.flowCanvas :global(.react-flow__renderer) {
+  z-index: 4;
+}
+
+.flowCanvas :global(.react-flow__pane) {
+  z-index: 1;
+  touch-action: none;
+  cursor: default;
+}
+
+.flowCanvas :global(.react-flow__viewport) {
+  z-index: 2;
+  transform-origin: 0 0;
+  pointer-events: none;
+}
+
+.flowCanvas :global(.react-flow__nodes) {
+  transform-origin: 0 0;
+  pointer-events: none;
+}
+
+.flowCanvas :global(.react-flow__node) {
+  position: absolute;
+  box-sizing: border-box;
+  transform-origin: 0 0;
+  user-select: none;
+  pointer-events: all;
+  cursor: grab;
+}
+
+.flowCanvas :global(.react-flow__node.dragging) {
+  cursor: grabbing;
+}
+
+.flowCanvas :global(.react-flow__edges) {
+  position: absolute;
+}
+
+.flowCanvas :global(.react-flow__edges svg) {
+  position: absolute;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.flowCanvas :global(.react-flow__edge-path) {
+  stroke: rgb(255 255 255 / 22%);
+  stroke-width: 1.5;
+}
+
+.flowCanvas :global(.react-flow__edge.selected .react-flow__edge-path) {
+  stroke: var(--evolv-accent);
+  stroke-width: 2;
+}
+
+.flowCanvas :global(.react-flow__handle) {
+  position: absolute;
+  z-index: 2;
+  width: 7px;
+  height: 7px;
+  border: 1px solid #151717;
+  border-radius: 50%;
+  background: var(--evolv-accent);
+  pointer-events: none;
+}
+
+.flowCanvas :global(.react-flow__handle-left) {
+  top: 50%;
+  left: -4px;
+  transform: translateY(-50%);
+}
+
+.flowCanvas :global(.react-flow__handle-right) {
+  top: 50%;
+  right: -4px;
+  transform: translateY(-50%);
+}
+
+.flowCanvas :global(.react-flow__attribution) {
+  display: none;
+}
+
+.flowNode {
   display: grid;
-  width: 42px;
-  height: 42px;
+  width: 204px;
+  min-height: 72px;
+  grid-template-columns: 31px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 9px;
+  padding: 10px 12px;
+  border: 1px solid rgb(255 255 255 / 16%);
+  border-radius: 8px;
+  background: #121615;
+  box-shadow: 0 12px 24px rgb(0 0 0 / 28%);
+  color: #dedede;
+  cursor: grab;
+  transition:
+    border-color 180ms ease,
+    box-shadow 180ms ease,
+    transform 180ms ease;
+}
+
+.flowNode:active {
+  cursor: grabbing;
+}
+
+.flowNode:hover,
+.flowNodeSelected {
+  border-color: var(--evolv-accent);
+  box-shadow: 0 0 0 1px rgb(240 68 56 / 18%), 0 14px 26px rgb(0 0 0 / 34%);
+  transform: translateY(-2px);
+}
+
+.flowNodeNumber {
+  display: grid;
+  width: 31px;
+  height: 31px;
   place-items: center;
   border: 1px solid currentColor;
-  border-radius: 9px;
+  border-radius: 7px;
   font-family: "Evolv Geist Mono", monospace;
-  font-size: 9px;
+  font-size: 8px;
+}
+
+.flowNode > div {
+  display: grid;
+  min-width: 0;
+  gap: 3px;
+}
+
+.flowNode > div span {
+  color: #777;
+  font-size: 8px;
+  text-transform: uppercase;
+}
+
+.flowNode > div strong {
+  overflow: hidden;
+  color: #d9d9d9;
+  font-size: 10px;
+  font-weight: 520;
+  line-height: 1.25;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.flowNodeCheck {
+  color: var(--evolv-accent);
+  font-size: 12px;
 }
 
 .violet {
-  background: rgb(139 111 234 / 11%);
+  background: rgb(139 111 234 / 9%);
   color: #a792ee;
 }
 
@@ -501,7 +638,7 @@
 }
 
 .blue {
-  background: rgb(77 148 242 / 11%);
+  background: rgb(77 148 242 / 10%);
   color: #76aaf0;
 }
 
@@ -510,26 +647,17 @@
   color: #e7b65f;
 }
 
-.workflowStep > div {
-  display: grid;
-  gap: 4px;
-}
-
-.workflowStep > div span {
-  color: #767676;
-  font-size: 9px;
+.flowHint {
+  position: absolute;
+  right: 14px;
+  bottom: 12px;
+  z-index: 5;
+  color: #666;
+  font-family: "Evolv Geist Mono", monospace;
+  font-size: 8px;
+  letter-spacing: 0.05em;
   text-transform: uppercase;
-}
-
-.workflowStep > div strong {
-  color: #d9d9d9;
-  font-size: 12px;
-  font-weight: 520;
-}
-
-.stepCheck {
-  color: var(--evolv-accent);
-  font-size: 12px;
+  pointer-events: none;
 }
 
 .runSummary {
@@ -576,10 +704,19 @@
 }
 
 .summaryLog span {
+  display: flex;
+  align-items: center;
+  gap: 7px;
   padding: 13px 0;
   border-bottom: 1px solid rgb(255 255 255 / 7%);
   color: #858585;
   font-size: 9px;
+}
+
+.summaryLog b {
+  color: var(--evolv-accent);
+  font-size: 10px;
+  font-weight: 500;
 }
 
 .workflowMetrics {
@@ -762,6 +899,34 @@
   font-family: "Evolv Geist Mono", monospace;
 }
 
+.monitorOverview {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.monitorOverview b {
+  padding: 4px 7px;
+  border: 1px solid rgb(99 216 159 / 25%);
+  border-radius: 999px;
+  color: #63d89f;
+  font-family: "Evolv Geist Mono", monospace;
+  font-size: 8px;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.syncDot {
+  display: inline-block;
+  width: 5px;
+  height: 5px;
+  margin-inline-end: 5px;
+  border-radius: 50%;
+  background: #63d89f;
+  box-shadow: 0 0 8px rgb(99 216 159 / 55%);
+}
+
 .monitorMetrics {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -774,6 +939,28 @@
   min-height: 105px;
   padding: 20px 22px;
   border-inline-end: 1px solid rgb(255 255 255 / 7%);
+}
+
+.metricSpark {
+  position: absolute;
+  right: 20px;
+  bottom: 10px;
+  left: 22px;
+  width: calc(100% - 42px);
+  height: 24px;
+  overflow: visible;
+  fill: none;
+  stroke: #63d89f;
+  stroke-width: 1.5;
+  opacity: 0.8;
+}
+
+.metricSparkWarn {
+  stroke: #e5a253;
+}
+
+.metricSparkDown {
+  stroke: #76aaf0;
 }
 
 .monitorMetrics > div:last-child {
@@ -909,6 +1096,14 @@
   color: #777;
   font-size: 9px;
   line-height: 1.5;
+}
+
+.latencyAlert > small {
+  display: block;
+  margin-top: 9px;
+  color: #666;
+  font-family: "Evolv Geist Mono", monospace;
+  font-size: 8px;
 }
 
 .latencyAlert .demoAction {

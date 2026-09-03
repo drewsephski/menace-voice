@@ -1,18 +1,9 @@
 .brand {
-  display: inline-flex;
-  align-items: center;
   gap: 10px;
+  height: 24px;
   font-size: 16px;
   font-weight: 620;
   letter-spacing: -0.02em;
-}
-
-.brandMark {
-  width: 16px;
-  height: 16px;
-  border: 4px solid var(--evolv-accent);
-  border-radius: 50%;
-  box-shadow: 0 0 16px rgb(240 68 56 / 30%);
 }
 
 .label {

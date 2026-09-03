@@ -7,7 +7,7 @@ import logger from '@/lib/logger';
 import type { AuthUser, LocalUser } from '../types';
 import { AuthContext } from './AuthProvider';
 
-const PUBLIC_PATHS = ['/', '/auth/login', '/auth/signup', '/embed'];
+const PUBLIC_PATHS = ['/', '/auth/login', '/auth/signup', '/embed', '/docs'];
 
 export function isPublicAuthPath(pathname: string) {
   return PUBLIC_PATHS.some(

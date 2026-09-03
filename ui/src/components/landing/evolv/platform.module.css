@@ -145,7 +145,7 @@
   min-height: 350px;
   flex-direction: column;
   padding: 34px;
-  background: #006b46;
+  background: var(--evolv-accent);
   color: #fff;
 }
 

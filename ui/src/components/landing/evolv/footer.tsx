@@ -8,6 +8,7 @@ import { Brand } from "./primitives";
 
 function getGroups(navigation: LandingNavigation) {
   const docs = navigation.docs;
+  const legacyDocs = "https://docs.dograh.com";
   const external = { rel: "noreferrer", target: "_blank" } as const;
 
   return [
@@ -42,12 +43,12 @@ function getGroups(navigation: LandingNavigation) {
         { label: "Documentation", href: docs, ...external },
         {
           label: "First Agent Guide",
-          href: `${docs}/getting-started/first-agent`,
+          href: `${legacyDocs}/getting-started/first-agent`,
           ...external,
         },
-        { label: "MCP Guide", href: `${docs}/integrations/mcp`, ...external },
-        { label: "API Reference", href: `${docs}/api-reference`, ...external },
-        { label: "SDKs", href: `${docs}/sdks/introduction`, ...external },
+        { label: "MCP Guide", href: `${legacyDocs}/integrations/mcp`, ...external },
+        { label: "API Reference", href: `${legacyDocs}/api-reference`, ...external },
+        { label: "SDKs", href: `${legacyDocs}/sdks/introduction`, ...external },
       ],
     },
     {
@@ -56,11 +57,11 @@ function getGroups(navigation: LandingNavigation) {
         { label: "Cloud", href: navigation.startBuilding },
         {
           label: "Self-host",
-          href: `${docs}/deployment/introduction`,
+          href: `${legacyDocs}/deployment/introduction`,
           ...external,
         },
-        { label: "Docker", href: `${docs}/deployment/docker`, ...external },
-        { label: "Scaling", href: `${docs}/deployment/scaling`, ...external },
+        { label: "Docker", href: `${legacyDocs}/deployment/docker`, ...external },
+        { label: "Scaling", href: `${legacyDocs}/deployment/scaling`, ...external },
       ],
     },
   ];

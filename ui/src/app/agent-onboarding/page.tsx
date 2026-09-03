@@ -3,10 +3,12 @@
 import {
   ArrowLeft,
   ArrowRight,
+  BookOpen,
   Check,
   CheckCircle2,
   CloudSun,
   FileText,
+  GitBranch,
   Headphones,
   Loader2,
   MessageCircle,
@@ -60,7 +62,13 @@ import { detailFromError } from "@/lib/apiError";
 import { useAuth } from "@/lib/auth";
 
 type StepIndex = 0 | 1 | 2 | 3 | 4;
-type TemplateId = "receptionist" | "lead-qualifier" | "support-desk" | "custom";
+type McpPresetId = "exa" | "open-meteo" | "context7" | "deepwiki";
+type TemplateId =
+  | "receptionist"
+  | "lead-qualifier"
+  | "support-desk"
+  | "technical-docs"
+  | "custom";
 
 type TemplateOption = {
   id: TemplateId;
@@ -69,6 +77,7 @@ type TemplateOption = {
   useCase: string;
   activityDescription: string;
   icon: typeof Headphones;
+  recommendedMcpPresetIds?: McpPresetId[];
 };
 
 type McpServerSummary = {
@@ -81,7 +90,7 @@ type McpServerSummary = {
 };
 
 type McpPreset = {
-  id: "exa" | "open-meteo";
+  id: McpPresetId;
   name: string;
   description: string;
   url: string;
@@ -117,6 +126,17 @@ const TEMPLATE_OPTIONS: TemplateOption[] = [
     activityDescription:
       "Help customers troubleshoot common issues, find answers in the knowledge base, and escalate requests that need a human.",
     icon: MessageCircle,
+  },
+  {
+    id: "technical-docs",
+    label: "Technical documentation",
+    description:
+      "Explain modern libraries with current, version-aware references.",
+    useCase: "Technical documentation assistant",
+    activityDescription:
+      "Help developers understand modern libraries and frameworks, explain APIs with concise examples, clarify version differences, and use connected documentation sources before relying on memory.",
+    icon: BookOpen,
+    recommendedMcpPresetIds: ["context7", "deepwiki"],
   },
   {
     id: "custom",
@@ -155,6 +175,24 @@ const TONES = [
 const LANGUAGES = ["English (US)", "English (UK)", "Spanish"] as const;
 
 const MCP_PRESETS: McpPreset[] = [
+  {
+    id: "context7",
+    name: "Context7 library docs",
+    description:
+      "Look up current, version-specific documentation and examples for modern libraries.",
+    url: "https://mcp.context7.com/mcp",
+    icon: BookOpen,
+    iconClassName: "h-5 w-5 text-sky-400",
+  },
+  {
+    id: "deepwiki",
+    name: "DeepWiki repositories",
+    description:
+      "Explain public GitHub repositories and their architecture from generated documentation.",
+    url: "https://mcp.deepwiki.com/mcp",
+    icon: GitBranch,
+    iconClassName: "h-5 w-5 text-violet-400",
+  },
   {
     id: "exa",
     name: "Exa web search",
@@ -209,6 +247,12 @@ function getMcpUsageInstructions(servers: McpServerSummary[]): string {
   if (servers.length === 0) return "No external MCP servers are connected.";
 
   const instructions = servers.map((server) => {
+    if (server.url === "https://mcp.context7.com/mcp") {
+      return `Use ${server.name} first for questions about libraries, frameworks, SDKs, or APIs. Ask for the package and version when it matters, prefer the returned documentation and examples over memory, and state the version context when answering.`;
+    }
+    if (server.url === "https://mcp.deepwiki.com/mcp") {
+      return `Use ${server.name} for questions about a public repository's architecture, setup, or implementation. Confirm the repository before searching, distinguish generated repository documentation from official maintainer documentation, and do not claim private-repository access.`;
+    }
     if (server.url === "https://mcp.exa.ai/mcp") {
       return `Use ${server.name} when the caller needs current information from the public web or asks you to look up a webpage. Prefer it over guessing, summarize the result clearly, and mention when information came from web search.`;
     }
@@ -508,6 +552,17 @@ export default function AgentOnboardingPage() {
       toast.success(`${server.name} removed`);
       return current.filter((item) => item.toolUuid !== toolUuid);
     });
+  };
+
+  const addRecommendedMcpServers = async () => {
+    const recommendedPresetIds =
+      selectedTemplateOption?.recommendedMcpPresetIds ?? [];
+    for (const preset of MCP_PRESETS.filter((item) =>
+      recommendedPresetIds.includes(item.id),
+    )) {
+      if (mcpServers.some((server) => server.url === preset.url)) continue;
+      await addMcpServer(preset);
+    }
   };
 
   const canContinue =
@@ -978,11 +1033,37 @@ export default function AgentOnboardingPage() {
                         needed for these defaults.
                       </p>
                     </div>
+                    {selectedTemplateOption?.recommendedMcpPresetIds && (
+                      <div className="flex flex-col gap-3 rounded-xl border border-cta/30 bg-cta/5 p-4 sm:flex-row sm:items-center sm:justify-between">
+                        <div>
+                          <p className="text-sm font-medium">
+                            Recommended for {selectedTemplateOption.label}
+                          </p>
+                          <p className="mt-1 text-xs leading-5 text-muted-foreground">
+                            Add Context7 and DeepWiki to ground answers in
+                            current library docs and public repository context.
+                          </p>
+                        </div>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          className="shrink-0"
+                          onClick={() => void addRecommendedMcpServers()}
+                          disabled={isAddingMcp || mcpToolsLoading}
+                        >
+                          <Plus className="h-4 w-4" />
+                          Add recommended tools
+                        </Button>
+                      </div>
+                    )}
                     <div className="grid gap-3 sm:grid-cols-2">
                       {MCP_PRESETS.map((preset) => {
                         const Icon = preset.icon;
                         const isConnected = mcpServers.some(
                           (server) => server.url === preset.url,
+                        );
+                        const isRecommended = selectedTemplateOption?.recommendedMcpPresetIds?.includes(
+                          preset.id,
                         );
                         return (
                           <button
@@ -1021,7 +1102,14 @@ export default function AgentOnboardingPage() {
                               </div>
                               <div className="min-w-0 flex-1">
                                 <div className="flex items-center justify-between gap-2">
-                                  <p className="font-medium">{preset.name}</p>
+                                  <div className="flex flex-wrap items-center gap-2">
+                                    <p className="font-medium">{preset.name}</p>
+                                    {isRecommended && !isConnected && (
+                                      <span className="rounded-full bg-cta/10 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-cta">
+                                        Recommended
+                                      </span>
+                                    )}
+                                  </div>
                                   {isConnected ? (
                                     <Check className="h-4 w-4 text-cta" />
                                   ) : (

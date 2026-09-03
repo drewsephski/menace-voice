@@ -1,6 +1,16 @@
 "use client";
 
 import {
+  Background,
+  type Edge,
+  Handle,
+  type Node,
+  type NodeProps,
+  Position,
+  ReactFlow,
+  useNodesState,
+} from "@xyflow/react";
+import {
   type KeyboardEvent,
   type ReactNode,
   useEffect,
@@ -22,12 +32,71 @@ const profiles = [
   ["CALL-2406", "CM", "Casey Morgan", "+1 312 555 0186"],
 ] as const;
 
-const workflowSteps = [
-  ["01", "Answer", "Greet caller and capture intent", "violet"],
-  ["02", "Qualify", "Ask service and timing questions", "accent"],
-  ["03", "Act", "Check calendar and reserve a slot", "blue"],
-  ["04", "Complete", "Confirm booking and update CRM", "amber"],
-] as const;
+type AgentFlowTone = "violet" | "accent" | "blue" | "amber";
+
+type AgentFlowNode = Node<
+  {
+    number: string;
+    title: string;
+    detail: string;
+    tone: AgentFlowTone;
+  },
+  "agent"
+>;
+
+const automationNodes: AgentFlowNode[] = [
+  {
+    id: "answer",
+    position: { x: 12, y: 124 },
+    data: {
+      number: "01",
+      title: "Answer",
+      detail: "Greet caller + capture intent",
+      tone: "violet",
+    },
+    type: "agent",
+  },
+  {
+    id: "qualify",
+    position: { x: 250, y: 26 },
+    data: {
+      number: "02",
+      title: "Qualify",
+      detail: "Ask service + timing",
+      tone: "accent",
+    },
+    type: "agent",
+  },
+  {
+    id: "act",
+    position: { x: 250, y: 222 },
+    data: {
+      number: "03",
+      title: "Act",
+      detail: "Check calendar + reserve",
+      tone: "blue",
+    },
+    type: "agent",
+  },
+  {
+    id: "complete",
+    position: { x: 488, y: 124 },
+    data: {
+      number: "04",
+      title: "Complete",
+      detail: "Confirm booking + update CRM",
+      tone: "amber",
+    },
+    type: "agent",
+  },
+];
+
+const automationEdges: Edge[] = [
+  { id: "answer-qualify", source: "answer", target: "qualify" },
+  { id: "answer-act", source: "answer", target: "act" },
+  { id: "qualify-complete", source: "qualify", target: "complete" },
+  { id: "act-complete", source: "act", target: "complete" },
+];
 
 const alerts = [
   ["HIGH", "Transfer rate above target", "2m ago"],
@@ -137,7 +206,32 @@ function GovernanceDemo() {
   );
 }
 
+function AgentFlowNode({ data, selected }: NodeProps<AgentFlowNode>) {
+  return (
+    <div
+      className={`${styles.flowNode} ${styles[data.tone]} ${selected ? styles.flowNodeSelected : ""}`}
+    >
+      <Handle position={Position.Left} type="target" />
+      <span className={styles.flowNodeNumber}>{data.number}</span>
+      <div>
+        <span>{data.title}</span>
+        <strong>{data.detail}</strong>
+      </div>
+      <span className={styles.flowNodeCheck}>✓</span>
+      <Handle position={Position.Right} type="source" />
+    </div>
+  );
+}
+
+const automationNodeTypes = { agent: AgentFlowNode };
+
 function AutomationDemo() {
+  const [selectedNodeId, setSelectedNodeId] = useState("qualify");
+  const [nodes, , onNodesChange] = useNodesState(automationNodes);
+  const selectedNode = nodes.find(
+    (node) => node.id === selectedNodeId,
+  );
+
   return (
     <div className={`${styles.demoCanvas} ${styles.automationCanvas}`}>
       <WindowFrame
@@ -150,34 +244,50 @@ function AutomationDemo() {
         }
       >
         <div className={styles.workflowBody}>
-          <ol className={styles.workflowRail} aria-label="Automation steps">
-            {workflowSteps.map(([number, title, detail, tone], index) => (
-              <li className={styles.workflowStep} key={number}>
-                <span className={`${styles.stepIcon} ${styles[tone]}`}>
-                  {number}
-                </span>
-                <div>
-                  <span>{title}</span>
-                  <strong>{detail}</strong>
-                </div>
-                <span className={styles.stepCheck}>✓</span>
-                {index < workflowSteps.length - 1 ? (
-                  <i aria-hidden="true" />
-                ) : null}
-              </li>
-            ))}
-          </ol>
+          <div className={styles.flowCanvas} aria-label="Interactive call flow">
+            <ReactFlow
+              edges={automationEdges}
+              defaultViewport={{ x: 6, y: 92, zoom: 0.56 }}
+              nodes={nodes.map((node) => ({
+                ...node,
+                selected: node.id === selectedNodeId,
+              }))}
+              nodeTypes={automationNodeTypes}
+              nodesConnectable={false}
+              nodesDraggable
+              onNodeClick={(_, node) => setSelectedNodeId(node.id)}
+              onNodesChange={onNodesChange}
+              panOnDrag={false}
+              proOptions={{ hideAttribution: true }}
+              zoomOnDoubleClick={false}
+              zoomOnPinch={false}
+              zoomOnScroll={false}
+            >
+              <Background color="rgba(240, 68, 56, 0.2)" gap={18} size={1} />
+            </ReactFlow>
+            <span className={styles.flowHint}>
+              Drag nodes · click to inspect
+            </span>
+          </div>
           <aside className={styles.runSummary}>
             <span className={styles.autoPill}>
               <span />
               Live workflow
             </span>
             <p>Current call</p>
-            <strong>Connected · 04:12</strong>
+            <strong>
+              {selectedNode?.data.title ?? "Answer"} · Connected
+            </strong>
             <div className={styles.summaryLog}>
-              <span>Intent qualified</span>
-              <span>Calendar checked</span>
-              <span>CRM update ready</span>
+              <span>
+                <b>✓</b> Intent qualified
+              </span>
+              <span>
+                <b>✓</b> Calendar checked
+              </span>
+              <span>
+                <b>✓</b> CRM update ready
+              </span>
             </div>
           </aside>
         </div>
@@ -279,24 +389,50 @@ function MonitorDemo() {
         }
       >
         <div className={styles.monitorTopline}>
-          <span>Call operations overview</span>
-          <span>Last updated 2s ago</span>
+          <span className={styles.monitorOverview}>
+            Call operations overview <b>Live</b>
+          </span>
+          <span>
+            <i className={styles.syncDot} />
+            Last updated 2s ago
+          </span>
         </div>
         <dl className={styles.monitorMetrics}>
           <div>
             <dt>Calls</dt>
             <dd>1,248</dd>
             <span className={styles.metricUp}>↑ 8.2%</span>
+            <svg
+              aria-hidden="true"
+              className={styles.metricSpark}
+              viewBox="0 0 96 24"
+            >
+              <polyline points="0,19 14,16 27,17 40,10 52,13 66,7 80,9 96,3" />
+            </svg>
           </div>
           <div>
             <dt>Transfers</dt>
             <dd>8.4%</dd>
             <span className={styles.metricWarn}>↑ 12%</span>
+            <svg
+              aria-hidden="true"
+              className={`${styles.metricSpark} ${styles.metricSparkWarn}`}
+              viewBox="0 0 96 24"
+            >
+              <polyline points="0,18 14,17 27,15 40,16 52,10 66,12 80,7 96,9" />
+            </svg>
           </div>
           <div>
             <dt>Latency</dt>
             <dd>642ms</dd>
             <span className={styles.metricDown}>↓ 4%</span>
+            <svg
+              aria-hidden="true"
+              className={`${styles.metricSpark} ${styles.metricSparkDown}`}
+              viewBox="0 0 96 24"
+            >
+              <polyline points="0,5 14,8 27,7 40,13 52,11 66,15 80,14 96,20" />
+            </svg>
           </div>
         </dl>
         <div className={styles.monitorGrid}>
@@ -320,6 +456,7 @@ function MonitorDemo() {
             <span>ALERT</span>
             <strong>Speech latency elevated</strong>
             <p>One provider is 38% above its normal response range.</p>
+            <small>Trace L-882 · us-east-1</small>
             <span className={styles.demoAction}>Inspect call traces ↗</span>
           </aside>
         </div>

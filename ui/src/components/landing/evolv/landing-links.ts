@@ -15,7 +15,7 @@ export function getLandingNavigation(
   const signUp = isStack ? "/handler/sign-up" : "/auth/signup";
 
   return {
-    docs: "https://docs.dograh.com",
+    docs: "/docs",
     github: "https://github.com/drewsephski/menace-voice",
     productHunt: "https://www.producthunt.com/products/dograh",
     signIn,
