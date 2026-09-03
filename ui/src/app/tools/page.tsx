@@ -11,6 +11,7 @@ import {
     unarchiveToolApiV1ToolsToolUuidUnarchivePost,
 } from "@/client/sdk.gen";
 import type { CreateToolRequest, ToolResponse } from "@/client/types.gen";
+import { DeleteConfirmationDialog } from "@/components/DeleteConfirmationDialog";
 import { CredentialSelector } from "@/components/http";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -66,6 +67,8 @@ export default function ToolsPage() {
     const [isCreating, setIsCreating] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [createError, setCreateError] = useState<string | null>(null);
+    const [deleteTarget, setDeleteTarget] = useState<ToolResponse | null>(null);
+    const [isDeleting, setIsDeleting] = useState(false);
 
     // MCP-specific create dialog state
     const [mcpUrl, setMcpUrl] = useState("");
@@ -195,7 +198,14 @@ export default function ToolsPage() {
 
     const handleDeleteTool = async (toolUuid: string, e: React.MouseEvent) => {
         e.stopPropagation();
-        if (!confirm("Are you sure you want to archive this tool?")) return;
+        const tool = tools.find((candidate) => candidate.tool_uuid === toolUuid);
+        if (tool) setDeleteTarget(tool);
+    };
+
+    const confirmDeleteTool = async () => {
+        if (!deleteTarget) return;
+
+        setIsDeleting(true);
 
         try {
             setError(null);
@@ -210,10 +220,13 @@ export default function ToolsPage() {
                 },
             });
 
-            fetchTools();
+            setDeleteTarget(null);
+            await fetchTools();
         } catch (err) {
             setError("Failed to archive tool");
             console.error("Error archiving tool:", err);
+        } finally {
+            setIsDeleting(false);
         }
     };
 
@@ -629,6 +642,23 @@ export default function ToolsPage() {
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
+            <DeleteConfirmationDialog
+                open={deleteTarget !== null}
+                onOpenChange={(open) => {
+                    if (!open && !isDeleting) setDeleteTarget(null);
+                }}
+                title="Archive tool?"
+                description={
+                    <>
+                        <span className="font-medium text-foreground">{deleteTarget?.name}</span>{' '}
+                        will be archived and removed from active workflows until it is restored.
+                    </>
+                }
+                onConfirm={confirmDeleteTool}
+                isDeleting={isDeleting}
+                confirmLabel="Archive tool"
+                pendingLabel="Archiving..."
+            />
         </div>
     );
 }

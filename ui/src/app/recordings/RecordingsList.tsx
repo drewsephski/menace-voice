@@ -11,6 +11,7 @@ import {
 } from "@/client/sdk.gen";
 import type { RecordingResponseSchema } from "@/client/types.gen";
 import { Button } from "@/components/ui/button";
+import { DeleteConfirmationDialog } from "@/components/DeleteConfirmationDialog";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAudioPlayback } from "@/hooks/useAudioPlayback";
@@ -24,6 +25,8 @@ export default function RecordingsList({ refreshKey }: { refreshKey?: number }) 
     const [isLoading, setIsLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState("");
     const [error, setError] = useState<string | null>(null);
+    const [deleteTarget, setDeleteTarget] = useState<RecordingResponseSchema | null>(null);
+    const [isDeleting, setIsDeleting] = useState(false);
 
     // Inline edit state
     const [editingId, setEditingId] = useState<string | null>(null);
@@ -58,12 +61,18 @@ export default function RecordingsList({ refreshKey }: { refreshKey?: number }) 
         fetchRecordings();
     }, [fetchRecordings, refreshKey]);
 
-    const handleDelete = async (recordingId: string) => {
-        if (!confirm("Are you sure you want to delete this recording?")) return;
+    const handleDelete = (recording: RecordingResponseSchema) => {
+        setDeleteTarget(recording);
+    };
+
+    const confirmDelete = async () => {
+        if (!deleteTarget) return;
+
+        setIsDeleting(true);
 
         try {
             const response = await deleteRecordingApiV1WorkflowRecordingsRecordingIdDelete({
-                path: { recording_id: recordingId },
+                path: { recording_id: deleteTarget.recording_id },
             });
 
             if (response.error) {
@@ -71,10 +80,13 @@ export default function RecordingsList({ refreshKey }: { refreshKey?: number }) 
             }
 
             toast.success("Recording deleted");
-            fetchRecordings();
+            setDeleteTarget(null);
+            await fetchRecordings();
         } catch (err) {
             toast.error(err instanceof Error ? err.message : "Failed to delete recording");
             logger.error("Error deleting recording:", err);
+        } finally {
+            setIsDeleting(false);
         }
     };
 
@@ -169,6 +181,7 @@ export default function RecordingsList({ refreshKey }: { refreshKey?: number }) 
     }
 
     return (
+        <>
         <div className="space-y-4">
             {/* Search and Refresh */}
             <div className="flex items-center gap-4">
@@ -305,7 +318,7 @@ export default function RecordingsList({ refreshKey }: { refreshKey?: number }) 
                                     <Button
                                         variant="ghost"
                                         size="sm"
-                                        onClick={() => handleDelete(rec.recording_id)}
+                                        onClick={() => handleDelete(rec)}
                                         className="text-destructive hover:text-destructive/90"
                                     >
                                         <Trash2 className="w-4 h-4" />
@@ -317,5 +330,21 @@ export default function RecordingsList({ refreshKey }: { refreshKey?: number }) 
                 </div>
             )}
         </div>
+        <DeleteConfirmationDialog
+            open={deleteTarget !== null}
+            onOpenChange={(open) => {
+                if (!open && !isDeleting) setDeleteTarget(null);
+            }}
+            title="Delete recording?"
+            description={
+                <>
+                    This will permanently remove the recording
+                    <span className="font-medium text-foreground"> {deleteTarget?.recording_id}</span>.
+                </>
+            }
+            onConfirm={confirmDelete}
+            isDeleting={isDeleting}
+        />
+        </>
     );
 }

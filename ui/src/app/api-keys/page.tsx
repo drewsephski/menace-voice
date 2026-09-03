@@ -14,6 +14,7 @@ import {
     reactivateApiKeyApiV1UserApiKeysApiKeyIdReactivatePut
 } from '@/client/sdk.gen';
 import type { ApiKeyResponse, CreateApiKeyResponse, CreateServiceKeyResponse,ServiceKeyResponse } from '@/client/types.gen';
+import { DeleteConfirmationDialog } from '@/components/DeleteConfirmationDialog';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -27,6 +28,10 @@ import { useAuth } from '@/lib/auth';
 import { copyTextToClipboard } from '@/lib/clipboard';
 import { formatDateTime } from '@/lib/dateTime';
 import logger from '@/lib/logger';
+
+type ArchiveTarget =
+    | { kind: 'api'; id: number; name: string }
+    | { kind: 'service'; id: string; name: string };
 
 export default function APIKeysPage() {
     const { user, getAccessToken, redirectToLogin, loading } = useAuth();
@@ -56,6 +61,8 @@ export default function APIKeysPage() {
     const [showCreatedKeyDialog, setShowCreatedKeyDialog] = useState(false);
     const [showCreatedServiceKeyDialog, setShowCreatedServiceKeyDialog] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [archiveTarget, setArchiveTarget] = useState<ArchiveTarget | null>(null);
+    const [isArchiving, setIsArchiving] = useState(false);
 
     // Redirect if not authenticated
     useEffect(() => {
@@ -222,45 +229,47 @@ export default function APIKeysPage() {
     };
 
     const handleArchiveKey = async (keyId: number) => {
+        const key = apiKeys.find((candidate) => candidate.id === keyId);
+        if (key) setArchiveTarget({ kind: 'api', id: key.id, name: key.name });
+    };
+
+    const confirmArchive = async () => {
+        if (!archiveTarget) return;
+
+        setIsArchiving(true);
         try {
             setError(null);
             const accessToken = await getAccessToken();
 
-            await archiveApiKeyApiV1UserApiKeysApiKeyIdDelete({
-                path: {
-                    api_key_id: keyId
-                },
-                headers: {
-                    'Authorization': `Bearer ${accessToken}`,
-                }
-            });
+            if (archiveTarget.kind === 'api') {
+                await archiveApiKeyApiV1UserApiKeysApiKeyIdDelete({
+                    path: { api_key_id: archiveTarget.id },
+                    headers: { 'Authorization': `Bearer ${accessToken}` },
+                });
+            } else {
+                await archiveServiceKeyApiV1UserServiceKeysServiceKeyIdDelete({
+                    path: { service_key_id: archiveTarget.id },
+                    headers: { 'Authorization': `Bearer ${accessToken}` },
+                });
+            }
 
-            fetchApiKeys();
+            setArchiveTarget(null);
+            if (archiveTarget.kind === 'api') {
+                await fetchApiKeys();
+            } else {
+                await fetchServiceKeys();
+            }
         } catch (err) {
-            setError('Failed to archive API key');
-            console.error('Error archiving API key:', err);
+            setError(archiveTarget.kind === 'api' ? 'Failed to archive API key' : 'Failed to archive service key');
+            console.error('Error archiving key:', err);
+        } finally {
+            setIsArchiving(false);
         }
     };
 
     const handleArchiveServiceKey = async (keyId: string) => {
-        try {
-            setError(null);
-            const accessToken = await getAccessToken();
-
-            await archiveServiceKeyApiV1UserServiceKeysServiceKeyIdDelete({
-                path: {
-                    service_key_id: keyId
-                },
-                headers: {
-                    'Authorization': `Bearer ${accessToken}`,
-                }
-            });
-
-            fetchServiceKeys();
-        } catch (err) {
-            setError('Failed to archive service key');
-            console.error('Error archiving service key:', err);
-        }
+        const key = serviceKeys.find((candidate) => candidate.id === keyId);
+        if (key) setArchiveTarget({ kind: 'service', id: key.id, name: key.name });
     };
 
     const handleReactivateKey = async (keyId: number) => {
@@ -724,6 +733,23 @@ export default function APIKeysPage() {
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
+            <DeleteConfirmationDialog
+                open={archiveTarget !== null}
+                onOpenChange={(open) => {
+                    if (!open && !isArchiving) setArchiveTarget(null);
+                }}
+                title="Archive key?"
+                description={
+                    <>
+                        <span className="font-medium text-foreground">{archiveTarget?.name}</span>{' '}
+                        will be deactivated and removed from active use until it is restored.
+                    </>
+                }
+                onConfirm={confirmArchive}
+                isDeleting={isArchiving}
+                confirmLabel="Archive key"
+                pendingLabel="Archiving..."
+            />
         </div>
     );
 }

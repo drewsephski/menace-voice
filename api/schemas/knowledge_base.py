@@ -51,6 +51,10 @@ class DocumentResponseSchema(BaseModel):
     custom_metadata: Dict[str, Any]
     docling_metadata: Dict[str, Any]
     source_url: Optional[str] = None
+    content: Optional[str] = Field(
+        default=None,
+        description="Extracted document content for preview when processing is complete",
+    )
     created_at: datetime
     updated_at: datetime
     organization_id: int

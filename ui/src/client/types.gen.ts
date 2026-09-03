@@ -2132,6 +2132,12 @@ export type DocumentResponseSchema = {
      */
     source_url?: string | null;
     /**
+     * Content
+     *
+     * Extracted document content for preview when processing is complete
+     */
+    content?: string | null;
+    /**
      * Created At
      */
     created_at: string;

@@ -27,6 +27,21 @@ from api.tasks.function_names import FunctionNames
 router = APIRouter(prefix="/knowledge-base", tags=["knowledge-base"])
 
 
+async def _get_document_content(document, organization_id: int) -> Optional[str]:
+    if document.processing_status != "completed":
+        return None
+
+    if document.retrieval_mode == "full_document":
+        return document.full_text or None
+
+    chunks = await db_client.get_chunks_for_document(
+        document_id=document.id,
+        organization_id=organization_id,
+    )
+    content = "\n\n".join(chunk.chunk_text for chunk in chunks)
+    return content or None
+
+
 @router.post(
     "/upload-url",
     response_model=DocumentUploadResponseSchema,
@@ -281,6 +296,11 @@ async def get_document(
         if not document:
             raise HTTPException(status_code=404, detail="Document not found")
 
+        content = await _get_document_content(
+            document,
+            organization_id=user.selected_organization_id,
+        )
+
         return DocumentResponseSchema(
             id=document.id,
             document_uuid=document.document_uuid,
@@ -295,6 +315,7 @@ async def get_document(
             custom_metadata=document.custom_metadata,
             docling_metadata=document.docling_metadata,
             source_url=document.source_url,
+            content=content,
             created_at=document.created_at,
             updated_at=document.updated_at,
             organization_id=document.organization_id,

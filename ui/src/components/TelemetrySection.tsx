@@ -9,6 +9,7 @@ import {
   saveLangfuseCredentialsApiV1OrganizationsLangfuseCredentialsPost,
 } from "@/client/sdk.gen";
 import type { LangfuseCredentialsResponse } from "@/client/types.gen";
+import { DeleteConfirmationDialog } from "@/components/DeleteConfirmationDialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -25,6 +26,7 @@ export function TelemetrySection() {
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const hasFetched = useRef(false);
 
   useEffect(() => {
@@ -84,6 +86,7 @@ export function TelemetrySection() {
         configured: false,
       });
       toast.success("Telemetry credentials removed");
+      setShowDeleteDialog(false);
     } catch {
       toast.error("Failed to remove telemetry credentials");
     } finally {
@@ -150,11 +153,23 @@ export function TelemetrySection() {
           {saving ? "Saving..." : "Save"}
         </Button>
         {credentials.configured && (
-          <Button type="button" variant="destructive" disabled={saving} onClick={handleDelete}>
+          <Button type="button" variant="destructive" disabled={saving} onClick={() => setShowDeleteDialog(true)}>
             Remove
           </Button>
         )}
       </div>
+      <DeleteConfirmationDialog
+        open={showDeleteDialog}
+        onOpenChange={(open) => {
+          if (!open && !saving) setShowDeleteDialog(false);
+        }}
+        title="Remove telemetry credentials?"
+        description="This will remove the saved Langfuse credentials from your organization."
+        onConfirm={handleDelete}
+        isDeleting={saving}
+        confirmLabel="Remove credentials"
+        pendingLabel="Removing..."
+      />
     </form>
   );
 }

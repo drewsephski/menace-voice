@@ -1,16 +1,29 @@
 'use client';
 
-import { FileText, RefreshCw, Search, Trash2 } from 'lucide-react';
+import { Eye, FileText, Loader2, RefreshCw, Search, Trash2 } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import { toast } from 'sonner';
 
 import {
   deleteDocumentApiV1KnowledgeBaseDocumentsDocumentUuidDelete,
+  getDocumentApiV1KnowledgeBaseDocumentsDocumentUuidGet,
   listDocumentsApiV1KnowledgeBaseDocumentsGet,
 } from '@/client/sdk.gen';
 import type { DocumentResponseSchema } from '@/client/types.gen';
+import { DeleteConfirmationDialog } from '@/components/DeleteConfirmationDialog';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useOrganizationTimezone } from '@/hooks/useOrganizationTimezone';
@@ -27,6 +40,36 @@ export default function DocumentList({ refreshTrigger }: DocumentListProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const [selectedDocument, setSelectedDocument] = useState<DocumentResponseSchema | null>(null);
+  const [isPreviewLoading, setIsPreviewLoading] = useState(false);
+  const [previewError, setPreviewError] = useState<string | null>(null);
+  const [deleteCandidate, setDeleteCandidate] = useState<Pick<DocumentResponseSchema, 'document_uuid' | 'filename'> | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const handlePreview = async (document: DocumentResponseSchema) => {
+    setSelectedDocument(document);
+    setIsPreviewLoading(true);
+    setPreviewError(null);
+
+    try {
+      const response = await getDocumentApiV1KnowledgeBaseDocumentsDocumentUuidGet({
+        path: {
+          document_uuid: document.document_uuid,
+        },
+      });
+
+      if (response.error || !response.data) {
+        throw new Error('Failed to load document content');
+      }
+
+      setSelectedDocument(response.data);
+    } catch (err) {
+      setPreviewError(err instanceof Error ? err.message : 'Failed to load document content');
+      logger.error('Error loading document content:', err);
+    } finally {
+      setIsPreviewLoading(false);
+    }
+  };
 
   const fetchDocuments = useCallback(async () => {
     try {
@@ -75,12 +118,18 @@ export default function DocumentList({ refreshTrigger }: DocumentListProps) {
   }, [documents, fetchDocuments]);
 
   const handleDelete = async (documentUuid: string, filename: string) => {
-    if (!confirm(`Are you sure you want to delete "${filename}"?`)) return;
+    setDeleteCandidate({ document_uuid: documentUuid, filename });
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteCandidate) return;
+
+    setIsDeleting(true);
 
     try {
       const response = await deleteDocumentApiV1KnowledgeBaseDocumentsDocumentUuidDelete({
         path: {
-          document_uuid: documentUuid,
+          document_uuid: deleteCandidate.document_uuid,
         },
       });
 
@@ -88,11 +137,14 @@ export default function DocumentList({ refreshTrigger }: DocumentListProps) {
         throw new Error('Failed to delete document');
       }
 
-      toast.success(`Deleted "${filename}"`);
+      toast.success(`Deleted "${deleteCandidate.filename}"`);
+      setDeleteCandidate(null);
       fetchDocuments();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Failed to delete document');
       logger.error('Error deleting document:', err);
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -226,18 +278,138 @@ export default function DocumentList({ refreshTrigger }: DocumentListProps) {
                   )}
                 </div>
               </div>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => handleDelete(doc.document_uuid, doc.filename)}
-                className="text-destructive hover:text-destructive/90"
-              >
-                <Trash2 className="w-4 h-4" />
-              </Button>
+              <div className="flex items-center gap-1 ml-4">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handlePreview(doc)}
+                  disabled={doc.processing_status !== 'completed'}
+                >
+                  <Eye className="w-4 h-4 mr-2" />
+                  View
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => handleDelete(doc.document_uuid, doc.filename)}
+                  className="text-destructive hover:text-destructive/90"
+                  aria-label={`Delete ${doc.filename}`}
+                >
+                  <Trash2 className="w-4 h-4" />
+                </Button>
+              </div>
             </div>
           ))}
         </div>
       )}
+
+      <Dialog
+        open={selectedDocument !== null}
+        onOpenChange={(open) => {
+          if (!open) {
+            setSelectedDocument(null);
+            setPreviewError(null);
+          }
+        }}
+      >
+        <DialogContent className="flex max-h-[85vh] max-w-6xl flex-col gap-0 p-0 sm:max-w-6xl">
+          <DialogHeader className="border-b px-6 py-5">
+            <DialogTitle className="truncate pr-8">
+              {selectedDocument?.filename ?? 'Document preview'}
+            </DialogTitle>
+            <DialogDescription>
+              Extracted content from your uploaded document
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="min-h-0 flex-1 overflow-y-auto px-6 py-5">
+            {isPreviewLoading ? (
+              <div className="flex items-center justify-center gap-2 py-16 text-muted-foreground">
+                <Loader2 className="h-5 w-5 animate-spin" />
+                Loading document content...
+              </div>
+            ) : previewError ? (
+              <div className="rounded-lg border border-destructive/20 bg-destructive/10 p-4 text-sm text-destructive">
+                {previewError}
+              </div>
+            ) : selectedDocument?.content ? (
+              <article className="max-w-none text-sm leading-6 text-foreground">
+                <ReactMarkdown
+                  remarkPlugins={[remarkGfm]}
+                  components={{
+                    h1: ({ children }) => <h1 className="mb-4 mt-1 text-2xl font-bold leading-tight">{children}</h1>,
+                    h2: ({ children }) => <h2 className="mb-3 mt-6 text-xl font-semibold leading-tight">{children}</h2>,
+                    h3: ({ children }) => <h3 className="mb-2 mt-5 text-lg font-semibold leading-tight">{children}</h3>,
+                    p: ({ children }) => <p className="mb-3 last:mb-0">{children}</p>,
+                    ul: ({ children }) => <ul className="mb-3 list-disc space-y-0.5 pl-6">{children}</ul>,
+                    ol: ({ children }) => <ol className="mb-3 list-decimal space-y-0.5 pl-6">{children}</ol>,
+                    a: ({ children, href }) => (
+                      <a
+                        href={href}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-primary underline underline-offset-2"
+                      >
+                        {children}
+                      </a>
+                    ),
+                    blockquote: ({ children }) => (
+                      <blockquote className="mb-4 border-l-2 border-primary/40 pl-4 italic text-muted-foreground">
+                        {children}
+                      </blockquote>
+                    ),
+                    pre: ({ children }) => (
+                      <pre className="mb-4 overflow-x-auto rounded-lg bg-muted p-4 text-xs leading-6">
+                        {children}
+                      </pre>
+                    ),
+                    table: ({ children }) => (
+                      <div className="mb-4 overflow-x-auto rounded-lg border">
+                        <table className="w-full border-collapse text-left">{children}</table>
+                      </div>
+                    ),
+                    th: ({ children }) => <th className="border-b bg-muted px-3 py-2 font-semibold">{children}</th>,
+                    td: ({ children }) => <td className="border-b px-3 py-2 align-top">{children}</td>,
+                    hr: () => <hr className="my-6 border-border" />,
+                  }}
+                >
+                  {selectedDocument.content}
+                </ReactMarkdown>
+              </article>
+            ) : (
+              <div className="py-16 text-center text-sm text-muted-foreground">
+                No extracted content is available for this document yet.
+              </div>
+            )}
+          </div>
+
+          <DialogFooter className="border-t px-6 py-4">
+            <DialogClose asChild>
+              <Button variant="secondary">Close</Button>
+            </DialogClose>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <DeleteConfirmationDialog
+        open={deleteCandidate !== null}
+        onOpenChange={(open) => {
+          if (!open && !isDeleting) {
+            setDeleteCandidate(null);
+          }
+        }}
+        title="Delete document?"
+        description={
+          <>
+            This will permanently remove{' '}
+            <span className="font-medium text-foreground">{deleteCandidate?.filename}</span>{' '}
+            and its extracted content from your knowledge base.
+          </>
+        }
+        onConfirm={confirmDelete}
+        isDeleting={isDeleting}
+        confirmLabel="Delete document"
+      />
     </div>
   );
 }

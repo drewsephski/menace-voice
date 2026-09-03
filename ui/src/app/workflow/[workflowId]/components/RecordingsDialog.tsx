@@ -10,6 +10,7 @@ import {
     transcribeAudioApiV1WorkflowRecordingsTranscribePost,
 } from "@/client";
 import type { RecordingResponseSchema, RecordingUploadResponseSchema } from "@/client/types.gen";
+import { DeleteConfirmationDialog } from "@/components/DeleteConfirmationDialog";
 import { Button } from "@/components/ui/button";
 import {
     Dialog,
@@ -71,6 +72,8 @@ export const RecordingsDialog = ({
     const [uploading, setUploading] = useState(false);
     const [pendingFiles, setPendingFiles] = useState<PendingFile[]>([]);
     const [error, setError] = useState<string | null>(null);
+    const [deleteTarget, setDeleteTarget] = useState<RecordingResponseSchema | null>(null);
+    const [isDeleting, setIsDeleting] = useState(false);
     const [language, setLanguage] = useState("multi");
     const [recordingStep, setRecordingStep] = useState<RecordingStep>("idle");
     const [recordingFilename, setRecordingFilename] = useState("");
@@ -331,7 +334,7 @@ export const RecordingsDialog = ({
             resetRecordingState();
             if (fileInputRef.current) fileInputRef.current.value = "";
             await fetchRecordings();
-        } catch (err) {
+        } catch {
             setError(
                 err instanceof Error ? err.message : "Failed to upload recordings"
             );
@@ -340,14 +343,25 @@ export const RecordingsDialog = ({
         }
     };
 
-    const handleDelete = async (recordingId: string) => {
+    const handleDelete = (recording: RecordingResponseSchema) => {
+        setDeleteTarget(recording);
+    };
+
+    const confirmDelete = async () => {
+        if (!deleteTarget) return;
+
+        setIsDeleting(true);
         try {
-            await deleteRecordingApiV1WorkflowRecordingsRecordingIdDelete({
-                path: { recording_id: recordingId },
+            const response = await deleteRecordingApiV1WorkflowRecordingsRecordingIdDelete({
+                path: { recording_id: deleteTarget.recording_id },
             });
+            if (response.error) throw new Error("Failed to delete recording");
+            setDeleteTarget(null);
             await fetchRecordings();
         } catch {
             setError("Failed to delete recording");
+        } finally {
+            setIsDeleting(false);
         }
     };
 
@@ -369,6 +383,7 @@ export const RecordingsDialog = ({
     const isBusy = uploading || isRecording || anyTranscribing;
 
     return (
+        <>
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className="max-w-lg max-h-[80vh] overflow-y-auto">
                 <DialogHeader>
@@ -638,7 +653,7 @@ export const RecordingsDialog = ({
                                 <Button
                                     size="sm"
                                     variant="ghost"
-                                    onClick={() => handleDelete(rec.recording_id)}
+                                    onClick={() => handleDelete(rec)}
                                 >
                                     <Trash2Icon className="w-4 h-4" />
                                 </Button>
@@ -646,7 +661,23 @@ export const RecordingsDialog = ({
                         ))
                     )}
                 </div>
-            </DialogContent>
+        </DialogContent>
         </Dialog>
+        <DeleteConfirmationDialog
+            open={deleteTarget !== null}
+            onOpenChange={(nextOpen) => {
+                if (!nextOpen && !isDeleting) setDeleteTarget(null);
+            }}
+            title="Delete recording?"
+            description={
+                <>
+                    This will permanently remove the recording
+                    <span className="font-medium text-foreground"> {deleteTarget?.recording_id}</span>.
+                </>
+            }
+            onConfirm={confirmDelete}
+            isDeleting={isDeleting}
+        />
+        </>
     );
 };
