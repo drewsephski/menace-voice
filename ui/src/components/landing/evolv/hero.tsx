@@ -1,5 +1,6 @@
 import Image from "next/image";
 import type { CSSProperties } from "react";
+
 import styles from "./hero.module.css";
 import { ArrowIcon, SectionLabel } from "./primitives";
 

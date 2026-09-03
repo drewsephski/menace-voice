@@ -1,6 +1,7 @@
 import { ArrowUpRight } from "lucide-react";
 import Image from "next/image";
 import type { ReactNode } from "react";
+
 import styles from "./primitives.module.css";
 
 export function Brand({ compact = false }: { compact?: boolean }) {
