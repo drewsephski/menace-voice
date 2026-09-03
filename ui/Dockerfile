@@ -9,10 +9,12 @@ WORKDIR /app
 RUN apk add --no-cache python3 make g++ libc6-compat
 
 # Copy package files
-COPY ui/package*.json ./
+COPY ui/package.json ui/pnpm-lock.yaml ./
 
 # Clean install with proper handling of native modules
-RUN --mount=type=cache,target=/root/.npm npm ci
+RUN --mount=type=cache,target=/root/.local/share/pnpm \
+    npm install --global pnpm@10.33.2 && \
+    pnpm install --frozen-lockfile
 
 # Stage 2: Builder
 FROM node:22-alpine AS builder
@@ -25,7 +27,7 @@ RUN apk add --no-cache libc6-compat
 COPY --from=deps /app/node_modules ./node_modules
 
 # Copy all files needed for build
-COPY ui/package*.json ./
+COPY ui/package.json ./
 COPY ui/tsconfig.json ./
 COPY ui/next.config.ts ./
 COPY ui/components.json ./
