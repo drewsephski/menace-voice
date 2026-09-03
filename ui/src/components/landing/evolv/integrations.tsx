@@ -83,7 +83,7 @@ export function Integrations() {
     <section className={styles.section} id="integrations">
       <div className={styles.heading}>
         <SectionLabel>Integrations</SectionLabel>
-        <h2>Connect AI agents to your entire operating stack.</h2>
+        <h2>Connect every conversation to the systems behind it.</h2>
       </div>
       <div className={styles.grid}>
         {cells.map(({ id, kind }) => {
@@ -114,7 +114,7 @@ export function Integrations() {
         })}
       </div>
       <a className={styles.action} href="#integrations">
-        Explore Integrations <ArrowIcon />
+        Explore voice integrations <ArrowIcon />
       </a>
     </section>
   );

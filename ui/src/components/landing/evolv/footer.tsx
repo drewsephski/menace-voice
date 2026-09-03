@@ -8,39 +8,39 @@ const groups = [
   {
     title: "Pages",
     links: [
-      "About",
-      "Blog",
-      "Blog Details",
-      "Changelog",
-      "Contact",
-      "Customers",
-      "Customers Details",
+      "Platform",
+      "Use Cases",
+      "Product Walkthrough",
       "Integrations",
+      "FAQ",
+      "Get Started",
+      "Sign In",
+      "Documentation",
     ],
   },
   {
     title: "Company",
     links: [
-      "About",
-      "Customers",
+      "About Menace",
+      "Open Source",
       "Integrations",
-      "Blog",
+      "Product Hunt",
       "Contact",
-      "Overview",
-      "Pricing",
+      "GitHub",
+      "Roadmap",
     ],
   },
   {
     title: "Resources",
     links: [
       "Documentation",
-      "Help Center",
-      "Community",
+      "First Agent Guide",
+      "MCP Guide",
       "API Reference",
-      "Status",
+      "SDKs",
     ],
   },
-  { title: "Legal", links: ["Privacy", "Terms", "Security", "Cookies"] },
+  { title: "Deploy", links: ["Cloud", "Self-host", "Docker", "Scaling"] },
 ] as const;
 
 function SocialIcon({ label, children }: { label: string; children: string }) {
@@ -65,14 +65,14 @@ export function Footer() {
         <div className={styles.brandColumn}>
           <Brand />
           <p>
-            Your AI agents, working behind every task. From planning to
-            execution, automated end-to-end.
+            Build, test, and deploy voice agents across phone and WebRTC, with
+            your models, your tools, and your infrastructure.
           </p>
           <div className={styles.subscribe}>
-            <span>Subscribe to updates</span>
+            <span>Product updates</span>
             {submitted ? (
               <p className={styles.thanks} role="status">
-                Thanks — you’re on the list.
+                You&apos;re on the Menace Voice list.
               </p>
             ) : (
               <form onSubmit={submit}>
@@ -105,7 +105,7 @@ export function Footer() {
         </nav>
       </div>
       <div className={styles.bottom}>
-        <p>© 2026 Evolv Ai. All rights reserved.</p>
+        <p>© 2026 Menace Voice. Built by Menace.</p>
         <div className={styles.socials}>
           <SocialIcon label="X">𝕏</SocialIcon>
           <SocialIcon label="LinkedIn">in</SocialIcon>

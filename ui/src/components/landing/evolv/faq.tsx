@@ -6,29 +6,29 @@ import { SectionLabel } from "./primitives";
 
 const questions = [
   {
-    question: "Can we connect AI agents to our current stack?",
+    question: "Can Menace Voice use our existing models and providers?",
     answer:
-      "Yes. You can connect CRMs, ticketing platforms, data warehouses, messaging apps, and internal tools through native integrations or APIs.",
+      "Yes. Start with the managed stack or connect your own LLM, speech-to-text, text-to-speech, telephony, and storage providers.",
   },
   {
-    question: "Do we need engineers to set up agents?",
+    question: "Can we test an agent before putting it on a phone line?",
     answer:
-      "Not necessarily. Operations teams can launch common workflows with no-code setup, while technical teams can extend logic and tooling when needed.",
+      "Yes. Test the conversation in your browser with live audio or use chat mode to edit and replay turns before you publish.",
   },
   {
-    question: "What work can AI agents automate end-to-end?",
+    question: "Which telephony providers are supported?",
     answer:
-      "AI agents can triage inbound tasks, coordinate multi-system workflows, generate reports, enforce policies, and execute recurring operations autonomously.",
+      "Menace Voice includes integrations for Twilio, Vonage, Telnyx, Plivo, Vobiz, Cloudonix, and Asterisk ARI, with SIP support for flexible deployments.",
   },
   {
-    question: "How do you keep agents safe and reliable?",
+    question: "What happens when the agent needs a person?",
     answer:
-      "Use policy controls, approval gates, permissions, logging, and audit trails to enforce governance while maintaining fast execution.",
+      "Agents can transfer supported calls to a human destination. The workflow decides when to hand off and preserves the context around that outcome.",
   },
   {
-    question: "How does pricing typically work?",
+    question: "Can we self-host Menace Voice?",
     answer:
-      "Plans are usually based on agent runs, connected systems, and governance features. Teams can start small, then scale as automation coverage increases.",
+      "Yes. Menace Voice is BSD-licensed and can run in your own environment, so you control deployment, data residency, and source-level customization.",
   },
 ] as const;
 
@@ -39,7 +39,7 @@ export function Faq() {
     <section className={styles.section} id="faq">
       <div className={styles.heading}>
         <SectionLabel>FAQ</SectionLabel>
-        <h2>Questions about AI agents deployment</h2>
+        <h2>Questions about building production voice agents</h2>
       </div>
       <div className={styles.questions}>
         {questions.map((item, index) => {
