@@ -1,6 +1,7 @@
 import Image from "next/image";
 
 import styles from "./integrations.module.css";
+import type { LandingNavigation } from "./landing-links";
 import { ArrowIcon, SectionLabel, SparkleIcon } from "./primitives";
 
 const integrationSources = {
@@ -57,9 +58,9 @@ const cells: Array<{ id: string; kind: CellKind }> = [
   { id: "south-east", kind: "stripe" },
 ];
 
-export function Integrations() {
+export function Integrations({ navigation }: { navigation: LandingNavigation }) {
   return (
-    <section className={styles.section} id="integrations">
+    <section className={styles.section} id="integrations" tabIndex={-1}>
       <div className={styles.heading}>
         <SectionLabel>Integrations</SectionLabel>
         <h2>Connect every conversation to the systems behind it.</h2>
@@ -92,7 +93,7 @@ export function Integrations() {
           );
         })}
       </div>
-      <a className={styles.action} href="#integrations">
+      <a className={styles.action} href={navigation.startBuilding}>
         Explore voice integrations <ArrowIcon />
       </a>
     </section>

@@ -96,7 +96,7 @@
   bottom: 0;
   left: 16px;
   height: 2px;
-  background: var(--evolv-green);
+  background: var(--evolv-accent);
   content: "";
   opacity: 0;
   transform: scaleX(0.2);
@@ -116,7 +116,7 @@
 }
 
 .tab[aria-selected="true"] > span {
-  color: var(--evolv-green);
+  color: var(--evolv-accent);
 }
 
 .tab[aria-selected="true"]::after {
@@ -128,7 +128,7 @@
 .panel:focus-visible,
 .window button:focus-visible,
 .chatBody a:focus-visible {
-  outline: 2px solid var(--evolv-green);
+  outline: 2px solid var(--evolv-accent);
   outline-offset: -3px;
 }
 
@@ -141,11 +141,11 @@
   height: 630px;
   margin-top: 14px;
   overflow: hidden;
-  border: 1px solid rgb(49 220 139 / 18%);
-  background-color: #07100c;
+  border: 1px solid rgb(240 68 56 / 18%);
+  background-color: #100807;
   background-image: radial-gradient(
     circle,
-    rgb(49 220 139 / 17%) 1px,
+    rgb(240 68 56 / 17%) 1px,
     transparent 1.25px
   );
   background-size: 17px 17px;
@@ -158,7 +158,7 @@
   width: 620px;
   height: 620px;
   border-radius: 50%;
-  background: rgb(37 180 112 / 8%);
+  background: rgb(180 42 34 / 8%);
   content: "";
   filter: blur(80px);
   inset: 4% auto auto 20%;
@@ -202,9 +202,9 @@
 .windowMark {
   width: 10px;
   height: 10px;
-  border: 2px solid var(--evolv-green);
+  border: 2px solid var(--evolv-accent);
   border-radius: 50%;
-  box-shadow: 0 0 10px rgb(49 220 139 / 40%);
+  box-shadow: 0 0 10px rgb(240 68 56 / 40%);
 }
 
 .windowStatus {
@@ -224,8 +224,8 @@
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: var(--evolv-green);
-  box-shadow: 0 0 9px rgb(49 220 139 / 70%);
+  background: var(--evolv-accent);
+  box-shadow: 0 0 9px rgb(240 68 56 / 70%);
 }
 
 .runningDot {
@@ -329,10 +329,10 @@
   width: 27px;
   height: 27px;
   place-items: center;
-  border: 1px solid rgb(49 220 139 / 16%);
+  border: 1px solid rgb(240 68 56 / 16%);
   border-radius: 50%;
-  background: #19241f;
-  color: #68dca2;
+  background: #251716;
+  color: #f18b84;
   font-size: 8px;
   font-weight: 650;
 }
@@ -355,8 +355,8 @@
 }
 
 .riskLow {
-  background: rgb(49 220 139 / 9%);
-  color: #5fd599;
+  background: rgb(240 68 56 / 9%);
+  color: #f18b84;
 }
 
 .riskReview {
@@ -403,8 +403,8 @@
 }
 
 .approvedPill {
-  background: rgb(49 220 139 / 10%);
-  color: #62d99e;
+  background: rgb(240 68 56 / 10%);
+  color: #f18b84;
 }
 
 .requestCard > strong {
@@ -439,7 +439,7 @@
 }
 
 .approvalRoute .approvedStep {
-  color: var(--evolv-green);
+  color: var(--evolv-accent);
 }
 
 /* Automation */
@@ -495,9 +495,9 @@
   color: #a792ee;
 }
 
-.green {
-  background: rgb(49 220 139 / 10%);
-  color: #56d796;
+.accent {
+  background: rgb(240 68 56 / 10%);
+  color: #f18b84;
 }
 
 .blue {
@@ -528,7 +528,7 @@
 }
 
 .stepCheck {
-  color: var(--evolv-green);
+  color: var(--evolv-accent);
   font-size: 12px;
 }
 
@@ -542,9 +542,9 @@
   align-items: center;
   gap: 7px;
   padding: 6px 9px;
-  border: 1px solid rgb(49 220 139 / 18%);
+  border: 1px solid rgb(240 68 56 / 18%);
   border-radius: 999px;
-  color: #6bdca4;
+  color: #f18b84;
   font-size: 9px;
 }
 
@@ -552,7 +552,7 @@
   width: 5px;
   height: 5px;
   border-radius: 50%;
-  background: var(--evolv-green);
+  background: var(--evolv-accent);
 }
 
 .runSummary > p {
@@ -653,9 +653,9 @@
 
 .routePill {
   padding: 6px 9px;
-  border: 1px solid rgb(49 220 139 / 16%);
+  border: 1px solid rgb(240 68 56 / 16%);
   border-radius: 999px;
-  color: #62d69c;
+  color: #f18b84;
   font-size: 9px;
 }
 
@@ -693,9 +693,9 @@
 }
 
 .agentMessage .chatAvatar {
-  border-color: rgb(49 220 139 / 20%);
-  background: #17251e;
-  color: var(--evolv-green);
+  border-color: rgb(240 68 56 / 20%);
+  background: #251716;
+  color: var(--evolv-accent);
 }
 
 .userMessage p,
@@ -711,12 +711,12 @@
 }
 
 .agentMessage p {
-  background: rgb(49 220 139 / 5%);
+  background: rgb(240 68 56 / 5%);
   color: #c6c6c6;
 }
 
 .agentMessage a {
-  color: #65dca2;
+  color: #f18b84;
   text-decoration: underline;
   text-underline-offset: 2px;
 }

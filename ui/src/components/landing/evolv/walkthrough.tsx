@@ -24,7 +24,7 @@ const profiles = [
 
 const workflowSteps = [
   ["01", "Answer", "Greet caller and capture intent", "violet"],
-  ["02", "Qualify", "Ask service and timing questions", "green"],
+  ["02", "Qualify", "Ask service and timing questions", "accent"],
   ["03", "Act", "Check calendar and reserve a slot", "blue"],
   ["04", "Complete", "Confirm booking and update CRM", "amber"],
 ] as const;
@@ -421,7 +421,7 @@ export function Walkthrough() {
   const active = walkthroughs[activeIndex];
 
   return (
-    <section className={styles.section} id="product-walkthrough">
+    <section className={styles.section} id="product-walkthrough" tabIndex={-1}>
       <div className={styles.heading}>
         <SectionLabel>Product walkthrough</SectionLabel>
         <h2>See the full conversation, not a black box</h2>

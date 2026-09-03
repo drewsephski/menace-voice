@@ -10,9 +10,9 @@
 .brandMark {
   width: 16px;
   height: 16px;
-  border: 4px solid #32dc8b;
+  border: 4px solid var(--evolv-accent);
   border-radius: 50%;
-  box-shadow: 0 0 16px rgb(50 220 139 / 30%);
+  box-shadow: 0 0 16px rgb(240 68 56 / 30%);
 }
 
 .label {
@@ -32,7 +32,7 @@
 .label > span {
   width: 5px;
   height: 5px;
-  background: #31dc8b;
+  background: var(--evolv-accent);
 }
 
 .arrowIcon {

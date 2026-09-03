@@ -18,7 +18,7 @@
   --evolv-bg: #181818;
   --evolv-border: rgb(255 255 255 / 10%);
   --evolv-muted: #747474;
-  --evolv-green: #31dc8b;
+  --evolv-accent: var(--cta, #f04438);
   min-height: 100%;
   overflow-x: clip;
   background-color: var(--evolv-bg);
@@ -55,6 +55,10 @@
   background: rgb(24 24 24 / 96%);
 }
 
+.rail > section {
+  scroll-margin-top: 96px;
+}
+
 .creatorBadge,
 .backToTop {
   position: fixed;
@@ -88,13 +92,17 @@
 
 .creatorBadge:focus-visible,
 .backToTop:focus-visible {
-  outline: 2px solid var(--evolv-green);
+  outline: 2px solid var(--evolv-accent);
   outline-offset: 3px;
 }
 
 @media (max-width: 800px) {
   .rail {
     width: calc(100% - 30px);
+  }
+
+  .rail > section {
+    scroll-margin-top: 82px;
   }
 }
 

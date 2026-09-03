@@ -96,7 +96,7 @@
 
 .primaryAction:focus-visible,
 .secondaryAction:focus-visible {
-  outline: 2px solid var(--evolv-green);
+  outline: 2px solid var(--evolv-accent);
   outline-offset: 3px;
 }
 

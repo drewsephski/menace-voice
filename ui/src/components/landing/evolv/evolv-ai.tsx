@@ -3,25 +3,30 @@ import { Footer } from "./footer";
 import { Header } from "./header";
 import { Hero } from "./hero";
 import { Integrations } from "./integrations";
+import type { LandingNavigation } from "./landing-links";
 import { Platform } from "./platform";
 import { Statement } from "./statement";
 import styles from "./template.module.css";
 import { UseCases } from "./use-cases";
 import { Walkthrough } from "./walkthrough";
 
-export default function EvolvAiTemplate() {
+export default function EvolvAiTemplate({
+  navigation,
+}: {
+  navigation: LandingNavigation;
+}) {
   return (
     <div className={styles.root} data-template="evolv-ai" id="evolv-ai-top">
-      <Header />
+      <Header navigation={navigation} />
       <main className={styles.rail}>
-        <Hero />
+        <Hero navigation={navigation} />
         <Statement />
         <Platform />
-        <UseCases />
+        <UseCases navigation={navigation} />
         <Walkthrough />
-        <Integrations />
+        <Integrations navigation={navigation} />
         <Faq />
-        <Footer />
+        <Footer navigation={navigation} />
       </main>
       <a
         aria-label="Back to top"

@@ -79,11 +79,11 @@
   width: 64px;
   height: 64px;
   place-items: center;
-  border: 1px solid rgb(60 236 146 / 34%);
+  border: 1px solid rgb(240 68 56 / 34%);
   border-radius: 50%;
-  background: rgb(23 176 102 / 10%);
-  color: #5beba4;
-  box-shadow: 0 0 45px rgb(42 221 137 / 22%);
+  background: rgb(240 68 56 / 10%);
+  color: var(--evolv-accent);
+  box-shadow: 0 0 45px rgb(240 68 56 / 22%);
 }
 
 .action {

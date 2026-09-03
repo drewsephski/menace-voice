@@ -3,57 +3,94 @@
 import { type FormEvent, useState } from "react";
 
 import styles from "./footer.module.css";
+import type { LandingNavigation } from "./landing-links";
 import { Brand } from "./primitives";
 
-const groups = [
-  {
-    title: "Pages",
-    links: [
-      "Platform",
-      "Use Cases",
-      "Product Walkthrough",
-      "Integrations",
-      "FAQ",
-      "Get Started",
-      "Sign In",
-      "Documentation",
-    ],
-  },
-  {
-    title: "Company",
-    links: [
-      "About Menace",
-      "Open Source",
-      "Integrations",
-      "Product Hunt",
-      "Contact",
-      "GitHub",
-      "Roadmap",
-    ],
-  },
-  {
-    title: "Resources",
-    links: [
-      "Documentation",
-      "First Agent Guide",
-      "MCP Guide",
-      "API Reference",
-      "SDKs",
-    ],
-  },
-  { title: "Deploy", links: ["Cloud", "Self-host", "Docker", "Scaling"] },
-] as const;
+function getGroups(navigation: LandingNavigation) {
+  const docs = navigation.docs;
+  const external = { rel: "noreferrer", target: "_blank" } as const;
 
-function SocialIcon({ label, children }: { label: string; children: string }) {
+  return [
+    {
+      title: "Pages",
+      links: [
+        { label: "Platform", href: "#platform" },
+        { label: "Use Cases", href: "#use-cases" },
+        { label: "Product Walkthrough", href: "#product-walkthrough" },
+        { label: "Integrations", href: "#integrations" },
+        { label: "FAQ", href: "#faq" },
+        { label: "Get Started", href: navigation.startBuilding },
+        { label: "Sign In", href: navigation.signIn },
+        { label: "Documentation", href: docs, ...external },
+      ],
+    },
+    {
+      title: "Company",
+      links: [
+        { label: "About Menace", href: docs, ...external },
+        { label: "Open Source", href: navigation.github, ...external },
+        { label: "Integrations", href: "#integrations" },
+        { label: "Product Hunt", href: navigation.productHunt, ...external },
+        { label: "Contact", href: docs, ...external },
+        { label: "GitHub", href: navigation.github, ...external },
+        { label: "Roadmap", href: `${navigation.github}/issues`, ...external },
+      ],
+    },
+    {
+      title: "Resources",
+      links: [
+        { label: "Documentation", href: docs, ...external },
+        {
+          label: "First Agent Guide",
+          href: `${docs}/getting-started/first-agent`,
+          ...external,
+        },
+        { label: "MCP Guide", href: `${docs}/integrations/mcp`, ...external },
+        { label: "API Reference", href: `${docs}/api-reference`, ...external },
+        { label: "SDKs", href: `${docs}/sdks/introduction`, ...external },
+      ],
+    },
+    {
+      title: "Deploy",
+      links: [
+        { label: "Cloud", href: navigation.startBuilding },
+        {
+          label: "Self-host",
+          href: `${docs}/deployment/introduction`,
+          ...external,
+        },
+        { label: "Docker", href: `${docs}/deployment/docker`, ...external },
+        { label: "Scaling", href: `${docs}/deployment/scaling`, ...external },
+      ],
+    },
+  ];
+}
+
+function SocialIcon({
+  href,
+  label,
+  children,
+}: {
+  href: string;
+  label: string;
+  children: string;
+}) {
   return (
-    <a aria-label={label} className={styles.social} href="#evolv-ai-top">
+    <a
+      aria-label={label}
+      className={styles.social}
+      href={href}
+      rel="noreferrer"
+      target="_blank"
+    >
       {children}
     </a>
   );
 }
 
-export function Footer() {
+export function Footer({ navigation }: { navigation: LandingNavigation }) {
   const [submitted, setSubmitted] = useState(false);
+  const groups = getGroups(navigation);
 
   function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -97,8 +134,13 @@ export function Footer() {
             <div key={group.title}>
               <h3>{group.title}</h3>
               {group.links.map((link) => (
-                <a href="#evolv-ai-top" key={link}>
-                  {link}
+                <a
+                  href={link.href}
+                  key={link.label}
+                  rel={"rel" in link ? link.rel : undefined}
+                  target={"target" in link ? link.target : undefined}
+                >
+                  {link.label}
                 </a>
               ))}
             </div>
@@ -108,10 +150,18 @@ export function Footer() {
       <div className={styles.bottom}>
         <p>© 2026 Menace Voice. Built by Menace.</p>
         <div className={styles.socials}>
-          <SocialIcon label="X">𝕏</SocialIcon>
-          <SocialIcon label="LinkedIn">in</SocialIcon>
-          <SocialIcon label="GitHub">⌘</SocialIcon>
-          <SocialIcon label="YouTube">▶</SocialIcon>
+          <SocialIcon href="https://x.com/dograh" label="X">
+            𝕏
+          </SocialIcon>
+          <SocialIcon href="https://linkedin.com/company/dograh" label="LinkedIn">
+            in
+          </SocialIcon>
+          <SocialIcon href={navigation.github} label="GitHub">
+            ⌘
+          </SocialIcon>
+          <SocialIcon href="https://www.youtube.com/watch?v=xD9JEvfCH9k" label="YouTube">
+            ▶
+          </SocialIcon>
         </div>
       </div>
     </footer>

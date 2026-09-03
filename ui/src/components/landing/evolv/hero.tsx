@@ -2,6 +2,7 @@ import Image from "next/image";
 import type { CSSProperties } from "react";
 
 import styles from "./hero.module.css";
+import type { LandingNavigation } from "./landing-links";
 import { ArrowIcon, SectionLabel } from "./primitives";
 
 const LOGOS = [
@@ -63,7 +64,7 @@ function LogoGroup({ duplicate = false }: { duplicate?: boolean }) {
   );
 }
 
-export function Hero() {
+export function Hero({ navigation }: { navigation: LandingNavigation }) {
   return (
     <>
       <section className={styles.hero}>
@@ -77,11 +78,11 @@ export function Hero() {
             or WebRTC from one visual workspace.
           </p>
           <div className={styles.actions}>
-            <a className={styles.primaryAction} href="#start" id="start">
+            <a className={styles.primaryAction} href={navigation.startBuilding}>
               Build your first agent
               <ArrowIcon />
             </a>
-            <a className={styles.secondaryAction} href="#demo" id="demo">
+            <a className={styles.secondaryAction} href="#platform">
               Explore the platform
             </a>
           </div>

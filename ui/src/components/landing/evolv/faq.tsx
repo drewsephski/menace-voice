@@ -37,7 +37,7 @@ export function Faq() {
   const [openIndex, setOpenIndex] = useState<number | null>(null);
 
   return (
-    <section className={styles.section} id="faq">
+    <section className={styles.section} id="faq" tabIndex={-1}>
       <div className={styles.heading}>
         <SectionLabel>FAQ</SectionLabel>
         <h2>Questions about building production voice agents</h2>

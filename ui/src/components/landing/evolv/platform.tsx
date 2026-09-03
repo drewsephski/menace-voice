@@ -47,7 +47,7 @@ export function Platform() {
   const baseId = useId();
 
   return (
-    <section className={styles.section}>
+    <section className={styles.section} id="platform" tabIndex={-1}>
       <div className={styles.intro}>
         <SectionLabel>Platform</SectionLabel>
         <h2>The complete production stack for voice agents</h2>

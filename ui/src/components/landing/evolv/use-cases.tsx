@@ -1,3 +1,4 @@
+import type { LandingNavigation } from "./landing-links";
 import { SectionLabel } from "./primitives";
 import styles from "./use-cases.module.css";
 
@@ -110,9 +111,9 @@ function CaseIcon({ name }: { name: IconName }) {
   );
 }
 
-export function UseCases() {
+export function UseCases({ navigation }: { navigation: LandingNavigation }) {
   return (
-    <section className={styles.section}>
+    <section className={styles.section} id="use-cases" tabIndex={-1}>
       <header className={styles.header}>
         <div className={styles.label}>
           <SectionLabel>Use cases</SectionLabel>
@@ -126,14 +127,12 @@ export function UseCases() {
 
       <div className={styles.grid}>
         {CASES.map((useCase, index) => {
-          const cardId = `evolv-use-case-${index}`;
-          const titleId = `${cardId}-title`;
+          const titleId = `evolv-use-case-${index}-title`;
           return (
             <a
               aria-labelledby={titleId}
               className={styles.card}
-              href={`#${cardId}`}
-              id={cardId}
+              href={navigation.startBuilding}
               key={useCase.title}
             >
               <CaseIcon name={useCase.icon} />
