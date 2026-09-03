@@ -17,7 +17,6 @@ from fastapi import HTTPException, WebSocketDisconnect
 from loguru import logger
 
 # 5-min replay window — matches Telnyx SDKs (Python/Node/Go/Ruby/PHP);
-# Source: github.com/team-telnyx/telnyx-python src/telnyx/lib/webhook_verification.py
 TELNYX_TIMESTAMP_TOLERANCE_SECONDS = 300
 
 # Ed25519 sizes per RFC 8032; Telnyx SDKs check these for clearer errors than PyNaCl.

@@ -193,6 +193,24 @@ class KnowledgeBaseClient(BaseDBClient):
             result = await session.execute(query)
             return list(result.scalars().all())
 
+    async def get_documents_by_uuids(
+        self,
+        document_uuids: List[str],
+        organization_id: int,
+    ) -> List[KnowledgeBaseDocumentModel]:
+        """Get active documents by UUID, scoped to an organization."""
+        if not document_uuids:
+            return []
+
+        async with self.async_session() as session:
+            query = select(KnowledgeBaseDocumentModel).where(
+                KnowledgeBaseDocumentModel.document_uuid.in_(document_uuids),
+                KnowledgeBaseDocumentModel.organization_id == organization_id,
+                KnowledgeBaseDocumentModel.is_active,
+            )
+            result = await session.execute(query)
+            return list(result.scalars().all())
+
     async def update_document_metadata(
         self,
         document_id: int,

@@ -4,8 +4,6 @@ __pycache__
 # .env.prod.server or .env.local are covered too. Only the committed
 # *.example templates are exempt.
 .env*
-!.env.example
-!.env.test.example
 !*.env.example
 
 # Conductor personal/per-machine overrides (settings.toml IS committed)
@@ -17,15 +15,22 @@ __pycache__
 infrastructure/
 prd/
 .vercel
+.next/
 
 .devcontainer/install.local.sh
 venv/
 .venv/
 .playwright-mcp
+.playwright-cli/
 coturn/
 *.wav
 dograh_pcm_cache/
 node_modules/
+.pnpm-store/
+
+# Local agent artifacts
+.omo/
+.debug-journal.md
 
 # Superpowers brainstorm mockups (local only)
 .superpowers/

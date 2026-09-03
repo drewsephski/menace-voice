@@ -41,7 +41,7 @@ if (-not $Dev) {
     git submodule update --init --recursive
 }
 
-# Use uv (https://github.com/astral-sh/uv) for ~5-10x faster installs.
+# Use uv for ~5-10x faster installs.
 if (-not (Get-Command uv -ErrorAction SilentlyContinue)) {
     Write-Host "Installing uv..."
     Invoke-RestMethod https://astral.sh/uv/install.ps1 | Invoke-Expression

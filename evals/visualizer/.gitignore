@@ -1,4 +1,4 @@
-# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+# Ignore generated files used only during local development.
 
 # dependencies
 /node_modules

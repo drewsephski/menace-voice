@@ -40,7 +40,7 @@ trap cleanup EXIT
 
 echo -e "${BLUE}"
 echo "╔══════════════════════════════════════════════════════════════╗"
-echo "║                   Dograh Remote Setup                        ║"
+echo "║                Menace Voice Remote Setup                     ║"
 echo "║      Automated HTTPS deployment with TURN server             ║"
 echo "╚══════════════════════════════════════════════════════════════╝"
 echo -e "${NC}"
@@ -231,7 +231,7 @@ if [[ "${DOGRAH_FORCE_OVERWRITE:-}" != "1" && "${DOGRAH_SKIP_DOWNLOAD:-}" != "1"
             existing_path="$(pwd)/$TARGET_DIR/.env"
         fi
         echo ""
-        echo -e "${YELLOW}Detected an existing Dograh install:${NC}"
+        echo -e "${YELLOW}Detected an existing Menace Voice install:${NC}"
         echo -e "  ${YELLOW}$existing_path${NC}"
         echo ""
         echo -e "${RED}Refusing to continue - re-running setup would:${NC}"

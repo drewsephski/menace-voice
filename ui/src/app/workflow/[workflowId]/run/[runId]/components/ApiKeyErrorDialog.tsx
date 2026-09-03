@@ -33,7 +33,7 @@ export const ApiKeyErrorDialog = ({
         : isServiceKeyOrgMismatch
             ? "Service Token Account Mismatch"
             : "API Configuration Error";
-    const icon = isQuotaError ? <CreditCard className="h-5 w-5 text-orange-500" /> : <Key className="h-5 w-5 text-red-500" />;
+    const icon = isQuotaError ? <CreditCard className="h-5 w-5 text-[#f04438]" /> : <Key className="h-5 w-5 text-red-500" />;
     const buttonText = isBillingCreditsError
         ? "Go to Billing"
         : isServiceKeyOrgMismatch
@@ -60,7 +60,7 @@ export const ApiKeyErrorDialog = ({
                                 <p className="font-medium text-foreground">{error}</p>
                                 {isBillingCreditsError && (
                                     <p className="text-muted-foreground">
-                                        Purchase credits from Billing to continue using Dograh-managed models.
+                                        Purchase credits from Billing to continue using Menace Voice-managed models.
                                     </p>
                                 )}
                                 {isServiceKeyOrgMismatch && (

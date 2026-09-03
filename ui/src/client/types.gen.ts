@@ -1707,6 +1707,9 @@ export type CreateWorkflowTemplateRequest = {
      * Activity Description
      */
     activity_description: string;
+    name?: string | null;
+    tool_uuids?: Array<string>;
+    document_uuids?: Array<string>;
 };
 
 /**

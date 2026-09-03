@@ -1,4 +1,4 @@
-"""Quota checking service for Dograh credits.
+"""Quota checking service for Menace Voice credits.
 
 This module provides reusable quota checking functionality that can be used
 across different endpoints (WebRTC signaling, telephony, public API triggers).
@@ -47,18 +47,18 @@ OSS_QUOTA_EXCEEDED_MESSAGE = (
 )
 
 HOSTED_QUOTA_EXCEEDED_MESSAGE = (
-    "You have exhausted your Dograh credits. "
+    "You have exhausted your Menace Voice credits. "
     "Please purchase more credits from /billing "
     "or change providers in Models configurations."
 )
 
 OSS_HOSTED_KEY_QUOTA_EXCEEDED_MESSAGE = (
-    "The organization linked to this Dograh service key has insufficient credits. "
+    "The organization linked to this Menace Voice service key has insufficient credits. "
     "Please add credits at app.dograh.com or change providers in Models configurations."
 )
 
 SERVICE_TOKEN_ORG_MISMATCH_MESSAGE = (
-    "The Dograh service token being used is created from another account. "
+    "The Menace Voice service token being used is created from another account. "
     "Please create a new service token from the Developers tab and use it in "
     "your model configuration."
 )
@@ -106,7 +106,7 @@ def _log_mps_system_failure(
             type=ErrorType.SYSTEM_ERROR,
             code=f"dograh-{code}",
             internal_message=message,
-            external_message="Dograh could not verify managed model access.",
+            external_message="Menace Voice could not verify managed model access.",
             provider="dograh",
             error_owner="operator",
             retryable=None,
@@ -127,7 +127,7 @@ def _log_insufficient_dograh_credits(
             type=ErrorType.QUOTA_ERROR,
             code="dograh-insufficient-credits",
             internal_message="Insufficient Dograh credits",
-            external_message="Your organization has insufficient Dograh credits.",
+            external_message="Your organization has insufficient Menace Voice credits.",
             provider="dograh",
             error_owner="user",
             retryable=False,
@@ -180,7 +180,7 @@ def _managed_v2_authorization_failed_result() -> QuotaCheckResult:
     return QuotaCheckResult(
         has_quota=False,
         error_code="quota_check_failed",
-        error_message="Could not verify Dograh credits. Please try again.",
+        error_message="Could not verify Menace Voice credits. Please try again.",
     )
 
 
@@ -304,7 +304,7 @@ async def _authorize_hosted_workflow_run_start(
     if requires_correlation and not service_key:
         _log_mps_system_failure(
             "invalid-service-key",
-            "Managed-v2 workflow configuration has no Dograh service key",
+            "Managed-v2 workflow configuration has no Menace Voice service key",
             organization_id=organization_id,
             workflow_run_id=workflow_run_id,
         )
@@ -362,7 +362,7 @@ async def _authorize_hosted_workflow_run_start(
         return QuotaCheckResult(
             has_quota=False,
             error_code="quota_check_failed",
-            error_message="Could not verify Dograh credits. Please try again.",
+            error_message="Could not verify Menace Voice credits. Please try again.",
         )
 
     remaining = _safe_float(authorization.get("remaining_credits"))
@@ -401,10 +401,10 @@ async def _authorize_hosted_workflow_run_start(
         return QuotaCheckResult(
             has_quota=False,
             error_code="quota_check_failed",
-            error_message="Could not verify Dograh credits. Please try again.",
+            error_message="Could not verify Menace Voice credits. Please try again.",
         )
     logger.info(
-        "Dograh run authorization passed for org {}: {:.2f} credits remaining",
+            "Menace Voice run authorization passed for org {}: {:.2f} credits remaining",
         organization_id,
         remaining,
     )
@@ -427,7 +427,7 @@ async def _authorize_oss_dograh_keys(
                 return _insufficient_oss_quota_result()
 
             logger.info(
-                f"Dograh quota check passed for key ...{api_key[-8:]}: "
+                f"Menace Voice quota check passed for key ...{api_key[-8:]}: "
                 f"{remaining:.2f} credits remaining"
             )
         except _MPS_UNREACHABLE_ERRORS as e:
@@ -444,7 +444,7 @@ async def _authorize_oss_dograh_keys(
             return QuotaCheckResult(
                 has_quota=False,
                 error_code="quota_check_failed",
-                error_message="Could not verify Dograh credits. Please try again.",
+                error_message="Could not verify Menace Voice credits. Please try again.",
             )
 
     return QuotaCheckResult(has_quota=True)
@@ -508,7 +508,7 @@ async def _authorize_oss_managed_v2_correlation(
         return QuotaCheckResult(
             has_quota=False,
             error_code="quota_check_failed",
-            error_message="Could not verify Dograh credits. Please try again.",
+            error_message="Could not verify Menace Voice credits. Please try again.",
         )
 
     return QuotaCheckResult(has_quota=True)
@@ -540,7 +540,7 @@ async def _authorize_oss_managed_v2_run(
             return QuotaCheckResult(
                 has_quota=False,
                 error_code="quota_check_failed",
-                error_message="Could not verify Dograh credits. Please try again.",
+                error_message="Could not verify Menace Voice credits. Please try again.",
             )
 
         logger.info(
@@ -573,7 +573,7 @@ async def _authorize_oss_managed_v2_run(
         return QuotaCheckResult(
             has_quota=False,
             error_code="quota_check_failed",
-            error_message="Could not verify Dograh credits. Please try again.",
+            error_message="Could not verify Menace Voice credits. Please try again.",
         )
 
     remaining = _safe_float(authorization.get("remaining_credits"))
@@ -607,11 +607,11 @@ async def _authorize_oss_managed_v2_run(
         return QuotaCheckResult(
             has_quota=False,
             error_code="quota_check_failed",
-            error_message="Could not verify Dograh credits. Please try again.",
+            error_message="Could not verify Menace Voice credits. Please try again.",
         )
 
     logger.info(
-        "Dograh run authorization passed for key ...{}: {:.2f} credits remaining",
+        "Menace Voice run authorization passed for key ...{}: {:.2f} credits remaining",
         service_key[-8:],
         remaining,
     )
@@ -829,5 +829,5 @@ async def authorize_workflow_run_start(
         return QuotaCheckResult(
             has_quota=False,
             error_code="quota_check_failed",
-            error_message="Could not verify Dograh credits. Please try again.",
+            error_message="Could not verify Menace Voice credits. Please try again.",
         )

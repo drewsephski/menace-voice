@@ -4,8 +4,8 @@ Requirements:
     pip install -r requirements.txt
 
 Environment variables (loaded from `.env` in this directory):
-    DOGRAH_API_ENDPOINT  - Dograh API base URL (e.g. http://localhost:8000)
-    DOGRAH_API_TOKEN     - API token sent as X-API-Key
+    DOGRAH_API_ENDPOINT  - Menace Voice API base URL (e.g. http://localhost:8000)
+    DOGRAH_API_TOKEN     - Menace Voice API token sent as X-API-Key
 
 Run:
     python build_workflow_with_sdk.py
@@ -23,7 +23,7 @@ from dograh_sdk import DograhClient, Workflow
 
 load_dotenv(Path(__file__).parent / ".env")
 
-# Replace with the numeric ID of an existing agent in your Dograh account.
+# Replace with the numeric ID of an existing agent in your Menace account.
 # Create one via the UI or with create_workflow.py if you don't have one yet.
 WORKFLOW_ID = 0
 

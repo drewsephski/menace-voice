@@ -2,14 +2,13 @@
 
 import Link from 'next/link';
 
-import { GitHubStarBadge } from '@/components/layout/GitHubStarBadge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAuth } from '@/lib/auth';
 
 export default function OverviewPage() {
     const { user, provider } = useAuth();
-    const isOSSMode = provider !== 'stack';
+    const isLocalMode = provider !== 'stack';
 
     return (
         <div className="container mx-auto px-4 py-8">
@@ -18,28 +17,36 @@ export default function OverviewPage() {
                 <Card className="mb-8">
                     <CardHeader>
                         <CardTitle className="text-3xl">
-                            {isOSSMode ? (
-                                "Welcome to Dograh"
+                            {isLocalMode ? (
+                                "Welcome to Menace Voice"
                             ) : (
                                 `Welcome${user?.displayName ? `, ${user.displayName.split(' ')[0]}` : ''}!`
                             )}
                         </CardTitle>
                         <CardDescription className="text-lg mt-2">
-                            {isOSSMode ? (
+                            {isLocalMode ? (
                                 <>
-                                    Open source alternative to Vapi. Help us support the project by giving us a star on GitHub.
+                                    Get started with building voice AI workflows
                                 </>
                             ) : (
                                 "Get started with building voice AI workflows"
                             )}
                         </CardDescription>
                     </CardHeader>
-                    <CardContent>
-                        {isOSSMode && (
-                            <div className="mb-6">
-                                <GitHubStarBadge label="Star us on GitHub" showCount source="overview_page" />
-                            </div>
-                        )}
+                </Card>
+
+                <Card className="card-weave mb-8 border-cta/35">
+                    <CardContent className="flex flex-col gap-5 p-6 sm:flex-row sm:items-center sm:justify-between sm:p-8">
+                        <div className="max-w-2xl">
+                            <p className="text-xs font-medium uppercase tracking-[0.18em] text-cta">New here?</p>
+                            <h2 className="mt-2 text-2xl font-semibold tracking-tight">Build your first agent in five focused steps</h2>
+                            <p className="mt-2 text-muted-foreground">
+                                Start from a template, add knowledge, shape its voice, and connect the tools it needs.
+                            </p>
+                        </div>
+                        <Button asChild className="shrink-0">
+                            <Link href="/agent-onboarding">Start guided setup</Link>
+                        </Button>
                     </CardContent>
                 </Card>
 
@@ -47,7 +54,7 @@ export default function OverviewPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <Card>
                         <CardHeader>
-                            <CardTitle>Create and Manage your Voice Agents</CardTitle>
+                            <CardTitle>Create and manage your Menace Agents</CardTitle>
                             <CardDescription>
                                 Build powerful AI Voice Agents with our visual editor
                             </CardDescription>
@@ -55,7 +62,7 @@ export default function OverviewPage() {
                         <CardContent>
                             <Button asChild>
                                 <Link href="/workflow">
-                                    Go to Agents
+                                    Open Menace Agents
                                 </Link>
                             </Button>
                         </CardContent>
@@ -83,7 +90,7 @@ export default function OverviewPage() {
                     <CardHeader>
                         <CardTitle>Resources</CardTitle>
                         <CardDescription>
-                            Get help and learn more about Dograh
+                            Get help and learn more about Menace Voice
                         </CardDescription>
                     </CardHeader>
                     <CardContent>
@@ -95,15 +102,6 @@ export default function OverviewPage() {
                                     rel="noopener noreferrer"
                                 >
                                     Documentation
-                                </a>
-                            </Button>
-                            <Button asChild variant="outline">
-                                <a
-                                    href="https://github.com/dograh-hq/dograh/issues"
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                >
-                                    Report an Issue
                                 </a>
                             </Button>
                         </div>

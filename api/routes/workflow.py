@@ -2,7 +2,7 @@ import json
 import re
 import uuid
 from datetime import datetime
-from typing import List, Literal, Optional
+from typing import Any, List, Literal, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import StreamingResponse
@@ -65,6 +65,10 @@ from api.services.workflow.run_usage_response import (
 )
 from api.services.workflow.tool_name_validation import (
     validate_workflow_tool_name_collisions,
+)
+from api.services.workflow.mcp_prompt import (
+    append_mcp_usage_instructions,
+    build_mcp_usage_instructions,
 )
 from api.services.workflow.trigger_paths import (
     TriggerPathIssue,
@@ -378,6 +382,111 @@ class CreateWorkflowTemplateRequest(BaseModel):
     call_type: Literal[CallType.INBOUND.value, CallType.OUTBOUND.value]
     use_case: str
     activity_description: str
+    name: str | None = Field(default=None, max_length=255)
+    tool_uuids: list[str] = Field(default_factory=list, max_length=100)
+    document_uuids: list[str] = Field(default_factory=list, max_length=100)
+
+
+def _normalized_resource_uuids(values: list[str]) -> list[str]:
+    return list(
+        dict.fromkeys(
+            value.strip()
+            for value in values
+            if isinstance(value, str) and value.strip()
+        )
+    )
+
+
+async def _validate_template_resources(
+    *,
+    tool_uuids: list[str],
+    document_uuids: list[str],
+    organization_id: int | None,
+) -> tuple[list[str], list[str], list[Any]]:
+    normalized_tools = _normalized_resource_uuids(tool_uuids)
+    normalized_documents = _normalized_resource_uuids(document_uuids)
+    if not normalized_tools and not normalized_documents:
+        return normalized_tools, normalized_documents, []
+    if organization_id is None:
+        raise HTTPException(status_code=400, detail="No organization selected")
+
+    tools: list[Any] = []
+    if normalized_tools:
+        tools = await db_client.get_tools_by_uuids(normalized_tools, organization_id)
+        found_tools = {tool.tool_uuid for tool in tools}
+        missing_tools = [uuid for uuid in normalized_tools if uuid not in found_tools]
+        if missing_tools:
+            raise HTTPException(
+                status_code=404,
+                detail=(
+                    "Tool resource(s) not found in this organization: "
+                    + ", ".join(missing_tools)
+                ),
+            )
+
+    if normalized_documents:
+        documents = await db_client.get_documents_by_uuids(
+            normalized_documents, organization_id
+        )
+        found_documents = {document.document_uuid for document in documents}
+        missing_documents = [
+            uuid for uuid in normalized_documents if uuid not in found_documents
+        ]
+        if missing_documents:
+            raise HTTPException(
+                status_code=404,
+                detail=(
+                    "Document resource(s) not found in this organization: "
+                    + ", ".join(missing_documents)
+                ),
+            )
+
+    return normalized_tools, normalized_documents, tools
+
+
+def _attach_template_resources(
+    workflow_definition: dict,
+    *,
+    tool_uuids: list[str],
+    document_uuids: list[str],
+) -> dict:
+    if not tool_uuids and not document_uuids:
+        return workflow_definition
+
+    nodes = workflow_definition.get("nodes")
+    if not isinstance(nodes, list):
+        return workflow_definition
+
+    updated_definition = {**workflow_definition}
+    updated_nodes = []
+    for node in nodes:
+        if not isinstance(node, dict) or node.get("type") not in {
+            "startCall",
+            "agentNode",
+        }:
+            updated_nodes.append(node)
+            continue
+
+        data = node.get("data")
+        updated_data = dict(data) if isinstance(data, dict) else {}
+        if tool_uuids:
+            existing_tools = updated_data.get("tool_uuids")
+            updated_data["tool_uuids"] = _normalized_resource_uuids(
+                [*existing_tools, *tool_uuids]
+                if isinstance(existing_tools, list)
+                else tool_uuids
+            )
+        if document_uuids:
+            existing_documents = updated_data.get("document_uuids")
+            updated_data["document_uuids"] = _normalized_resource_uuids(
+                [*existing_documents, *document_uuids]
+                if isinstance(existing_documents, list)
+                else document_uuids
+            )
+        updated_nodes.append({**node, "data": updated_data})
+
+    updated_definition["nodes"] = updated_nodes
+    return updated_definition
 
 
 @router.post("/{workflow_id}/validate")
@@ -557,6 +666,12 @@ async def create_workflow_from_template(
         HTTPException: If MPS API call fails
     """
     try:
+        tool_uuids, document_uuids, selected_tools = await _validate_template_resources(
+            tool_uuids=request.tool_uuids,
+            document_uuids=request.document_uuids,
+            organization_id=user.selected_organization_id,
+        )
+
         # Call MPS API to generate workflow using the client
         if DEPLOYMENT_MODE == "oss":
             workflow_data = await mps_service_key_client.call_workflow_api(
@@ -581,6 +696,15 @@ async def create_workflow_from_template(
         workflow_def = regenerate_trigger_uuids(
             workflow_data.get("workflow_definition", {})
         )
+        workflow_def = _attach_template_resources(
+            workflow_def,
+            tool_uuids=tool_uuids,
+            document_uuids=document_uuids,
+        )
+        workflow_def = append_mcp_usage_instructions(
+            workflow_def,
+            build_mcp_usage_instructions(selected_tools),
+        )
 
         trigger_paths = extract_trigger_paths(workflow_def) if workflow_def else []
         if trigger_paths:
@@ -592,7 +716,13 @@ async def create_workflow_from_template(
                 raise HTTPException(status_code=409, detail=str(e))
 
         workflow = await db_client.create_workflow(
-            name=workflow_data.get("name", f"{request.use_case} - {request.call_type}"),
+            name=(
+                request.name.strip()
+                if request.name and request.name.strip()
+                else workflow_data.get(
+                    "name", f"{request.use_case} - {request.call_type}"
+                )
+            ),
             workflow_definition=workflow_def,
             user_id=user.id,
             organization_id=user.selected_organization_id,

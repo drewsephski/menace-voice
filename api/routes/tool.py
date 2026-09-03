@@ -35,6 +35,7 @@ from api.services.tool_management import (
     build_tool_response,
     create_tool_for_user,
     refresh_mcp_tool_for_user,
+    validate_mcp_server_url,
     validate_tool_credential_references,
 )
 from api.services.tool_management import (
@@ -371,6 +372,7 @@ async def update_tool(
     if request.definition:
         definition = request.definition.model_dump()
         try:
+            validate_mcp_server_url(definition)
             await validate_tool_credential_references(
                 definition,
                 organization_id=user.selected_organization_id,

@@ -1,7 +1,7 @@
 """GENERATED — do not edit by hand.
 
 Regenerate with `python -m dograh_sdk.codegen` against the target
-Dograh backend. Source of truth: the backend's model-backed node-spec
+Menace Voice backend. Source of truth: the backend's model-backed node-spec
 catalog served from `/api/v1/node-types`.
 """
 
@@ -95,4 +95,3 @@ class AgentNode(TypedNode):
     """
     Documents the agent can reference during this step.
     """
-

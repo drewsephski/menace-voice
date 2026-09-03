@@ -1,9 +1,9 @@
 ---
 title: "Update"
-description: "Update your self-hosted Dograh stack to a newer image version"
+description: "Update your self-hosted Menace Voice stack to a newer image version"
 ---
 
-This guide covers updating a Dograh stack you've already deployed with [Docker](/deployment/docker) or a [custom domain](/deployment/custom-domain). You run commands from the same directory that contains your `docker-compose.yaml` (this is the `dograh/` directory if you used `setup_remote.sh`).
+This guide covers updating a Menace Voice stack you've already deployed with [Docker](/deployment/docker) or a [custom domain](/deployment/custom-domain). You run commands from the same directory that contains your `docker-compose.yaml` (this is the `dograh/` directory if you used `setup_remote.sh`).
 
 There are three update flows depending on how you deployed:
 
@@ -13,16 +13,13 @@ There are three update flows depending on how you deployed:
 
 ## Find an image version
 
-Dograh publishes two images — `dograh-api` and `dograh-ui` — to both container registries:
+Menace Voice publishes two images — `dograh-api` and `dograh-ui` — to the container registry configured for your deployment.
 
-- **GitHub Container Registry** — [github.com/orgs/dograh-hq/packages](https://github.com/orgs/dograh-hq/packages)
-- **Docker Hub** — [hub.docker.com/u/dograhai](https://hub.docker.com/u/dograhai)
-
-Each release is published under release tags. Note the formats differ between GitHub releases and Docker image tags — `update_remote.sh` understands both and normalizes for you.
+Each release is published under release tags. `update_remote.sh` understands the supported release formats and normalizes them for you.
 
 | Where | Tag format | Example | When to use |
 |-------|-----------|---------|-------------|
-| GitHub release tag | `dograh-vX.Y.Z` | `dograh-v1.28.0` | Use when copying the version from a GitHub release |
+| Release tag | `dograh-vX.Y.Z` | `dograh-v1.28.0` | Use when selecting a published release |
 | Docker image tag (semver) | `X.Y.Z` | `1.28.0` | Stable, recommended for production |
 | Docker image tag (`latest`) | `latest` | `latest` | Tracks the most recent release tag |
 
@@ -34,7 +31,7 @@ Always update **`dograh-api`** and **`dograh-ui`** to the **same tag**. The two 
 
 `update_remote.sh` is the supported path for updating a stack created with `setup_remote.sh`. In one shot it:
 
-- Asks for a target version (defaults to the latest release tag on GitHub).
+- Asks for a target version (defaults to the latest release tag).
 - Pulls `docker-compose.yaml` at that version and pins both `api` and `ui` images to it.
 - Refreshes the remote helper bundle (`remote_up.sh` plus shared templates/helpers).
 - Synchronizes the canonical remote keys in `.env` and validates the runtime config that `dograh-init` will render from it.
@@ -44,11 +41,10 @@ From your install directory:
 
 ```bash
 cd dograh
-curl -o update_remote.sh https://raw.githubusercontent.com/dograh-hq/dograh/main/scripts/update_remote.sh
 bash update_remote.sh
 ```
 
-You'll be prompted for the target version, defaulting to the most recent release. Accepted forms: bare semver (`1.28.0`), v-prefixed (`v1.28.0`), the full GitHub tag (`dograh-v1.28.0`), or `main` to refresh deployment files from the default branch — the script normalizes them. Non-interactive callers can set it via environment variable and skip the confirmation prompt:
+You'll be prompted for the target version, defaulting to the most recent release. Accepted forms: bare semver (`1.28.0`), v-prefixed (`v1.28.0`), the full release tag (`dograh-v1.28.0`), or `main` to refresh deployment files from the default branch — the script normalizes them. Non-interactive callers can set it via environment variable and skip the confirmation prompt:
 
 ```bash
 TARGET_VERSION=1.28.0 DOGRAH_UPDATE_YES=1 bash update_remote.sh
@@ -70,13 +66,12 @@ For local Docker installs (the [Quick Start](/deployment/docker#quick-start) flo
 
 <CodeGroup>
 ```bash macOS/Linux
-curl -o docker-compose.yaml https://raw.githubusercontent.com/dograh-hq/dograh/main/docker-compose.yaml
-curl -o start_docker.sh https://raw.githubusercontent.com/dograh-hq/dograh/main/scripts/start_docker.sh && chmod +x start_docker.sh
 docker compose down
 ./start_docker.sh
 ```
 ```powershell Windows
-Invoke-WebRequest -OutFile docker-compose.yaml https://raw.githubusercontent.com/dograh-hq/dograh/main/docker-compose.yaml; Invoke-WebRequest -OutFile start_docker.ps1 https://raw.githubusercontent.com/dograh-hq/dograh/main/scripts/start_docker.ps1; docker compose down; .\start_docker.ps1
+docker compose down
+.\start_docker.ps1
 ```
 </CodeGroup>
 
@@ -114,7 +109,7 @@ done
 Your Postgres data volume persists across `down`/`up` cycles, so agents and call history are preserved.
 
 <Warning>
-Rolling back across a database migration is not always safe — if the newer release ran a schema migration, downgrading may leave the DB in a state the older API doesn't understand. If in doubt, [open an issue](https://github.com/dograh-hq/dograh/issues) before rolling back.
+Rolling back across a database migration is not always safe — if the newer release ran a schema migration, downgrading may leave the DB in a state the older API doesn't understand. If in doubt, contact your designated Menace support channel before rolling back.
 </Warning>
 
 ## Updating a source build

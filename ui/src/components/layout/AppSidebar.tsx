@@ -89,7 +89,7 @@ const NAV_SECTIONS: SidebarNavSection[] = [
     label: "BUILD",
     items: [
       {
-        title: "Voice Agents",
+        title: "Agents",
         url: "/workflow",
         icon: Workflow,
       },
@@ -327,7 +327,7 @@ export function AppSidebar() {
               className="notranslate flex items-center gap-2 px-1"
               translate="no"
             >
-              <BrandLogo mark className="h-6" />
+              <BrandLogo className="h-7" />
               {versionInfo && (
                 <span
                   className="notranslate text-xs font-normal text-muted-foreground"

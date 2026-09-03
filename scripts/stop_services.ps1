@@ -12,7 +12,7 @@ $BaseDir   = Split-Path -Parent $ScriptDir
 $RunDir    = Join-Path $BaseDir 'run'
 
 Set-Location $BaseDir
-Write-Host "Stopping Dograh Services in BASE_DIR: $BaseDir"
+Write-Host "Stopping Menace Voice Services in BASE_DIR: $BaseDir"
 
 ###############################################################################
 ### HELPER

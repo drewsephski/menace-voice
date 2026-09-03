@@ -20,6 +20,7 @@ from pipecat.services.mcp_service import MCPClient
 
 from api.services.workflow.tools.mcp_tool import namespace_function_name
 from api.utils.credential_auth import build_auth_header
+from api.utils.url_security import validate_user_configured_service_url
 
 if TYPE_CHECKING:
     from api.db.models import ExternalCredentialModel
@@ -86,6 +87,10 @@ class McpToolSession:
         external cancellation, KeyboardInterrupt, and SystemExit are re-raised
         (see the CancelledError handling below and ``_degrade``)."""
         try:
+            validate_user_configured_service_url(
+                self._url,
+                field_name="MCP server URL",
+            )
             params = build_streamable_http_params(
                 url=self._url,
                 credential=self._credential,

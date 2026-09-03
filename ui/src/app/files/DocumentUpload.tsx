@@ -17,7 +17,7 @@ import { useAppConfig } from '@/context/AppConfigContext';
 import logger from '@/lib/logger';
 
 interface DocumentUploadProps {
-  onUploadSuccess: () => void;
+  onUploadSuccess: (documentUuid?: string) => void;
 }
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
@@ -39,8 +39,8 @@ export default function DocumentUpload({ onUploadSuccess }: DocumentUploadProps)
       <div className="text-xs text-amber-900 dark:text-amber-200">
         <p className="font-medium">Processed by an external service</p>
         <p className="mt-1">
-          Uploaded documents are sent to Dograh&apos;s managed Model Proxy Service for
-          parsing and chunking. Dograh Model Proxy Service does not store or read your documents -
+          Uploaded documents are sent to Menace Voice&apos;s managed Model Proxy Service for
+          parsing and chunking. Menace Voice Model Proxy Service does not store or read your documents -
           the extracted text and embeddings are returned and stored locally in your
           self-hosted database.
         </p>
@@ -136,7 +136,7 @@ export default function DocumentUpload({ onUploadSuccess }: DocumentUploadProps)
       setUploadProgress(100);
       toast.success(`File uploaded: ${selectedFile.name}. Processing started.`);
       clearSelectedFile();
-      onUploadSuccess();
+      onUploadSuccess(uploadData.document_uuid);
     } catch (error) {
       logger.error('Error uploading document:', error);
       toast.error(error instanceof Error ? error.message : 'Failed to upload document');

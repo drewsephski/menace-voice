@@ -1,12 +1,12 @@
-# Dograh AI
+# Menace Voice
 
 <p align="center">
   <a href="https://www.producthunt.com/products/dograh">
-    <img src="https://img.shields.io/badge/Product%20Hunt-%231%20Product%20of%20the%20Day-DA552F?style=for-the-badge&logo=producthunt&logoColor=white" alt="Dograh: #1 Product of the Day on Product Hunt">
+    <img src="https://img.shields.io/badge/Product%20Hunt-%231%20Product%20of%20the%20Day-DA552F?style=for-the-badge&logo=producthunt&logoColor=white" alt="Menace Voice: #1 Product of the Day on Product Hunt">
   </a>
 </p>
 
-**The open-source, self-hostable alternative to Vapi & Retell** — build production voice agents with a visual workflow builder, test them in minutes, and let AI coding assistants help design and edit them through MCP.
+**The voice AI platform for building and deploying production agents** — use a visual workflow builder, test agents in minutes, and let AI coding assistants help design and edit them through MCP.
 
 <p align="center">
   <a href="https://app.dograh.com">
@@ -15,10 +15,6 @@
   &nbsp;
   <a href="#-get-started">
     <img src="https://img.shields.io/badge/⚡_Self--host_in_60s-One_command-111827?style=for-the-badge" alt="Self-host in 60s">
-  </a>
-  &nbsp;
-  <a href="https://join.slack.com/t/dograh-community/shared_invite/zt-4787daqcn-3TDiQUh~3xrr3pwAqR9wpQ">
-    <img src="https://img.shields.io/badge/💬_Join_Slack-Community-4A154B?style=for-the-badge&logo=slack" alt="Join Slack">
   </a>
 </p>
 
@@ -30,21 +26,21 @@
 </p>
 
 <p align="center">
-  <img src="docs/images/hero.gif" alt="Dograh in action — build a workflow, launch a voice agent, talk to it" width="80%">
+  <img src="docs/images/hero.gif" alt="Menace Voice in action — build a workflow, launch a voice agent, talk to it" width="80%">
 </p>
 
-- **100% open source**, self-hostable — no vendor lock-in, unlike Vapi or Retell
-- **Full control & transparency** — every line of code is open, with flexible LLM / TTS / STT integration
-- **Maintained by YC alumni and exit founders**, committed to keeping voice AI open
+- **Flexible deployment** — run the platform in the environment that fits your team
+- **Full control & transparency** — configure the LLM / TTS / STT integrations you need
+- **Maintained by YC alumni and exit founders**, committed to making voice AI practical
 
 <p align="center">
-  <a href="https://www.producthunt.com/products/dograh?embed=true&utm_source=badge-top-post-badge&utm_medium=badge&utm_campaign=badge-dograh-3" target="_blank"><img src="https://api.producthunt.com/widgets/embed-image/v1/top-post-badge.svg?post_id=1217382&theme=light&period=daily&t=1786607298379" alt="Dograh - #1 Product of the Day | Product Hunt" width="250" height="54"></a>
+  <a href="https://www.producthunt.com/products/dograh?embed=true&utm_source=badge-top-post-badge&utm_medium=badge&utm_campaign=badge-dograh-3" target="_blank"><img src="https://api.producthunt.com/widgets/embed-image/v1/top-post-badge.svg?post_id=1217382&theme=light&period=daily&t=1786607298379" alt="Menace Voice - #1 Product of the Day | Product Hunt" width="250" height="54"></a>
   &nbsp;
-  <a href="https://www.producthunt.com/products/dograh?embed=true&utm_source=badge-top-post-badge&utm_medium=badge&utm_campaign=badge-dograh-3" target="_blank"><img src="https://api.producthunt.com/widgets/embed-image/v1/top-post-badge.svg?post_id=1217382&theme=light&period=weekly&t=1786966826740" alt="Dograh - #1 Product of the Week | Product Hunt" width="250" height="54"></a>
+  <a href="https://www.producthunt.com/products/dograh?embed=true&utm_source=badge-top-post-badge&utm_medium=badge&utm_campaign=badge-dograh-3" target="_blank"><img src="https://api.producthunt.com/widgets/embed-image/v1/top-post-badge.svg?post_id=1217382&theme=light&period=weekly&t=1786966826740" alt="Menace Voice - #1 Product of the Week | Product Hunt" width="250" height="54"></a>
   <br />
-  <a href="https://www.producthunt.com/products/dograh?embed=true&utm_source=badge-top-post-badge&utm_medium=badge&utm_campaign=badge-dograh-3" target="_blank"><img src="https://api.producthunt.com/widgets/embed-image/v1/top-post-badge.svg?post_id=1217382&theme=neutral&period=monthly&t=1788261987782" alt="Dograh - #1 Product of the Month | Product Hunt" width="250" height="54"></a>
+  <a href="https://www.producthunt.com/products/dograh?embed=true&utm_source=badge-top-post-badge&utm_medium=badge&utm_campaign=badge-dograh-3" target="_blank"><img src="https://api.producthunt.com/widgets/embed-image/v1/top-post-badge.svg?post_id=1217382&theme=neutral&period=monthly&t=1788261987782" alt="Menace Voice - #1 Product of the Month | Product Hunt" width="250" height="54"></a>
   &nbsp;
-  <a href="https://www.producthunt.com/products/dograh?embed=true&utm_source=badge-top-post-topic-badge&utm_medium=badge&utm_campaign=badge-dograh-3" target="_blank"><img src="https://api.producthunt.com/widgets/embed-image/v1/top-post-topic-badge.svg?post_id=1217382&theme=neutral&period=monthly&topic_id=267&t=1788261987782" alt="Dograh - #1 Product of the Month, Developer Tools | Product Hunt" width="250" height="54"></a>
+  <a href="https://www.producthunt.com/products/dograh?embed=true&utm_source=badge-top-post-topic-badge&utm_medium=badge&utm_campaign=badge-dograh-3" target="_blank"><img src="https://api.producthunt.com/widgets/embed-image/v1/top-post-topic-badge.svg?post_id=1217382&theme=neutral&period=monthly&topic_id=267&t=1788261987782" alt="Menace Voice - #1 Product of the Month, Developer Tools | Product Hunt" width="250" height="54"></a>
   <br />
   <a href="https://trendshift.io/repositories/31007" target="_blank"><img src="https://trendshift.io/api/badge/repositories/31007" alt="dograh-hq%2Fdograh | Trendshift" style="width: 250px; height: 55px;" width="250" height="55"/></a>
 </p>
@@ -53,10 +49,10 @@
 
 <div align="center">
   <a href="https://www.youtube.com/watch?v=xD9JEvfCH9k">
-    <img src="https://img.youtube.com/vi/xD9JEvfCH9k/maxresdefault.jpg" alt="Dograh featured by Better Stack" width="80%" style="border-radius: 8px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+    <img src="https://img.youtube.com/vi/xD9JEvfCH9k/maxresdefault.jpg" alt="Menace Voice featured by Better Stack" width="80%" style="border-radius: 8px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
   </a>
   <br>
-  <em>Featured by <strong>Better Stack</strong> — a hands-on look at Dograh</em>
+  <em>Featured by <strong>Better Stack</strong> — a hands-on look at Menace Voice</em>
 </div>
 
 <details>
@@ -64,22 +60,22 @@
 
 <div align="center">
   <a href="https://youtu.be/9gPneyf9M9w">
-    <img src="docs/images/video_thumbnail_1.png" alt="Watch Dograh AI Demo Video" width="70%" style="border-radius: 8px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+    <img src="docs/images/video_thumbnail_1.png" alt="Watch Menace Voice Demo Video" width="70%" style="border-radius: 8px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
   </a>
 </div>
 
 </details>
 
-## ⚖️ Dograh vs Vapi vs Retell
+## ⚖️ Menace Voice vs Vapi vs Retell
 
 An honest comparison on the axes that matter most to teams evaluating voice AI platforms.
 
-|  | **Dograh** | **Vapi** | **Retell** |
+|  | **Menace Voice** | **Vapi** | **Retell** |
 |---|---|---|---|
-| **License** | BSD 2-Clause (open source) | Proprietary | Proprietary |
+| **License** | BSD 2-Clause | Proprietary | Proprietary |
 | **Self-hostable** | ✅ Yes — one Docker command | ❌ SaaS only | ❌ SaaS only |
 | **Pricing** | Free (self-host) · usage-based (cloud) | Per-minute SaaS | Per-minute SaaS |
-| **Bring your own LLM / STT / TTS** | ✅ Any provider, or use Dograh's stack | Configurable within their integrations | Configurable within their integrations |
+| **Bring your own LLM / STT / TTS** | ✅ Any provider, or use Menace Voice's stack | Configurable within their integrations | Configurable within their integrations |
 | **Source-level customization** | ✅ Every line is yours to modify | ❌ Closed source | ❌ Closed source |
 | **Data residency** | Your infra, your rules | Their cloud | Their cloud |
 | **Vendor lock-in** | None | Full | Full |
@@ -87,7 +83,7 @@ An honest comparison on the axes that matter most to teams evaluating voice AI p
 
 ## 🚀 Get Started
 
-##### Download and setup Dograh on your Local Machine
+##### Download and setup Menace Voice on your Local Machine
 
 > **Note**
 > We collect anonymous usage data to improve the product. You can opt out by setting `ENABLE_TELEMETRY=false` before running the startup script.
@@ -95,20 +91,7 @@ An honest comparison on the axes that matter most to teams evaluating voice AI p
 > **Note**
 > If you wish to run the platform on a remote server instead, checkout our [Documentation](https://docs.dograh.com/deployment/docker#option-2:-remote-server-deployment)
 
-```bash
-curl -o docker-compose.yaml https://raw.githubusercontent.com/dograh-hq/dograh/main/docker-compose.yaml && curl -o start_docker.sh https://raw.githubusercontent.com/dograh-hq/dograh/main/scripts/start_docker.sh && chmod +x start_docker.sh && ./start_docker.sh
-```
-
-> **⚡ Prefer an AI agent to set it up for you?**
-> If you use **Claude Code** or **Codex**, install the official [Dograh setup skill](https://github.com/dograh-hq/dograh-plugins) and let your agent handle installation, configuration, and troubleshooting — it detects your OS, picks the right deploy path, runs Dograh's own setup scripts, and verifies the result.
->
-> ```text
-> # In Claude Code
-> /plugin marketplace add dograh-hq/dograh-plugins
-> /plugin install dograh@dograh
-> ```
->
-> Then start a new session and ask it to _"set up Dograh"_ (or run `/dograh-setup`). Codex is supported too — see the [plugin repo](https://github.com/dograh-hq/dograh-plugins#install).
+Use the deployment package provided by Menace, then follow the startup instructions in the deployment documentation.
 
 > **Note**
 > First startup may take 2-3 minutes to download all images. Once running, open http://localhost:3010 to create your first AI voice assistant!
@@ -119,17 +102,17 @@ curl -o docker-compose.yaml https://raw.githubusercontent.com/dograh-hq/dograh/m
 1. Open [http://localhost:3010](http://localhost:3010) in your browser.
 2. Pick **Inbound** or **Outbound**, name your bot (e.g. _Lead Qualification_), and describe the use case in 5–10 words (e.g. _Screen insurance form submissions for purchase intent_).
 3. Click **Test Agent**.
-4. Use **Test Audio** to talk to your agent in the browser, or **Test Chat** to iterate faster in text. In Test Chat, you can edit or replay user turns and Dograh will regenerate the agent's replies and node transitions from that point.
+4. Use **Test Audio** to talk to your agent in the browser, or **Test Chat** to iterate faster in text. In Test Chat, you can edit or replay user turns and Menace Voice will regenerate the agent's replies and node transitions from that point.
 
-> 🔑 **No API keys needed.** Dograh ships with auto-generated keys and its own LLM / TTS / STT stack. Connect your own keys for LLM, TTS, STT, or Telephony (e.g. Twilio, Vonage, Telnyx) anytime.
+> 🔑 **No API keys needed.** Menace Voice ships with auto-generated keys and its own LLM / TTS / STT stack. Connect your own keys for LLM, TTS, STT, or Telephony (e.g. Twilio, Vonage, Telnyx) anytime.
 
-> **Featured On & Community Validation:** Dograh was named **[#1 Product of the Day on Product Hunt](https://www.producthunt.com/products/dograh)**.
+> **Featured On & Community Validation:** Menace Voice was named **[#1 Product of the Day on Product Hunt](https://www.producthunt.com/products/dograh)**.
 
 ## Build Agents with MCP
 
-Dograh ships with an MCP server, so coding agents can work directly inside your Dograh workspace.
+Menace Voice ships with an MCP server, so coding agents can work directly inside your Menace Voice workspace.
 
-Connect Codex, Claude Code, Cursor, or any MCP client to inspect existing agents, search Dograh docs, fetch node schemas, create new workflows, and save draft edits from natural language.
+Connect Codex, Claude Code, Cursor, or any MCP client to inspect existing agents, search Menace Voice docs, fetch node schemas, create new workflows, and save draft edits from natural language.
 
 When asking your coding agent to build a voice agent, share a short script for
 the use case instead of only a one-line prompt. Include the agent persona, call
@@ -181,45 +164,17 @@ You can go to [https://docs.dograh.com](https://docs.dograh.com/) for our docume
 - **Python SDK** — [pypi.org/project/dograh-sdk](https://pypi.org/project/dograh-sdk/)
 - **Node SDK** — [npmjs.com/package/@dograh/sdk](https://www.npmjs.com/package/@dograh/sdk)
 
-## 🤝Community & Support
-
-> 👋 **Coming from the Better Stack video?** Drop your use case in our [pinned GitHub Discussion](https://github.com/orgs/dograh-hq/discussions/291) — we read every reply and the founders personally onboard early adopters.
-
-- **Slack** — the cornerstone of Dograh AI contributions. Connect with maintainers, discuss features before coding, get help with setup, and stay current on contribution sprints.
-- **GitHub Discussions** — share use cases, ask questions, swap workflow recipes.
-- **GitHub Issues** — report bugs or request features.
-
-👉 Join us → [Dograh Community Slack](https://join.slack.com/t/dograh-community/shared_invite/zt-4787daqcn-3TDiQUh~3xrr3pwAqR9wpQ)
-
-## 🙌 Contributing
-
-We love contributions! Dograh AI is 100% open source and we intend to keep it that way.
-
-### Getting Started
-
-- Fork the repository
-- Create your feature branch (git checkout -b feature/AmazingFeature)
-- Commit your changes (git commit -m 'Add some AmazingFeature')
-- Push to the branch (git push origin feature/AmazingFeature)
-- Open a Pull Request
-
-## ⭐ Star History
-
-<img src="docs/images/star-history.png" alt="Dograh star history" width="80%">
-
 ## 📄 License
 
-Dograh AI is licensed under the [BSD 2-Clause License](LICENSE)- the same license as projects that were used in building Dograh AI, ensuring compatibility and freedom to use, modify, and distribute.
+Menace Voice is licensed under the [BSD 2-Clause License](LICENSE).
 
 ## 🏢 About
 
-Built with ❤️ by **Dograh** (Zansat Technologies Private Limited)
-Founded by YC alumni and exit founders committed to keeping voice AI open and accessible to everyone.
+Built with ❤️ by **Menace** (Zansat Technologies Private Limited)
+Founded by YC alumni and exit founders committed to making voice AI accessible to everyone.
 
 <br><br><br>
 
   <p align="center">
-    <a href="https://github.com/dograh-hq/dograh">⭐ Star us on GitHub</a> |
-    <a href="https://app.dograh.com">☁️ Try Cloud Version</a> |
-    <a href="https://join.slack.com/t/dograh-community/shared_invite/zt-4787daqcn-3TDiQUh~3xrr3pwAqR9wpQ">💬 Join Slack</a>
+    <a href="https://app.dograh.com">☁️ Try Cloud Version</a>
   </p>

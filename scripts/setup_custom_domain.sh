@@ -40,7 +40,7 @@ trap cleanup EXIT
 
 echo -e "${BLUE}"
 echo "╔══════════════════════════════════════════════════════════════╗"
-echo "║              Dograh Custom Domain Setup                      ║"
+echo "║           Menace Voice Custom Domain Setup                   ║"
 echo "║     Automated Let's Encrypt SSL certificate setup            ║"
 echo "╚══════════════════════════════════════════════════════════════╝"
 echo -e "${NC}"
@@ -51,8 +51,8 @@ fi
 
 if [[ ! -d "dograh" ]]; then
     echo -e "${RED}Error: 'dograh' directory not found.${NC}"
-    echo -e "${YELLOW}Please run this script from the directory containing your Dograh installation.${NC}"
-    echo -e "${YELLOW}If you haven't set up Dograh yet, run the remote setup first:${NC}"
+    echo -e "${YELLOW}Please run this script from the directory containing your Menace Voice installation.${NC}"
+    echo -e "${YELLOW}If you haven't set up Menace Voice yet, run the remote setup first:${NC}"
     echo -e "${BLUE}  curl -o setup_remote.sh https://raw.githubusercontent.com/dograh-hq/dograh/main/scripts/setup_remote.sh && chmod +x setup_remote.sh && sudo ./setup_remote.sh${NC}"
     exit 1
 fi

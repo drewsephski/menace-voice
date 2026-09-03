@@ -1,4 +1,4 @@
-# Dograh Helm chart — default values.
+# Menace Voice Helm chart — default values.
 #
 # Conventions:
 # - "mode" fields are enums; see values.schema.json for allowed values.

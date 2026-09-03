@@ -4,8 +4,8 @@
 //   npm install @dograh/sdk
 //
 // Environment variables:
-//   DOGRAH_API_ENDPOINT  - Dograh API base URL (e.g. http://localhost:8000)
-//   DOGRAH_API_TOKEN     - API token sent as X-API-Key
+//   DOGRAH_API_ENDPOINT  - Menace Voice API base URL (e.g. http://localhost:8000)
+//   DOGRAH_API_TOKEN     - Menace Voice API token sent as X-API-Key
 //
 // Run:
 //   npx tsx fetch_workflow_and_call.ts

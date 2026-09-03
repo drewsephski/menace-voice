@@ -1,4 +1,4 @@
-Dograh has been installed.
+Menace Voice has been installed.
 
 Release:    {{ .Release.Name }}
 Namespace:  {{ .Release.Namespace }}

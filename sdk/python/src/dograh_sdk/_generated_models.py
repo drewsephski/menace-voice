@@ -448,7 +448,7 @@ class Type(Enum):
 
 class PresetToolParameter(BaseModel):
     """
-    A parameter injected by Dograh at runtime.
+    A parameter injected by Menace Voice at runtime.
     """
 
     name: Annotated[str, Field(title='Name')]
@@ -638,7 +638,7 @@ class MessageType1(Enum):
 class CallDisposition(RootModel[str]):
     root: Annotated[str, Field(max_length=64, title='Call Disposition')]
     """
-    Optional disposition to record after a successful transfer. When omitted, Dograh records its provider-specific transfer default.
+    Optional disposition to record after a successful transfer. When omitted, Menace Voice records its provider-specific transfer default.
     """
 
 
@@ -822,7 +822,7 @@ class HttpApiConfig(BaseModel):
         list[PresetToolParameter] | None, Field(title='Preset Parameters')
     ] = None
     """
-    Parameters injected by Dograh from fixed values or workflow context templates.
+    Parameters injected by Menace Voice from fixed values or workflow context templates.
     """
     timeout_ms: Annotated[
         TimeoutMs | None, Field(title='Timeout Ms', validate_default=True)
@@ -898,7 +898,7 @@ class HttpTransferResolverConfig(BaseModel):
     """
     wait_message: Annotated[str | None, Field(title='Wait Message')] = None
     """
-    Optional short message played while Dograh resolves routing.
+    Optional short message played while Menace Voice resolves routing.
     """
     parameters: Annotated[list[ToolParameter] | None, Field(title='Parameters')] = None
     """
@@ -908,7 +908,7 @@ class HttpTransferResolverConfig(BaseModel):
         list[PresetToolParameter] | None, Field(title='Preset Parameters')
     ] = None
     """
-    Parameters injected by Dograh from fixed values or workflow context templates.
+    Parameters injected by Menace Voice from fixed values or workflow context templates.
     """
 
 
@@ -999,7 +999,7 @@ class TransferCallConfig(BaseModel):
         CallDisposition | None, Field(title='Call Disposition')
     ] = None
     """
-    Optional disposition to record after a successful transfer. When omitted, Dograh records its provider-specific transfer default.
+    Optional disposition to record after a successful transfer. When omitted, Menace Voice records its provider-specific transfer default.
     """
     parameters: Annotated[list[ToolParameter] | None, Field(title='Parameters')] = None
     """

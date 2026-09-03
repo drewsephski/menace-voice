@@ -1,6 +1,6 @@
-# Dograh Helm chart
+# Menace Voice Helm chart
 
-Deploys Dograh on Kubernetes with decomposed backend workloads (web,
+Deploys Menace Voice on Kubernetes with decomposed backend workloads (web,
 ARQ workers, telephony singleton, campaign singleton), Next.js UI, and
 coturn for WebRTC media relay. Implements the architecture defined in
 `HELM_DEPLOYMENT_PLAN.md` at the repo root.

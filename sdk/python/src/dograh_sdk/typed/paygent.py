@@ -1,7 +1,7 @@
 """GENERATED — do not edit by hand.
 
 Regenerate with `python -m dograh_sdk.codegen` against the target
-Dograh backend. Source of truth: the backend's model-backed node-spec
+Menace Voice backend. Source of truth: the backend's model-backed node-spec
 catalog served from `/api/v1/node-types`.
 """
 
@@ -45,7 +45,7 @@ class Paygent(TypedNode):
 
     paygent_enabled: bool = True
     """
-    When false, Dograh skips all Paygent tracking for this call.
+    When false, Menace Voice skips all Paygent tracking for this call.
     """
 
     paygent_indicator: str = 'per-minute-call'
@@ -53,4 +53,3 @@ class Paygent(TypedNode):
     The indicator event name sent at the end of the call (e.g. per-minute-
     call).
     """
-

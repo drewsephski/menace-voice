@@ -127,7 +127,7 @@ def _format_docstring(text: str, indent: int = 4) -> str:
 _FILE_HEADER = '''"""GENERATED — do not edit by hand.
 
 Regenerate with `python -m dograh_sdk.codegen` against the target
-Dograh backend. Source of truth: the backend's model-backed node-spec
+Menace Voice backend. Source of truth: the backend's model-backed node-spec
 catalog served from `/api/v1/node-types`.
 """
 
@@ -304,10 +304,10 @@ def _load_specs_from_api(base_url: str) -> list[dict[str, Any]]:
 def main(argv: list[str] | None = None) -> None:
     parser = argparse.ArgumentParser(
         prog="python -m dograh_sdk.codegen",
-        description="Generate typed SDK dataclasses from the Dograh node-spec catalog.",
+        description="Generate typed SDK dataclasses from the Menace Voice node-spec catalog.",
     )
     source = parser.add_mutually_exclusive_group(required=True)
-    source.add_argument("--api", help="Dograh backend base URL")
+    source.add_argument("--api", help="Menace Voice backend base URL")
     source.add_argument("--input", help="Local JSON file with specs")
     parser.add_argument(
         "--out", required=True, help="Output directory for generated modules"

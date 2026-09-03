@@ -4,15 +4,15 @@
 //   npm install @dograh/sdk
 //
 // Environment variables:
-//   DOGRAH_API_ENDPOINT  - Dograh API base URL (e.g. http://localhost:8000)
-//   DOGRAH_API_TOKEN     - API token sent as X-API-Key
+//   DOGRAH_API_ENDPOINT  - Menace Voice API base URL (e.g. http://localhost:8000)
+//   DOGRAH_API_TOKEN     - Menace Voice API token sent as X-API-Key
 //
 // Run:
 //   npx tsx build_workflow_with_sdk.ts
 
 import { DograhClient, Workflow } from "@dograh/sdk";
 
-// Replace with the numeric ID of an existing agent in your Dograh account.
+// Replace with the numeric ID of an existing agent in your Menace account.
 // Create one via the UI or with create_workflow.ts if you don't have one yet.
 const WORKFLOW_ID = 0;
 

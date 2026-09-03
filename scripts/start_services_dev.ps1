@@ -27,7 +27,7 @@ $LogsRoot   = Join-Path $BaseDir 'logs'
 $LatestDir  = Join-Path $LogsRoot 'latest'
 $VenvPath   = Join-Path $BaseDir 'venv'
 
-Write-Host "Starting Dograh Services (DEV MODE) in BASE_DIR: $BaseDir"
+Write-Host "Starting Menace Voice Services (DEV MODE) in BASE_DIR: $BaseDir"
 Write-Host "Auto-reload enabled for api/ directory changes"
 Write-Host "Environment file: $EnvFile"
 

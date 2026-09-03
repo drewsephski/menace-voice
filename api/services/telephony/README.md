@@ -1,6 +1,6 @@
 # Telephony Provider Implementation
 
-This module implements the telephony provider abstraction for Dograh AI. For user-facing documentation, see the [Mintlify docs](https://docs.dograh.com/integrations/telephony/overview).
+This module implements the telephony provider abstraction for Menace Voice. For user-facing documentation, see the [Mintlify docs](https://docs.dograh.com/integrations/telephony/overview).
 
 ## Architecture
 

@@ -33,7 +33,6 @@ dev = [
 [project.urls]
 Homepage = "https://dograh.com"
 Documentation = "https://docs.dograh.com"
-Repository = "https://github.com/dograh-hq/dograh"
 
 [project.scripts]
 dograh-sdk-codegen = "dograh_sdk.codegen:main"

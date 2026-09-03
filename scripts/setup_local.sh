@@ -30,7 +30,7 @@ trap cleanup EXIT
 
 echo -e "${BLUE}"
 echo "╔══════════════════════════════════════════════════════════════╗"
-echo "║                    Dograh Local Setup                        ║"
+echo "║                 Menace Voice Local Setup                     ║"
 echo "║       Local docker deployment, optional TURN server          ║"
 echo "╚══════════════════════════════════════════════════════════════╝"
 echo -e "${NC}"
@@ -156,7 +156,7 @@ MINIO_ROOT_USER="dograh$(openssl rand -hex 6)"
 MINIO_ROOT_PASSWORD=$(openssl rand -hex 32)
 
 cat > .env << ENV_EOF
-# Container registry for Dograh images
+# Container registry for Menace Voice images
 REGISTRY=$REGISTRY
 
 # JWT secret for OSS authentication
@@ -210,11 +210,11 @@ if [[ "${ENABLE_COTURN:-false}" == "true" ]]; then
 fi
 echo ""
 if [[ "${ENABLE_COTURN:-false}" == "true" ]]; then
-    echo -e "${YELLOW}To start Dograh with TURN, run:${NC}"
+    echo -e "${YELLOW}To start Menace Voice with TURN, run:${NC}"
     echo ""
     echo -e "  ${BLUE}docker compose --profile local-turn --profile tunnel up --pull always${NC}"
 else
-    echo -e "${YELLOW}To start Dograh, run:${NC}"
+    echo -e "${YELLOW}To start Menace Voice, run:${NC}"
     echo ""
     echo -e "  ${BLUE}docker compose --profile tunnel up --pull always${NC}"
 fi

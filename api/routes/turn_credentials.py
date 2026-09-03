@@ -10,7 +10,7 @@ The credential format:
 
 References:
 - https://datatracker.ietf.org/doc/html/draft-uberti-behave-turn-rest-00
-- https://github.com/coturn/coturn/wiki/turnserver#turn-rest-api
+- coturn TURN REST API documentation
 """
 
 import base64

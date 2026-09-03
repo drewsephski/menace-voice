@@ -26,6 +26,7 @@ from api.services.workflow.tools.mcp_tool import (
     McpDefinitionError,
     validate_mcp_definition,
 )
+from api.utils.url_security import validate_user_configured_service_url
 
 
 class ToolManagementError(ValueError):
@@ -86,6 +87,22 @@ def _credential_uuids_from_definition(definition: dict[str, Any]) -> list[str]:
                 credential_uuids.append(resolver_credential_uuid)
 
     return list(dict.fromkeys(credential_uuids))
+
+
+def validate_mcp_server_url(definition: dict[str, Any]) -> None:
+    if definition.get("type") != "mcp":
+        return
+    try:
+        validate_user_configured_service_url(
+            definition["config"]["url"],
+            field_name="MCP server URL",
+        )
+    except (KeyError, TypeError, ValueError) as e:
+        raise ToolManagementError(
+            "unsafe_mcp_url",
+            str(e) or "MCP server URL is not allowed",
+            status_code=400,
+        ) from e
 
 
 async def fetch_credential(credential_uuid: Optional[str], organization_id: int):
@@ -168,6 +185,7 @@ async def create_tool_for_user(
         )
 
     definition = request.definition.model_dump()
+    validate_mcp_server_url(definition)
     await validate_tool_credential_references(
         definition, organization_id=user.selected_organization_id
     )

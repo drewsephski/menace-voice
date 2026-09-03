@@ -88,8 +88,8 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(
-    title="Dograh API",
-    description="API for the Dograh app",
+    title="Menace Voice API",
+    description="API for Menace Voice agents",
     version="1.0.0",
     openapi_url=f"{API_PREFIX}/openapi.json",
     lifespan=lifespan,
@@ -105,7 +105,7 @@ async def handle_mps_unavailable_error(
     _request: Request,
     _exc: MPSUnavailableError,
 ) -> JSONResponse:
-    """Tell callers this is a Dograh outage, not invalid customer config."""
+    """Tell callers this is a Menace Voice outage, not invalid customer config."""
 
     return JSONResponse(
         status_code=503,

@@ -10,7 +10,8 @@ from .regions import CLOUDONIX_REGION_NAMES, get_cloudonix_region
 # Identity of the configuration Dograh provisions for every organization at
 # signup. Lives here rather than in ``provisioning`` so the leaf modules that
 # only need to recognize a managed row don't pull in the provisioning path.
-MANAGED_CONFIGURATION_NAME = "Dograh Cloudonix SIP"
+MANAGED_CONFIGURATION_NAME = "Menace Voice Cloudonix SIP"
+LEGACY_MANAGED_CONFIGURATION_NAMES = frozenset({"Dograh Cloudonix SIP"})
 MANAGED_BY = "dograh-mps"
 
 

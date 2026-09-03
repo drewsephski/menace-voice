@@ -128,7 +128,7 @@ _UI_METADATA = ProviderUIMetadata(
             type="select",
             required=False,
             description=(
-                "Enable PBX-specific call control for calls patched into Dograh "
+                "Enable PBX-specific call control for calls patched into Menace Voice "
                 "through this Asterisk configuration."
             ),
             options=[ProviderUIOption(value="vicidial", label="VICIdial")],

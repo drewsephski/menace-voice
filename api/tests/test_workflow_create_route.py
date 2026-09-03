@@ -197,6 +197,120 @@ def test_update_workflow_rejects_transition_custom_tool_collision_before_db_writ
     assert mock_db.mock_calls == []
 
 
+def test_create_workflow_from_template_attaches_selected_resources_atomically():
+    app = _make_test_app()
+    client = TestClient(app)
+    created_at = datetime.now(UTC)
+    generated_definition = {
+        "nodes": [
+            {
+                "id": "start",
+                "type": "startCall",
+                "data": {"prompt": "Greet the caller."},
+            },
+            {
+                "id": "agent",
+                "type": "agentNode",
+                "data": {"name": "Agent", "prompt": "Help the caller."},
+            },
+            {"id": "end", "type": "endCall", "data": {}},
+        ],
+        "edges": [],
+    }
+    workflow = SimpleNamespace(
+        id=42,
+        name="Maya",
+        status="draft",
+        created_at=created_at,
+        current_definition_id=7,
+        template_context_variables=None,
+        call_disposition_codes=None,
+        workflow_configurations=None,
+    )
+
+    with (
+        patch("api.routes.workflow.db_client") as mock_db,
+        patch(
+            "api.routes.workflow.mps_service_key_client.call_workflow_api",
+            AsyncMock(return_value={"workflow_definition": generated_definition}),
+        ) as generate_workflow,
+    ):
+        mock_db.get_tools_by_uuids = AsyncMock(
+            return_value=[
+                SimpleNamespace(
+                    tool_uuid="mcp-1",
+                    category="mcp",
+                    name="Exa web search",
+                    definition={
+                        "type": "mcp",
+                        "config": {"url": "https://mcp.exa.ai/mcp"},
+                    },
+                )
+            ]
+        )
+        mock_db.get_documents_by_uuids = AsyncMock(
+            return_value=[SimpleNamespace(document_uuid="doc-1")]
+        )
+        mock_db.create_workflow = AsyncMock(return_value=workflow)
+
+        response = client.post(
+            "/workflow/create/template",
+            json={
+                "call_type": "inbound",
+                "use_case": "Receptionist",
+                "activity_description": "Answer calls",
+                "name": "Maya",
+                "tool_uuids": ["mcp-1", "mcp-1"],
+                "document_uuids": ["doc-1"],
+            },
+        )
+
+    assert response.status_code == 200
+    generate_workflow.assert_awaited_once()
+    create_kwargs = mock_db.create_workflow.await_args.kwargs
+    assert create_kwargs["name"] == "Maya"
+    assert all(
+        node["data"].get("tool_uuids") == ["mcp-1"]
+        and node["data"].get("document_uuids") == ["doc-1"]
+        for node in create_kwargs["workflow_definition"]["nodes"]
+        if node["type"] in {"startCall", "agentNode"}
+    )
+    assert all(
+        "MCP tool guidance:" in node["data"]["prompt"]
+        for node in create_kwargs["workflow_definition"]["nodes"]
+        if node["type"] in {"startCall", "agentNode"}
+    )
+    assert create_kwargs["workflow_definition"]["nodes"][2]["data"] == {}
+
+
+def test_create_workflow_from_template_rejects_unavailable_selected_resource():
+    app = _make_test_app()
+    client = TestClient(app)
+
+    with (
+        patch("api.routes.workflow.db_client") as mock_db,
+        patch(
+            "api.routes.workflow.mps_service_key_client.call_workflow_api",
+            AsyncMock(),
+        ) as generate_workflow,
+    ):
+        mock_db.get_tools_by_uuids = AsyncMock(return_value=[])
+
+        response = client.post(
+            "/workflow/create/template",
+            json={
+                "call_type": "inbound",
+                "use_case": "Receptionist",
+                "activity_description": "Answer calls",
+                "tool_uuids": ["missing-tool"],
+            },
+        )
+
+    assert response.status_code == 404
+    assert "missing-tool" in response.json()["detail"]
+    generate_workflow.assert_not_awaited()
+
+
 def test_create_workflow_run_uses_draft_and_template_context():
     app = _make_test_app()
     client = TestClient(app)

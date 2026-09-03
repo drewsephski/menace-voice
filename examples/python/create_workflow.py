@@ -4,8 +4,8 @@ Requirements:
     pip install -r requirements.txt
 
 Environment variables (loaded from `.env` in this directory):
-    DOGRAH_API_ENDPOINT  - Dograh API base URL (e.g. http://localhost:8000)
-    DOGRAH_API_TOKEN     - API token sent as X-API-Key
+    DOGRAH_API_ENDPOINT  - Menace Voice API base URL (e.g. http://localhost:8000)
+    DOGRAH_API_TOKEN     - Menace Voice API token sent as X-API-Key
 
 Run:
     python create_workflow.py
@@ -27,7 +27,7 @@ load_dotenv(Path(__file__).parent / ".env")
 WORKFLOW_NAME = "My SDK-created agent"
 
 # A minimal starter agent with a single `startCall` node that greets the user.
-# Open the new agent in the Dograh UI to extend it, or edit this dict and
+# Open the new agent in Menace Voice to extend it, or edit this dict and
 # re-run to tweak the starting definition.
 WORKFLOW_DEFINITION: dict = {
     "nodes": [

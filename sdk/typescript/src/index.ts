@@ -1,7 +1,7 @@
 /**
- * Dograh SDK — typed builder for voice-AI workflows.
+ * Menace Agents SDK — typed builder for voice workflows.
  *
- * Runtime SDK: fetches the spec catalog from the Dograh backend at session
+ * Runtime SDK: fetches the spec catalog from the Menace Voice backend at session
  * start and validates every `Workflow.add()` call against it. Don't import
  * per-node-type classes — the `type` argument is a string keyed against the
  * fetched spec catalog.

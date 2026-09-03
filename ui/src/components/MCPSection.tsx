@@ -109,7 +109,7 @@ export function MCPSection() {
           rel="noopener noreferrer"
           className="text-primary underline hover:no-underline"
         >
-          MCP integration guide
+          Menace Voice MCP integration guide
         </Link>
         .
       </p>

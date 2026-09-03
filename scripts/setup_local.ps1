@@ -147,7 +147,7 @@ function Assert-PathExists([string]$Path, [string]$Message) {
 
 Write-Info ''
 Write-Info '╔══════════════════════════════════════════════════════════════╗'
-Write-Info '║                    Dograh Local Setup                        ║'
+Write-Info '║                 Menace Voice Local Setup                     ║'
 Write-Info '║       Local docker deployment, optional TURN server          ║'
 Write-Info '╚══════════════════════════════════════════════════════════════╝'
 Write-Info ''

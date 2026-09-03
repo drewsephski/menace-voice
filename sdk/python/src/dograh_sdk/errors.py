@@ -20,7 +20,7 @@ class ValidationError(DograhSdkError):
 
 
 class ApiError(DograhSdkError):
-    """Raised when the Dograh backend returns a non-2xx response."""
+    """Raised when the Menace Voice backend returns a non-2xx response."""
 
     def __init__(self, status_code: int, message: str, body: object = None):
         super().__init__(f"[{status_code}] {message}")

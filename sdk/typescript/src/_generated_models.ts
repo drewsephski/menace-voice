@@ -681,7 +681,7 @@ export interface components {
             parameters?: components["schemas"]["ToolParameter"][] | null;
             /**
              * Preset Parameters
-             * @description Parameters injected by Dograh from fixed values or workflow context templates.
+             * @description Parameters injected by Menace Voice from fixed values or workflow context templates.
              */
             preset_parameters?: components["schemas"]["PresetToolParameter"][] | null;
             /**
@@ -769,7 +769,7 @@ export interface components {
             timeout_ms: number;
             /**
              * Wait Message
-             * @description Optional short message played while Dograh resolves routing.
+             * @description Optional short message played while Menace Voice resolves routing.
              */
             wait_message?: string | null;
             /**
@@ -779,7 +779,7 @@ export interface components {
             parameters?: components["schemas"]["ToolParameter"][] | null;
             /**
              * Preset Parameters
-             * @description Parameters injected by Dograh from fixed values or workflow context templates.
+             * @description Parameters injected by Menace Voice from fixed values or workflow context templates.
              */
             preset_parameters?: components["schemas"]["PresetToolParameter"][] | null;
         };
@@ -941,7 +941,7 @@ export interface components {
         };
         /**
          * PresetToolParameter
-         * @description A parameter injected by Dograh at runtime.
+         * @description A parameter injected by Menace Voice at runtime.
          */
         PresetToolParameter: {
             /**
@@ -1220,7 +1220,7 @@ export interface components {
             timeout: number;
             /**
              * Call Disposition
-             * @description Optional disposition to record after a successful transfer. When omitted, Dograh records its provider-specific transfer default.
+             * @description Optional disposition to record after a successful transfer. When omitted, Menace Voice records its provider-specific transfer default.
              */
             call_disposition?: string | null;
             /**

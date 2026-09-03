@@ -5,11 +5,6 @@
   "license": "BSD-2-Clause",
   "author": "Zansat Technologies Private Limited",
   "homepage": "https://dograh.com",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/dograh-hq/dograh.git",
-    "directory": "sdk/typescript"
-  },
   "keywords": [
     "dograh",
     "voice-ai",

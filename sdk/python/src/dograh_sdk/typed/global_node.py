@@ -1,7 +1,7 @@
 """GENERATED — do not edit by hand.
 
 Regenerate with `python -m dograh_sdk.codegen` against the target
-Dograh backend. Source of truth: the backend's model-backed node-spec
+Menace Voice backend. Source of truth: the backend's model-backed node-spec
 catalog served from `/api/v1/node-types`.
 """
 
@@ -35,4 +35,3 @@ class GlobalNode(TypedNode):
     Text appended to every prompted node's system prompt when that node has
     `add_global_prompt=true`. Supports {{template_variables}}.
     """
-

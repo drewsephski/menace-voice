@@ -1896,7 +1896,7 @@ function WorkflowSettingsInner({
                             >
                                 {item.label}
                                 {dirtySections.has(item.id) && (
-                                    <span className="h-1.5 w-1.5 rounded-full bg-orange-500" />
+                                    <span className="h-1.5 w-1.5 rounded-full bg-[#f04438]" />
                                 )}
                             </a>
                         ))}

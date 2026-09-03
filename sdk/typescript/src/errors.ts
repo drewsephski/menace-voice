@@ -1,4 +1,4 @@
-// SDK-level exceptions. All subclass `DograhSdkError` so callers can
+// SDK-level exceptions. All subclass `DograhSdkError` so Menace Agents callers can
 // catch them as one category.
 
 export class DograhSdkError extends Error {
@@ -23,7 +23,7 @@ export class ValidationError extends DograhSdkError {
     }
 }
 
-/** Raised when the Dograh backend returns a non-2xx response. */
+/** Raised when the Menace Voice backend returns a non-2xx response. */
 export class ApiError extends DograhSdkError {
     readonly statusCode: number;
     readonly body: unknown;

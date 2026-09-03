@@ -1,7 +1,7 @@
-# dograh-sdk
+# Menace Agents SDK (Python)
 
-Typed builder for Dograh voice-AI workflows. Fetches the node-spec catalog from
-the Dograh backend at session start, validates every call against it at the
+Typed builder for Menace Agents voice workflows. Fetches the node-spec catalog from
+the Menace Voice backend at session start, validates every call against it at the
 call site, and produces `ReactFlowDTO`-compatible JSON.
 
 ## Install

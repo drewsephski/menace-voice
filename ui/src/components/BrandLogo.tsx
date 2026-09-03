@@ -1,11 +1,5 @@
 import { cn } from "@/lib/utils";
 
-// Reusable Dograh wordmark. Theme-aware by default: the dark logo shows on light
-// surfaces and the light/cream logo shows on dark. Pass `inverse` to force the
-// light logo on an always-dark surface (e.g. the auth brand panel). Pass `mark`
-// to render the square logo mark instead of the full wordmark (e.g. the app
-// sidebar header). Height is controlled by the caller via className (e.g.
-// "h-7"); width stays auto so each lockup keeps its aspect ratio.
 export function BrandLogo({
   className,
   inverse = false,
@@ -18,21 +12,39 @@ export function BrandLogo({
   if (mark) {
     return (
       // eslint-disable-next-line @next/next/no-img-element
-      <img src="/dograh-mark.png" alt="Dograh" className={cn("w-auto select-none", className)} />
+      <img
+        src="/menace-mark.png"
+        alt="Menace Voice"
+        className={cn(
+          "w-auto select-none dark:brightness-0 dark:invert",
+          className,
+        )}
+      />
     );
   }
-  if (inverse) {
-    return (
-      // eslint-disable-next-line @next/next/no-img-element
-      <img src="/dograh-logo-inverse.png" alt="Dograh" className={cn("w-auto select-none", className)} />
-    );
-  }
+
   return (
-    <>
+    <span
+      role="img"
+      aria-label="Menace Voice"
+      className={cn(
+        "inline-flex items-center gap-2",
+        inverse ? "text-zinc-50" : "text-foreground",
+        className,
+      )}
+    >
       {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src="/dograh-logo.png" alt="Dograh" className={cn("block w-auto select-none dark:hidden", className)} />
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src="/dograh-logo-inverse.png" alt="Dograh" className={cn("hidden w-auto select-none dark:block", className)} />
-    </>
+      <img
+        src="/menace-mark.png"
+        alt=""
+        className={cn(
+          "h-full w-auto select-none",
+          inverse ? "brightness-0 invert" : "dark:brightness-0 dark:invert",
+        )}
+      />
+      <span className="text-[0.92em] font-semibold tracking-[-0.04em]">
+        Menace Voice
+      </span>
+    </span>
   );
 }

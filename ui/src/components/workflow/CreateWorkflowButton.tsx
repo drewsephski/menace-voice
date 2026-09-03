@@ -50,7 +50,7 @@ export function CreateWorkflowButton() {
     const [isCreating, setIsCreating] = useState(false);
 
     const handleAgentBuilder = () => {
-        router.push('/workflow/create');
+        router.push('/agent-onboarding');
     };
 
     const handleBlankCanvas = async () => {

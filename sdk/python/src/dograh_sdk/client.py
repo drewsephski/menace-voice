@@ -1,4 +1,4 @@
-"""HTTP client for the Dograh REST API.
+"""HTTP client for the Menace Voice REST API.
 
 Most endpoint methods come from `_GeneratedClient` (auto-generated from
 the FastAPI OpenAPI spec — see `scripts/generate_sdk.sh`). This class

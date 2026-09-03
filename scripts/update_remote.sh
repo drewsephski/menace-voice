@@ -63,7 +63,7 @@ generate_minio_root_user() {
 
 echo -e "${BLUE}"
 echo "╔══════════════════════════════════════════════════════════════╗"
-echo "║                  Dograh Remote Update                        ║"
+echo "║               Menace Voice Remote Update                     ║"
 echo "║  Refresh deployment files and validate runtime config        ║"
 echo "╚══════════════════════════════════════════════════════════════╝"
 echo -e "${NC}"

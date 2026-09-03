@@ -14,16 +14,18 @@ from . import _preprocess_credentials_on_save
 from .config import (
     MANAGED_BY,
     MANAGED_CONFIGURATION_NAME,
+    LEGACY_MANAGED_CONFIGURATION_NAMES,
     normalize_cloudonix_domain,
 )
 
 
 def _managed_configuration(rows: list[Any]):
     """Return the MPS-managed row without treating user configs as managed."""
+    managed_names = {MANAGED_CONFIGURATION_NAME, *LEGACY_MANAGED_CONFIGURATION_NAMES}
     for row in rows:
         credentials = row.credentials or {}
         if (
-            row.name == MANAGED_CONFIGURATION_NAME
+            row.name in managed_names
             and row.provider == "cloudonix"
             and credentials.get("managed_by") == MANAGED_BY
         ):

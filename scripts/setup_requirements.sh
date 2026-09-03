@@ -59,7 +59,7 @@ if [ "$DEV_MODE" -eq 0 ]; then
     git submodule update --init --recursive
 fi
 
-# Use uv (https://github.com/astral-sh/uv) for ~5-10x faster installs.
+# Use uv for ~5-10x faster installs.
 # The devcontainer Dockerfile pre-installs uv; this fallback handles CI runners
 # and contributor laptops that don't have it yet.
 if ! command -v uv >/dev/null 2>&1; then

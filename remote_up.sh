@@ -61,7 +61,7 @@ done
 
 cd "$SCRIPT_DIR"
 
-dograh_info "Running Dograh remote preflight..."
+dograh_info "Running Menace Voice remote preflight..."
 dograh_prepare_remote_install "$SCRIPT_DIR"
 docker compose config -q
 dograh_success "✓ dograh-init preflight validated"

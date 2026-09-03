@@ -39,6 +39,7 @@ from api.routes.tool import (
 from api.services.workflow.tools.mcp_tool import (
     validate_mcp_definition,
 )
+from api.services.tool_management import ToolManagementError, validate_mcp_server_url
 
 # ── Canonical valid MCP request body ─────────────────────────────────────────
 
@@ -52,6 +53,18 @@ VALID_MCP_DEFINITION = {
         "tools_filter": [],
     },
 }
+
+
+def test_saas_mcp_url_validation_rejects_private_hosts(monkeypatch):
+    monkeypatch.setattr("api.utils.url_security.DEPLOYMENT_MODE", "saas")
+
+    with pytest.raises(ToolManagementError, match="localhost"):
+        validate_mcp_server_url(
+            {
+                "type": "mcp",
+                "config": {"url": "http://localhost:8080/mcp"},
+            }
+        )
 
 
 # ── Part A regression: CreateToolRequest / UpdateToolRequest validation ───────

@@ -16,7 +16,7 @@ export async function GET() {
 
   // Only handle OSS mode
   if (authProvider !== 'local') {
-    return NextResponse.json({ error: 'Not in OSS mode' }, { status: 400 });
+    return NextResponse.json({ error: 'Not in local mode' }, { status: 400 });
   }
 
   const cookieStore = await cookies();

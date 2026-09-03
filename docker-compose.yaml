@@ -1,4 +1,4 @@
-# Dograh deployment stack — driven by the helper scripts, not by a bare
+# Menace Voice deployment stack — driven by the helper scripts, not by a bare
 # `docker compose up`.
 #
 # This stack needs a generated .env (secrets, public host/URL) and, for the

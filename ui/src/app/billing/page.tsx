@@ -269,7 +269,7 @@ export default function BillingPage() {
                 <div className="flex gap-3 rounded-lg border border-amber-200 bg-amber-50 p-4 dark:border-amber-900/50 dark:bg-amber-950/30">
                     <Info className="mt-0.5 h-4 w-4 flex-shrink-0 text-amber-600 dark:text-amber-400" />
                     <div className="text-sm text-amber-900 dark:text-amber-200">
-                        <p className="font-medium">Credit purchases are unavailable in OSS mode</p>
+                        <p className="font-medium">Credit purchases are unavailable in local mode</p>
                         <p className="mt-1">
                             You can&apos;t purchase credits from this self-hosted app. Sign up and
                             purchase credits at{" "}

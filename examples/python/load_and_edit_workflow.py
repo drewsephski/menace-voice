@@ -4,8 +4,8 @@ Requirements:
     pip install -r requirements.txt
 
 Environment variables (loaded from `.env` in this directory):
-    DOGRAH_API_ENDPOINT  - Dograh API base URL (e.g. http://localhost:8000)
-    DOGRAH_API_TOKEN     - API token sent as X-API-Key
+    DOGRAH_API_ENDPOINT  - Menace Voice API base URL (e.g. http://localhost:8000)
+    DOGRAH_API_TOKEN     - Menace Voice API token sent as X-API-Key
 
 Run:
     python load_and_edit_workflow.py
@@ -24,7 +24,7 @@ from dograh_sdk._generated_models import UpdateWorkflowRequest
 
 load_dotenv(Path(__file__).parent / ".env")
 
-# Replace with the numeric ID of an existing agent in your Dograh account.
+# Replace with the numeric ID of an existing agent in your Menace account.
 WORKFLOW_ID = 0
 
 # Sentence appended to the startCall node's prompt when the script runs.

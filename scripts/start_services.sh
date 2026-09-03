@@ -22,7 +22,7 @@ LOG_TO_FILE=${LOG_TO_FILE:-true}    # Set to false in Docker to use stdout
 
 # Log startup
 cd "$BASE_DIR"
-echo "Starting Dograh Services at $(date) in BASE_DIR: ${BASE_DIR}"
+echo "Starting Menace Voice Services at $(date) in BASE_DIR: ${BASE_DIR}"
 
 ###############################################################################
 ### 1) Load environment variables

@@ -1,4 +1,4 @@
-# Dograh — Hostinger VPS Docker Manager deployment
+# Menace Voice — Hostinger VPS Docker Manager deployment
 # =================================================================
 # This variant is for environments where a SHARED, MANAGED Traefik
 # (with Let's Encrypt) already terminates TLS and routes ingress —

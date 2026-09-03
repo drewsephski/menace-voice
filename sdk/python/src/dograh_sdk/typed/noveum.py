@@ -1,7 +1,7 @@
 """GENERATED — do not edit by hand.
 
 Regenerate with `python -m dograh_sdk.codegen` against the target
-Dograh backend. Source of truth: the backend's model-backed node-spec
+Menace Voice backend. Source of truth: the backend's model-backed node-spec
 catalog served from `/api/v1/node-types`.
 """
 
@@ -41,7 +41,7 @@ class Noveum(TypedNode):
 
     noveum_enabled: bool = True
     """
-    When false, Dograh skips exporting this call to Noveum.
+    When false, Menace Voice skips exporting this call to Noveum.
     """
 
     noveum_environment: str = 'production'
@@ -54,4 +54,3 @@ class Noveum(TypedNode):
     Capture per-segment STT/TTS audio and the full-conversation recording
     for audio evaluation on Noveum.
     """
-

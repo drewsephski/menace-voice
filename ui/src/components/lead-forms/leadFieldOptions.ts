@@ -68,7 +68,6 @@ export const ONBOARDING_MIGRATION_OPTIONS = [
 
 // Onboarding: how did you hear about us? (trimmed).
 export const ONBOARDING_HEARD_OPTIONS = [
-  { value: "github", label: "GitHub" },
   { value: "search_engine", label: "Search engine" },
   { value: "social_media", label: "Social media (Twitter, LinkedIn)" },
   { value: "youtube", label: "YouTube" },

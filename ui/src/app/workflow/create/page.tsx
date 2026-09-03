@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { createWorkflowFromTemplateApiV1WorkflowCreateTemplatePost } from '@/client/sdk.gen';
 import { Button } from '@/components/ui/button';
@@ -32,6 +32,10 @@ export default function CreateWorkflowPage() {
     const [callType, setCallType] = useState<'inbound' | 'outbound'>('inbound');
     const [useCase, setUseCase] = useState('');
     const [activityDescription, setActivityDescription] = useState('');
+
+    useEffect(() => {
+        router.replace('/agent-onboarding');
+    }, [router]);
 
     const handleCreateWorkflow = async () => {
         if (!useCase || !activityDescription) {
@@ -83,7 +87,7 @@ export default function CreateWorkflowPage() {
         <div className="min-h-screen">
             <div className="container mx-auto px-4 py-8 max-w-2xl">
                 <div className="mb-6">
-                    <h1 className="text-3xl font-bold mb-2">Create Voice Agent</h1>
+                    <h1 className="text-3xl font-bold mb-2">Create a Menace Agent</h1>
                     <p className="text-muted-foreground">
                         Tell us about your use case and we&apos;ll create a customized voice agent for you
                     </p>
