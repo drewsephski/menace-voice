@@ -334,7 +334,7 @@ export const RecordingsDialog = ({
             resetRecordingState();
             if (fileInputRef.current) fileInputRef.current.value = "";
             await fetchRecordings();
-        } catch {
+        } catch (err) {
             setError(
                 err instanceof Error ? err.message : "Failed to upload recordings"
             );

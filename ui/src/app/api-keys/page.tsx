@@ -267,9 +267,9 @@ export default function APIKeysPage() {
         }
     };
 
-    const handleArchiveServiceKey = async (keyId: string) => {
+    const handleArchiveServiceKey = async (keyId: number) => {
         const key = serviceKeys.find((candidate) => candidate.id === keyId);
-        if (key) setArchiveTarget({ kind: 'service', id: key.id, name: key.name });
+        if (key) setArchiveTarget({ kind: 'service', id: String(key.id), name: key.name });
     };
 
     const handleReactivateKey = async (keyId: number) => {
@@ -551,7 +551,7 @@ export default function APIKeysPage() {
                                                     <Button
                                                         variant="ghost"
                                                         size="sm"
-                                                        onClick={() => handleArchiveServiceKey(String(key.id))}
+                                                        onClick={() => handleArchiveServiceKey(key.id)}
                                                         className="text-destructive hover:text-destructive/90"
                                                     >
                                                         <Trash2 className="w-4 h-4" />

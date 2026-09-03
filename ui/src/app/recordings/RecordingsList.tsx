@@ -10,8 +10,8 @@ import {
     updateRecordingApiV1WorkflowRecordingsIdPatch,
 } from "@/client/sdk.gen";
 import type { RecordingResponseSchema } from "@/client/types.gen";
-import { Button } from "@/components/ui/button";
 import { DeleteConfirmationDialog } from "@/components/DeleteConfirmationDialog";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAudioPlayback } from "@/hooks/useAudioPlayback";

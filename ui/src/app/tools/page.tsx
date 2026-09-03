@@ -213,7 +213,7 @@ export default function ToolsPage() {
 
             await deleteToolApiV1ToolsToolUuidDelete({
                 path: {
-                    tool_uuid: toolUuid,
+                    tool_uuid: deleteTarget.tool_uuid,
                 },
                 headers: {
                     Authorization: `Bearer ${accessToken}`,
