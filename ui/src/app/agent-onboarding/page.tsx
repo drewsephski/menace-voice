@@ -356,7 +356,7 @@ export default function AgentOnboardingPage() {
           category: "mcp",
           icon: "puzzle",
           icon_color: "#f04438",
-          definition: createMcpDefinition(normalizedUrl, mcpCredentialUuid, preset ? "" : mcpToolsFilter),
+          definition: createMcpDefinition(normalizedUrl, preset ? "" : mcpCredentialUuid, preset ? "" : mcpToolsFilter),
         },
         headers: { Authorization: `Bearer ${accessToken}` },
       });
