@@ -42,7 +42,11 @@ from pipecat.services.deepgram.flux.stt import (
 from pipecat.services.deepgram.stt import DeepgramSTTService, DeepgramSTTSettings
 from pipecat.services.deepgram.tts import DeepgramTTSService, DeepgramTTSSettings
 from pipecat.services.dograh.flux.stt import DograhFluxSTTService
-from pipecat.services.dograh.llm import DograhLLMService
+from api.services.pipecat.dograh_llm import DograhManagedLLMService
+from api.services.pipecat.openai_llm import (
+    DograhOpenAILLMService,
+    DograhOpenRouterLLMService,
+)
 from pipecat.services.dograh.stt import DograhSTTService, DograhSTTSettings
 from pipecat.services.dograh.tts import DograhTTSService, DograhTTSSettings
 from pipecat.services.elevenlabs.stt import (
@@ -970,7 +974,7 @@ def create_llm_service_from_provider(
             _validate_runtime_service_url(base_url, "base_url")
             kwargs["base_url"] = base_url
         if "gpt-5" in model:
-            return OpenAILLMService(
+            return DograhOpenAILLMService(
                 api_key=api_key,
                 settings=OpenAILLMSettings(
                     model=model,
@@ -978,7 +982,7 @@ def create_llm_service_from_provider(
                 ),
                 **kwargs,
             )
-        return OpenAILLMService(
+        return DograhOpenAILLMService(
             api_key=api_key,
             settings=OpenAILLMSettings(model=model, temperature=0.1),
             **kwargs,
@@ -993,7 +997,7 @@ def create_llm_service_from_provider(
         if base_url:
             _validate_runtime_service_url(base_url, "base_url")
             kwargs["base_url"] = base_url
-        return OpenRouterLLMService(
+        return DograhOpenRouterLLMService(
             api_key=api_key,
             settings=OpenRouterLLMSettings(model=model, temperature=0.1),
             **kwargs,
@@ -1020,13 +1024,14 @@ def create_llm_service_from_provider(
             settings=AzureLLMSettings(model=model, temperature=0.1),
         )
     elif provider == ServiceProviders.DOGRAH.value:
-        return DograhLLMService(
+        service = DograhManagedLLMService(
             base_url=f"{MPS_API_URL}/api/v1/llm",
             api_key=api_key,
             correlation_id=correlation_id,
             usage_context=usage_context,
             settings=OpenAILLMSettings(model=model),
         )
+        return service
     elif provider == ServiceProviders.AWS_BEDROCK.value:
         return AWSBedrockLLMService(
             aws_access_key=aws_access_key,
@@ -1323,7 +1328,7 @@ def create_llm_service(
     elif provider == ServiceProviders.SARVAM.value:
         kwargs["temperature"] = user_config.llm.temperature
 
-    return create_llm_service_from_provider(
+    service = create_llm_service_from_provider(
         provider,
         model,
         api_key,
@@ -1331,6 +1336,9 @@ def create_llm_service(
         usage_context=usage_context,
         **kwargs,
     )
+    if hasattr(service, "_failure_provider"):
+        service._failure_provider = provider
+    return service
 
 
 def create_llm_service_with_model_override(

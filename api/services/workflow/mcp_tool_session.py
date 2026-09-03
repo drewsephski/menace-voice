@@ -19,6 +19,7 @@ from pipecat.adapters.schemas.function_schema import FunctionSchema
 from pipecat.services.mcp_service import MCPClient
 
 from api.services.workflow.tools.mcp_tool import namespace_function_name
+from api.services.workflow.tools.tool_result_limits import bound_tool_result_for_llm
 from api.utils.credential_auth import build_auth_header
 from api.utils.url_security import validate_user_configured_service_url
 
@@ -222,7 +223,9 @@ class McpToolSession:
         for content in getattr(result, "content", []) or []:
             if getattr(content, "text", None):
                 text += content.text
-        return text or "Sorry, the MCP tool returned no content."
+        if not text:
+            return "Sorry, the MCP tool returned no content."
+        return bound_tool_result_for_llm(text)
 
     async def close(self) -> None:
         if self._client is not None:

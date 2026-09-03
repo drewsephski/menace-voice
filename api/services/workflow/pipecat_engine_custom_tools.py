@@ -28,6 +28,7 @@ from api.services.telephony.external_pbx import resolve_external_pbx_field_mappi
 from api.services.telephony.factory import get_telephony_provider_for_run
 from api.services.telephony.transfer_event_protocol import TransferContext
 from api.services.workflow.tools.calculator import get_calculator_tools, safe_calculator
+from api.services.workflow.tools.tool_result_limits import bound_tool_result_for_llm
 from api.services.workflow.tools.custom_tool import (
     execute_http_tool,
     tool_to_function_schema,
@@ -457,7 +458,9 @@ class CustomToolManager:
                     organization_id=await self.get_organization_id(),
                 )
 
-                await function_call_params.result_callback(result)
+                await function_call_params.result_callback(
+                    bound_tool_result_for_llm(result)
+                )
 
             except Exception as e:
                 logger.error(f"HTTP tool '{function_name}' execution failed: {e}")
@@ -481,7 +484,9 @@ class CustomToolManager:
                 result = await session.call(
                     function_name, function_call_params.arguments or {}
                 )
-                await function_call_params.result_callback(result)
+                await function_call_params.result_callback(
+                    bound_tool_result_for_llm(result)
+                )
             except Exception as e:
                 logger.error(f"MCP tool '{function_name}' failed: {e}")
                 await function_call_params.result_callback(
