@@ -30,8 +30,20 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Menace Voice",
-  description: "Voice AI platform for building and deploying Menace Agents",
+  title: "Menace Voice | Build production voice AI agents",
+  description:
+    "Design, test, and deploy voice AI agents across phone and WebRTC with visual workflows, tool calling, human handoff, and your choice of models.",
+  alternates: {
+    canonical: "https://voice.menaceui.com",
+  },
+  openGraph: {
+    title: "Menace Voice | Build production voice AI agents",
+    description:
+      "Design the conversation, connect your tools, and deploy over phone or WebRTC from one visual workspace.",
+    siteName: "Menace Voice",
+    type: "website",
+    url: "https://voice.menaceui.com",
+  },
 };
 
 export default function RootLayout({

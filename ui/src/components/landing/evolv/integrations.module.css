@@ -1,0 +1,167 @@
+.section {
+  min-height: 1269px;
+  padding: 126px 32px 120px;
+  overflow: hidden;
+  border-top: 1px solid rgb(255 255 255 / 10%);
+}
+
+.heading {
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+  text-align: center;
+}
+
+.heading h2 {
+  max-width: 720px;
+  margin: 26px 0 74px;
+  font-size: 48px;
+  font-weight: 450;
+  letter-spacing: -0.04em;
+  line-height: 1.15;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(5, 153px);
+  width: fit-content;
+  margin: 0 auto;
+  border-top: 1px solid rgb(255 255 255 / 10%);
+  border-left: 1px solid rgb(255 255 255 / 10%);
+}
+
+.cell,
+.stripe {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 153px;
+  height: 153px;
+  border-right: 1px solid rgb(255 255 255 / 10%);
+  border-bottom: 1px solid rgb(255 255 255 / 10%);
+}
+
+.cell {
+  opacity: 0.65;
+  transition:
+    opacity 300ms ease,
+    background-color 300ms ease;
+}
+
+.cell img {
+  width: 56px;
+  height: 56px;
+  object-fit: contain;
+  filter: grayscale(1);
+}
+
+.cell:hover,
+.cell:focus-within {
+  background: rgb(255 255 255 / 2%);
+  opacity: 1;
+  outline: none;
+}
+
+.stripe {
+  background-image: repeating-linear-gradient(
+    135deg,
+    transparent 0 8px,
+    rgb(255 255 255 / 5%) 8px 9px
+  );
+}
+
+.sparkle {
+  opacity: 1;
+}
+
+.sparkle span {
+  display: grid;
+  width: 64px;
+  height: 64px;
+  place-items: center;
+  border: 1px solid rgb(60 236 146 / 34%);
+  border-radius: 50%;
+  background: rgb(23 176 102 / 10%);
+  color: #5beba4;
+  box-shadow: 0 0 45px rgb(42 221 137 / 22%);
+}
+
+.action {
+  display: flex;
+  width: fit-content;
+  min-height: 44px;
+  align-items: center;
+  gap: 22px;
+  margin: 54px auto 0;
+  padding: 0 18px;
+  border: 1px solid rgb(255 255 255 / 15%);
+  color: #d2d2d2;
+  font-size: 13px;
+  transition: background-color 200ms ease;
+}
+
+.action:hover {
+  background: rgb(255 255 255 / 4%);
+}
+
+@media (max-width: 900px) {
+  .section {
+    min-height: 1122px;
+    padding-block: 104px;
+  }
+
+  .grid {
+    grid-template-columns: repeat(5, 128px);
+  }
+
+  .cell,
+  .stripe {
+    width: 128px;
+    height: 128px;
+  }
+}
+
+@media (max-width: 600px) {
+  .section {
+    min-height: 757px;
+    padding: 76px 20px 72px;
+  }
+
+  .heading h2 {
+    max-width: 320px;
+    margin: 22px 0 46px;
+    font-size: 30px;
+    line-height: 1.15;
+  }
+
+  .grid {
+    grid-template-columns: repeat(5, 65px);
+  }
+
+  .cell,
+  .stripe {
+    width: 65px;
+    height: 65px;
+  }
+
+  .cell img {
+    width: 40px;
+    height: 40px;
+  }
+
+  .sparkle span {
+    width: 46px;
+    height: 46px;
+  }
+
+  .action {
+    margin-top: 42px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cell,
+  .action {
+    transition: none;
+  }
+}

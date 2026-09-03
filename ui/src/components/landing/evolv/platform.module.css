@@ -1,0 +1,271 @@
+.section {
+  min-height: 940px;
+  padding: 96px 64px 104px;
+  border-bottom: 1px solid var(--evolv-border);
+}
+
+.intro {
+  max-width: 768px;
+}
+
+.intro h2 {
+  margin: 28px 0 0;
+  font-size: 48px;
+  font-weight: 450;
+  letter-spacing: -0.045em;
+  line-height: 1.15;
+}
+
+.intro > p {
+  max-width: 650px;
+  margin: 24px 0 0;
+  color: #8c8c8c;
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+.layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 40px;
+  margin-top: 68px;
+}
+
+.accordion {
+  border-bottom: 1px solid var(--evolv-border);
+}
+
+.item {
+  min-height: 70px;
+  border-top: 1px solid var(--evolv-border);
+}
+
+.trigger {
+  display: grid;
+  width: 100%;
+  min-height: 69px;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 20px;
+  align-items: center;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #c9c9c9;
+  cursor: pointer;
+  font-size: 15px;
+  font-weight: 520;
+  text-align: left;
+  transition:
+    min-height 320ms cubic-bezier(0.22, 1, 0.36, 1),
+    color 220ms ease;
+}
+
+.item[data-open="true"] .trigger {
+  min-height: 54px;
+  color: #fff;
+}
+
+.trigger:focus-visible {
+  outline: 2px solid var(--evolv-green);
+  outline-offset: -2px;
+}
+
+.toggleMark {
+  position: relative;
+  display: grid;
+  width: 24px;
+  height: 24px;
+  place-items: center;
+  color: var(--evolv-green);
+  transition: transform 320ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.toggleMark::before,
+.toggleMark::after {
+  position: absolute;
+  width: 10px;
+  height: 1.5px;
+  background: currentColor;
+  content: "";
+  transition:
+    opacity 180ms ease,
+    transform 320ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.toggleMark::after {
+  transform: rotate(90deg) scaleX(1);
+}
+
+.item[data-open="true"] .toggleMark {
+  transform: rotate(180deg);
+}
+
+.item[data-open="true"] .toggleMark::after {
+  opacity: 0;
+  transform: rotate(90deg) scaleX(0);
+}
+
+.answer {
+  display: grid;
+  grid-template-rows: 0fr;
+  opacity: 0;
+  visibility: hidden;
+  transition:
+    grid-template-rows 360ms cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 220ms ease,
+    visibility 0s linear 360ms;
+}
+
+.item[data-open="true"] .answer {
+  grid-template-rows: 1fr;
+  opacity: 1;
+  visibility: visible;
+  transition:
+    grid-template-rows 360ms cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 240ms ease 70ms,
+    visibility 0s linear 0s;
+}
+
+.answerInner {
+  min-height: 0;
+  overflow: hidden;
+}
+
+.answer p {
+  max-width: 490px;
+  margin: 0;
+  padding: 0 44px 18px 0;
+  color: #777;
+  font-size: 12.5px;
+  line-height: 1.55;
+}
+
+.proof {
+  display: flex;
+  min-height: 350px;
+  flex-direction: column;
+  padding: 34px;
+  background: #006b46;
+  color: #fff;
+}
+
+.proof blockquote {
+  max-width: 500px;
+  margin: 0;
+  font-size: 22px;
+  font-weight: 480;
+  letter-spacing: -0.03em;
+  line-height: 1.35;
+}
+
+.attribution {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-top: 24px;
+  font-size: 12px;
+}
+
+.attribution strong {
+  font-weight: 620;
+}
+
+.attribution span {
+  color: rgb(255 255 255 / 65%);
+}
+
+.metrics {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  margin: auto 0 0;
+  padding: 28px 0 0;
+  list-style: none;
+}
+
+.metrics li {
+  padding: 7px 9px;
+  border: 1px solid rgb(255 255 255 / 26%);
+  border-radius: 999px;
+  color: rgb(255 255 255 / 88%);
+  font-family: "Evolv Geist Mono", monospace;
+  font-size: 8.5px;
+  letter-spacing: 0.08em;
+  line-height: 1;
+}
+
+@media (max-width: 1024px) {
+  .section {
+    min-height: 1279px;
+    padding: 84px 48px 90px;
+  }
+
+  .intro h2 {
+    font-size: 36px;
+  }
+
+  .layout {
+    grid-template-columns: 1fr;
+    gap: 34px;
+    margin-top: 56px;
+  }
+
+  .proof {
+    min-height: 410px;
+  }
+}
+
+@media (max-width: 640px) {
+  .section {
+    min-height: 1259px;
+    padding: 72px 20px 71px;
+  }
+
+  .intro h2 {
+    margin-top: 24px;
+    font-size: 30px;
+  }
+
+  .intro > p {
+    margin-top: 20px;
+    font-size: 14px;
+  }
+
+  .layout {
+    gap: 28px;
+    margin-top: 44px;
+  }
+
+  .item {
+    min-height: 60px;
+  }
+
+  .trigger,
+  .item[data-open="true"] .trigger {
+    min-height: 59px;
+    font-size: 14px;
+  }
+
+  .answer p {
+    padding: 0 36px 16px 0;
+  }
+
+  .proof {
+    min-height: 430px;
+    padding: 26px 22px;
+  }
+
+  .proof blockquote {
+    font-size: 20px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .trigger,
+  .toggleMark,
+  .toggleMark::before,
+  .toggleMark::after,
+  .answer {
+    transition: none;
+  }
+}

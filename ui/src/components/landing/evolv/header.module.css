@@ -1,0 +1,243 @@
+.header {
+  position: fixed;
+  inset: 0 0 auto;
+  z-index: 50;
+  height: 77px;
+  border-bottom: 1px solid var(--evolv-border);
+  background: rgb(24 24 24 / 96%);
+  backdrop-filter: blur(14px);
+}
+
+.inner {
+  position: relative;
+  display: flex;
+  width: min(100% - 30px, 1280px);
+  height: 100%;
+  margin-inline: auto;
+  align-items: center;
+  justify-content: space-between;
+  padding-inline: 32px;
+  border-inline: 1px solid var(--evolv-border);
+}
+
+.logo,
+.contact,
+.waitlist,
+.desktopNav a,
+.mobileNav a {
+  transition:
+    color 160ms ease,
+    background-color 160ms ease,
+    border-color 160ms ease;
+}
+
+.logo {
+  display: inline-flex;
+  align-items: center;
+  color: #f5f5f5;
+}
+
+.desktopNav {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.desktopNav ul,
+.mobileNav ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.desktopNav ul {
+  display: flex;
+  align-items: center;
+  gap: 32px;
+}
+
+.desktopNav a,
+.contact {
+  color: #a3a3a3;
+  font-size: 13px;
+  line-height: 1;
+}
+
+.desktopNav a:hover,
+.contact:hover {
+  color: #fff;
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}
+
+.waitlist,
+.demoButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.waitlist {
+  min-height: 38px;
+  padding: 10px 18px;
+  background: #fff;
+  color: #111;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1;
+}
+
+.waitlist:hover {
+  background: #dedede;
+}
+
+.menuButton {
+  display: none;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgb(255 255 255 / 42%);
+  border-radius: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.menuIcon {
+  position: relative;
+  display: block;
+  width: 14px;
+  height: 12px;
+}
+
+.menuIcon span {
+  position: absolute;
+  left: 0;
+  width: 14px;
+  height: 1px;
+  background: #fff;
+  transition:
+    top 160ms ease,
+    transform 160ms ease;
+}
+
+.menuIcon span:first-child {
+  top: 3px;
+}
+
+.menuIcon span:last-child {
+  top: 8px;
+}
+
+.menuIcon[data-open="true"] span:first-child {
+  top: 6px;
+  transform: rotate(45deg);
+}
+
+.menuIcon[data-open="true"] span:last-child {
+  top: 6px;
+  transform: rotate(-45deg);
+}
+
+.menuPanel {
+  position: fixed;
+  inset: 66px 0 auto;
+  z-index: 49;
+  border-bottom: 1px solid var(--evolv-border);
+  background: #181818;
+}
+
+.mobileNav {
+  width: min(100% - 30px, 1280px);
+  margin-inline: auto;
+  padding: 28px;
+  border-inline: 1px solid var(--evolv-border);
+}
+
+.mobileNav ul {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.mobileNav li,
+.mobileNav li a {
+  display: block;
+}
+
+.mobileNav li a {
+  color: #d4d4d4;
+  font-size: 24px;
+  font-weight: 400;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+}
+
+.mobileNav li a:hover {
+  color: #fff;
+}
+
+.demoButton {
+  width: 100%;
+  min-height: 46px;
+  margin-top: 36px;
+  border: 1px solid rgb(255 255 255 / 20%);
+  background: rgb(255 255 255 / 3%);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.demoButton:hover {
+  border-color: rgb(255 255 255 / 38%);
+  background: rgb(255 255 255 / 7%);
+}
+
+.logo:focus-visible,
+.desktopNav a:focus-visible,
+.contact:focus-visible,
+.waitlist:focus-visible,
+.menuButton:focus-visible,
+.mobileNav a:focus-visible {
+  outline: 2px solid var(--evolv-green);
+  outline-offset: 3px;
+}
+
+@media (max-width: 1000px) {
+  .header {
+    height: 66px;
+  }
+
+  .inner {
+    padding-inline: 0;
+  }
+
+  .desktopNav,
+  .waitlist {
+    display: none;
+  }
+
+  .actions {
+    gap: 14px;
+  }
+
+  .menuButton {
+    display: inline-flex;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .logo,
+  .contact,
+  .waitlist,
+  .desktopNav a,
+  .mobileNav a,
+  .menuIcon span {
+    transition: none;
+  }
+}

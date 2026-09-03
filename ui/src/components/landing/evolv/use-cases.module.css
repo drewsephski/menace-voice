@@ -1,0 +1,150 @@
+.section {
+  min-height: 982px;
+  padding: 102px 64px 112px;
+  border-bottom: 1px solid var(--evolv-border);
+}
+
+.header {
+  max-width: 760px;
+  margin-inline: auto;
+  text-align: center;
+}
+
+.label {
+  display: flex;
+  justify-content: center;
+}
+
+.header h2 {
+  margin: 28px 0 0;
+  font-size: 48px;
+  font-weight: 450;
+  letter-spacing: -0.045em;
+  line-height: 1.15;
+}
+
+.header > p {
+  margin: 22px 0 0;
+  color: #858585;
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+.grid {
+  display: grid;
+  max-width: 1120px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin: 70px auto 0;
+  border-top: 1px solid rgb(255 255 255 / 10%);
+  border-left: 1px solid rgb(255 255 255 / 10%);
+}
+
+.card {
+  min-height: 228px;
+  padding: 32px;
+  border-right: 1px solid rgb(255 255 255 / 10%);
+  border-bottom: 1px solid rgb(255 255 255 / 10%);
+  background: transparent;
+  outline: 0;
+  transition: background-color 150ms ease;
+}
+
+.card:hover,
+.card:focus-visible {
+  background: rgb(255 255 255 / 2%);
+}
+
+.card:focus-visible {
+  box-shadow: inset 0 0 0 2px var(--evolv-green);
+}
+
+.icon {
+  display: grid;
+  width: 40px;
+  height: 40px;
+  place-items: center;
+  border: 1px solid rgb(255 255 255 / 16%);
+  color: #9d9d9d;
+}
+
+.icon svg {
+  width: 40px;
+  height: 40px;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.15;
+}
+
+.card h3 {
+  margin: 35px 0 0;
+  color: #f5f5f5;
+  font-size: 17px;
+  font-weight: 560;
+  letter-spacing: -0.025em;
+  line-height: 1.5;
+}
+
+.card p {
+  max-width: 290px;
+  margin: 12px 0 0;
+  color: #7f7f7f;
+  font-size: 13.5px;
+  line-height: 1.55;
+}
+
+@media (max-width: 1024px) {
+  .section {
+    min-height: 1173px;
+    padding: 90px 48px 100px;
+  }
+
+  .header h2 {
+    font-size: 36px;
+  }
+
+  .grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    margin-top: 62px;
+  }
+
+  .card {
+    min-height: 230px;
+  }
+}
+
+@media (max-width: 640px) {
+  .section {
+    min-height: 1821px;
+    padding: 80px 20px 90px;
+  }
+
+  .header h2 {
+    margin-top: 24px;
+    font-size: 30px;
+  }
+
+  .header > p {
+    margin-top: 18px;
+    font-size: 14px;
+  }
+
+  .grid {
+    grid-template-columns: 1fr;
+    margin-top: 52px;
+  }
+
+  .card {
+    min-height: 226px;
+    padding: 28px;
+  }
+
+  .card h3 {
+    margin-top: 29px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card {
+    transition: none;
+  }
+}

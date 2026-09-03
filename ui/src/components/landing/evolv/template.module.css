@@ -1,0 +1,117 @@
+@font-face {
+  font-family: "Evolv Geist";
+  font-style: normal;
+  font-weight: 100 900;
+  src: url("/templates/evolv-ai/geist-latin.woff2") format("woff2");
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Evolv Geist Mono";
+  font-style: normal;
+  font-weight: 100 900;
+  src: url("/templates/evolv-ai/geist-mono-latin.woff2") format("woff2");
+  font-display: swap;
+}
+
+.root {
+  --evolv-bg: #181818;
+  --evolv-border: rgb(255 255 255 / 10%);
+  --evolv-muted: #747474;
+  --evolv-green: #31dc8b;
+  min-height: 100%;
+  overflow-x: clip;
+  background-color: var(--evolv-bg);
+  background-image: radial-gradient(
+    circle,
+    rgb(255 255 255 / 6%) 1px,
+    transparent 1px
+  );
+  background-size: 22px 22px;
+  color: #fff;
+  font-family: "Evolv Geist", Arial, sans-serif;
+  line-height: 1.5;
+  scroll-behavior: smooth;
+}
+
+.root,
+.root * {
+  box-sizing: border-box;
+}
+
+.root :where(a) {
+  text-decoration: none;
+}
+
+.root :where(button, input) {
+  color: inherit;
+  font: inherit;
+}
+
+.rail {
+  width: min(100% - 30px, 1280px);
+  margin-inline: auto;
+  border-inline: 1px solid var(--evolv-border);
+  background: rgb(24 24 24 / 96%);
+}
+
+.creatorBadge,
+.backToTop {
+  position: fixed;
+  z-index: 80;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgb(255 255 255 / 18%);
+  background: #050505;
+  box-shadow: 0 12px 28px rgb(0 0 0 / 28%);
+  color: #fff;
+}
+
+.creatorBadge {
+  bottom: 18px;
+  left: 18px;
+  min-height: 38px;
+  gap: 8px;
+  padding: 0 14px;
+  font-size: 12px;
+  font-weight: 550;
+}
+
+.backToTop {
+  right: 18px;
+  bottom: 18px;
+  width: 38px;
+  height: 38px;
+  font-size: 16px;
+}
+
+.creatorBadge:focus-visible,
+.backToTop:focus-visible {
+  outline: 2px solid var(--evolv-green);
+  outline-offset: 3px;
+}
+
+@media (max-width: 800px) {
+  .rail {
+    width: calc(100% - 30px);
+  }
+}
+
+@media (max-width: 480px) {
+  .creatorBadge {
+    bottom: 12px;
+    left: 12px;
+  }
+
+  .backToTop {
+    right: 12px;
+    bottom: 12px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .root {
+    scroll-behavior: auto;
+  }
+}
