@@ -19,7 +19,7 @@ class PlanLimits:
 
 @dataclass(frozen=True)
 class PlanCatalogEntry:
-    id: PaidSubscriptionPlanId
+    id: SubscriptionPlanId
     name: str
     price_usd: int
     description: str
@@ -47,6 +47,21 @@ PLAN_LIMITS: dict[SubscriptionPlanId, PlanLimits] = {
         max_concurrent_calls=20,
     ),
 }
+
+FREE_PLAN = PlanCatalogEntry(
+    id="free",
+    name="Free",
+    price_usd=0,
+    description="For building and testing your first voice agent.",
+    features=(
+        "1 voice agent",
+        "Visual agent builder",
+        "WebRTC testing",
+        "Bring your own AI provider keys",
+    ),
+    limits=PLAN_LIMITS["free"],
+)
+
 
 PAID_PLANS: tuple[PlanCatalogEntry, ...] = (
     PlanCatalogEntry(
@@ -78,6 +93,8 @@ PAID_PLANS: tuple[PlanCatalogEntry, ...] = (
         limits=PLAN_LIMITS["pro"],
     ),
 )
+
+PUBLIC_PLANS: tuple[PlanCatalogEntry, ...] = (FREE_PLAN, *PAID_PLANS)
 
 PAID_PLAN_IDS: frozenset[str] = frozenset(plan.id for plan in PAID_PLANS)
 

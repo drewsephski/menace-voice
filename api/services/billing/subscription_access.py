@@ -9,7 +9,7 @@ from fastapi import HTTPException
 
 from api.db import db_client
 from api.db.models import OrganizationModel
-from api.services.billing.plans import PLAN_LIMITS, PAID_PLANS, SubscriptionPlanId
+from api.services.billing.plans import PLAN_LIMITS, PUBLIC_PLANS, SubscriptionPlanId
 from api.services.billing.stripe_service import stripe_billing_enabled
 
 
@@ -94,15 +94,6 @@ async def assert_subscription_feature(
     access = get_subscription_access(organization)
     limits = PLAN_LIMITS[access.plan]
 
-    if access.plan == "free":
-        raise HTTPException(
-            status_code=402,
-            detail=(
-                "Your trial has ended or you do not have an active subscription. "
-                "Choose a plan on the Billing page to continue."
-            ),
-        )
-
     if requires_telephony and not limits.telephony_enabled:
         raise HTTPException(
             status_code=402,
@@ -118,11 +109,12 @@ async def assert_subscription_feature(
     if requires_workflow_slot:
         counts = await db_client.get_workflow_counts(organization_id=organization_id)
         if counts.get("total", 0) >= limits.max_workflows:
+            agent_label = "agent" if limits.max_workflows == 1 else "agents"
             raise HTTPException(
                 status_code=402,
                 detail=(
                     f"Your {access.plan.title()} plan allows up to "
-                    f"{limits.max_workflows} agents. Upgrade to add more."
+                    f"{limits.max_workflows} {agent_label}. Upgrade to add more."
                 ),
             )
 
@@ -144,5 +136,5 @@ def public_plan_catalog() -> list[dict[str, object]]:
                 "max_concurrent_calls": plan.limits.max_concurrent_calls,
             },
         }
-        for plan in PAID_PLANS
+        for plan in PUBLIC_PLANS
     ]

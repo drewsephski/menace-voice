@@ -39,6 +39,7 @@ class SubscriptionStatusResponse(BaseModel):
     plan: str
     status: str | None = None
     is_active: bool
+    has_active_subscription: bool = False
     has_billing_account: bool = False
     trial_ends_at: datetime | None = None
     current_period_end: datetime | None = None
@@ -80,6 +81,8 @@ async def get_subscription_status(
         plan=access.plan,
         status=access.status,
         is_active=access.is_active,
+        has_active_subscription=bool(organization.stripe_subscription_id)
+        and access.is_active,
         has_billing_account=bool(organization.stripe_customer_id),
         trial_ends_at=access.trial_ends_at,
         current_period_end=access.current_period_end,

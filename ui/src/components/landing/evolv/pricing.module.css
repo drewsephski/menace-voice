@@ -1,0 +1,48 @@
+.section {
+  padding: 126px 80px 120px;
+  border-top: 1px solid rgb(255 255 255 / 10%);
+}
+
+.heading {
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+  text-align: center;
+}
+
+.heading h2 {
+  max-width: 720px;
+  margin: 26px 0 0;
+  font-size: 48px;
+  font-weight: 450;
+  letter-spacing: -0.04em;
+  line-height: 1.15;
+}
+
+.cards {
+  margin-top: 74px;
+  text-align: left;
+}
+
+@media (max-width: 900px) {
+  .section {
+    padding: 104px 48px;
+  }
+}
+
+@media (max-width: 600px) {
+  .section {
+    padding: 76px 20px 72px;
+  }
+
+  .heading h2 {
+    max-width: 340px;
+    margin-top: 22px;
+    font-size: 30px;
+    line-height: 1.15;
+  }
+
+  .cards {
+    margin-top: 46px;
+  }
+}

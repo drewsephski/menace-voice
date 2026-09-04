@@ -641,7 +641,7 @@ export default function CampaignDetailPage() {
                                 </dd>
                             </div>
                             <div>
-                                <dt className="text-sm font-medium">Telephony Configuration</dt>
+                                <dt className="text-sm font-medium">Phone connection</dt>
                                 <dd className="mt-1">
                                     {campaign.telephony_configuration_id ? (
                                         <button

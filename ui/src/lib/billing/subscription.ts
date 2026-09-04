@@ -8,7 +8,7 @@ export interface SubscriptionLimits {
 }
 
 export interface SubscriptionPlan {
-  id: "starter" | "pro";
+  id: "free" | "starter" | "pro";
   name: string;
   price_usd: number;
   description: string;
@@ -21,6 +21,7 @@ export interface SubscriptionStatus {
   plan: string;
   status: string | null;
   is_active: boolean;
+  has_active_subscription: boolean;
   has_billing_account: boolean;
   trial_ends_at: string | null;
   current_period_end: string | null;

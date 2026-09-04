@@ -254,8 +254,8 @@ export const PhoneCallDialog = ({
         }
         router.push(
             target?.add
-                ? '/telephony-configurations?add=1'
-                : '/telephony-configurations',
+                ? '/phone-numbers/new'
+                : '/phone-numbers',
         );
     };
 
@@ -555,10 +555,10 @@ export const PhoneCallDialog = ({
                     variant="outline"
                     onClick={() => {
                         onOpenChange(false);
-                        router.push('/telephony-configurations');
+                        router.push('/phone-numbers');
                     }}
                 >
-                    Configure Telephony
+                    Phone number settings
                 </Button>
                 <div className="flex gap-2 flex-1 justify-end">
                     <DialogClose asChild>

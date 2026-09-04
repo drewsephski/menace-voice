@@ -68,6 +68,7 @@ const initPostHog = () => {
       capture_pageleave: true,
       capture_exceptions: true,
       cross_subdomain_cookie: true,
+      disable_surveys: true,
       debug: process.env.NEXT_PUBLIC_NODE_ENV === 'development',
     });
     console.log('PostHog initialized from NEXT_PUBLIC config');
@@ -84,6 +85,7 @@ const initPostHog = () => {
             capture_pageleave: true,
             capture_exceptions: true,
             cross_subdomain_cookie: true,
+            disable_surveys: true,
             debug: process.env.NEXT_PUBLIC_NODE_ENV === 'development',
           });
           console.log('PostHog initialized from API config');

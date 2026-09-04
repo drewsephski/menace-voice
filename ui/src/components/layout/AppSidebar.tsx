@@ -105,8 +105,8 @@ const NAV_SECTIONS: SidebarNavSection[] = [
         icon: Brain,
       },
       {
-        title: "Telephony",
-        url: "/telephony-configurations",
+        title: "Phone numbers",
+        url: "/phone-numbers",
         icon: Phone,
         showsTelephonyWarning: true,
       },

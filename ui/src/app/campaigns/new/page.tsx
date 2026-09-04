@@ -422,15 +422,15 @@ export default function NewCampaignPage() {
                             </div>
 
                             <div className="space-y-2">
-                                <Label htmlFor="telephony-config">Telephony Configuration</Label>
+                                <Label htmlFor="telephony-config">Phone connection</Label>
                                 {!isLoadingTelephonyConfigs && telephonyConfigs.length === 0 ? (
                                     <div className="rounded-md border border-dashed p-3 text-sm text-muted-foreground">
-                                        No telephony configurations yet.{' '}
+                                        No phone numbers are connected yet.{' '}
                                         <Link
-                                            href="/telephony-configurations"
+                                            href="/phone-numbers/new"
                                             className="underline text-foreground"
                                         >
-                                            Add one
+                                            Add a phone number
                                         </Link>{' '}
                                         to create a campaign.
                                     </div>
@@ -441,7 +441,7 @@ export default function NewCampaignPage() {
                                         required
                                     >
                                         <SelectTrigger id="telephony-config">
-                                            <SelectValue placeholder="Select a telephony configuration" />
+                                            <SelectValue placeholder="Select a phone connection" />
                                         </SelectTrigger>
                                         <SelectContent>
                                             {isLoadingTelephonyConfigs ? (

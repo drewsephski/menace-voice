@@ -5946,6 +5946,10 @@ export type SubscriptionStatusResponse = {
      */
     is_active: boolean;
     /**
+     * Has Active Subscription
+     */
+    has_active_subscription?: boolean;
+    /**
      * Has Billing Account
      */
     has_billing_account?: boolean;

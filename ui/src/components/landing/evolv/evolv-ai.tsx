@@ -5,6 +5,7 @@ import { Hero } from "./hero";
 import { Integrations } from "./integrations";
 import type { LandingNavigation } from "./landing-links";
 import { Platform } from "./platform";
+import { Pricing } from "./pricing";
 import { Statement } from "./statement";
 import styles from "./template.module.css";
 import { UseCases } from "./use-cases";
@@ -25,6 +26,7 @@ export default function EvolvAiTemplate({
         <UseCases navigation={navigation} />
         <Walkthrough />
         <Integrations navigation={navigation} />
+        <Pricing navigation={navigation} />
         <Faq />
         <Footer navigation={navigation} />
       </main>

@@ -1,10 +1,11 @@
 "use client";
 
-import { Check, CreditCard, Loader2, Sparkles } from "lucide-react";
+import { CreditCard, Loader2, Sparkles } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 
+import { SubscriptionPlanCards } from "@/components/billing/SubscriptionPlanCards";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -16,7 +17,6 @@ import {
   startSubscriptionCheckout,
   type SubscriptionStatus,
 } from "@/lib/billing/subscription";
-import { cn } from "@/lib/utils";
 
 const formatPlanLabel = (plan: string) => plan.charAt(0).toUpperCase() + plan.slice(1);
 
@@ -83,7 +83,8 @@ export function SubscriptionBillingPanel() {
     return (
       <div className="space-y-6">
         <Skeleton className="h-36 rounded-lg" />
-        <div className="grid gap-4 md:grid-cols-2">
+        <div className="grid gap-4 md:grid-cols-3">
+          <Skeleton className="h-80 rounded-lg" />
           <Skeleton className="h-80 rounded-lg" />
           <Skeleton className="h-80 rounded-lg" />
         </div>
@@ -101,11 +102,14 @@ export function SubscriptionBillingPanel() {
     );
   }
 
-  const workflowUsagePercent = status.limits.max_workflows > 0
-    ? Math.min(100, Math.round((status.usage.workflows / status.limits.max_workflows) * 100))
+  const currentPlan = status.has_active_subscription ? status.plan : "free";
+  const isAccessTrial = !status.has_active_subscription && status.status === "trialing";
+  const statusBadgeVariant = status.has_active_subscription ? "default" : "secondary";
+  const currentPlanLimits = status.plans.find((plan) => plan.id === currentPlan)?.limits
+    ?? status.limits;
+  const workflowUsagePercent = currentPlanLimits.max_workflows > 0
+    ? Math.min(100, Math.round((status.usage.workflows / currentPlanLimits.max_workflows) * 100))
     : 0;
-
-  const statusBadgeVariant = status.is_active ? "default" : "secondary";
 
   return (
     <div className="space-y-6">
@@ -115,12 +119,20 @@ export function SubscriptionBillingPanel() {
             <CardDescription>Current plan</CardDescription>
             <CardTitle className="flex flex-wrap items-center gap-2 text-3xl">
               <Sparkles className="h-6 w-6 text-muted-foreground" />
-              {formatPlanLabel(status.plan)}
-              <Badge variant={statusBadgeVariant}>{status.status ?? "inactive"}</Badge>
+              {formatPlanLabel(currentPlan)}
+              <Badge variant={statusBadgeVariant}>
+                {isAccessTrial
+                  ? "Starter trial access"
+                  : status.has_active_subscription
+                    ? status.status ?? "active"
+                    : "current"}
+              </Badge>
             </CardTitle>
             <p className="text-sm text-muted-foreground">
-              {status.trial_ends_at && status.status === "trialing"
-                ? `Trial ends ${formatDate(status.trial_ends_at)}`
+              {status.trial_ends_at && isAccessTrial
+                ? `Starter trial access ends ${formatDate(status.trial_ends_at)}`
+                : status.trial_ends_at && status.status === "trialing"
+                  ? `Trial ends ${formatDate(status.trial_ends_at)}`
                 : status.current_period_end
                   ? `Renews ${formatDate(status.current_period_end)}`
                   : "Subscribe to unlock production features"}
@@ -142,80 +154,31 @@ export function SubscriptionBillingPanel() {
             <div className="mb-2 flex justify-between text-sm">
               <span>Agents</span>
               <span className="text-muted-foreground">
-                {status.usage.workflows} / {status.limits.max_workflows}
+                {status.usage.workflows} / {currentPlanLimits.max_workflows}
               </span>
             </div>
             <Progress value={workflowUsagePercent} />
           </div>
           <div className="flex flex-wrap gap-2 text-sm text-muted-foreground">
             <Badge variant="outline">
-              {status.limits.telephony_enabled ? "Telephony included" : "No telephony"}
+              {currentPlanLimits.telephony_enabled ? "Telephony included" : "No telephony"}
             </Badge>
             <Badge variant="outline">
-              {status.limits.campaigns_enabled ? "Campaigns included" : "No campaigns"}
+              {currentPlanLimits.campaigns_enabled ? "Campaigns included" : "No campaigns"}
             </Badge>
             <Badge variant="outline">
-              {status.limits.max_concurrent_calls} concurrent calls
+              {currentPlanLimits.max_concurrent_calls} concurrent calls
             </Badge>
           </div>
         </CardContent>
       </Card>
 
-      <div className="grid gap-4 md:grid-cols-2">
-        {status.plans.map((plan) => {
-          const isCurrent = status.plan === plan.id && status.is_active;
-          return (
-            <Card
-              key={plan.id}
-              className={cn(
-                "relative",
-                plan.id === "pro" && "border-cta/40 shadow-sm",
-              )}
-            >
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <CardTitle>{plan.name}</CardTitle>
-                  <p className="text-2xl font-semibold">
-                    ${plan.price_usd}
-                    <span className="text-sm font-normal text-muted-foreground">/mo</span>
-                  </p>
-                </div>
-                <CardDescription>{plan.description}</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <ul className="space-y-2 text-sm">
-                  {plan.features.map((feature) => (
-                    <li key={feature} className="flex items-start gap-2">
-                      <Check className="mt-0.5 h-4 w-4 shrink-0 text-cta" />
-                      <span>{feature}</span>
-                    </li>
-                  ))}
-                </ul>
-                <Button
-                  className={cn(
-                    "w-full",
-                    plan.id === "pro" && "bg-cta text-cta-foreground hover:bg-cta/90",
-                  )}
-                  variant={plan.id === "pro" ? "default" : "outline"}
-                  disabled={isCurrent || busyPlan !== null}
-                  onClick={() => handleCheckout(plan.id)}
-                >
-                  {busyPlan === plan.id ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Redirecting…
-                    </>
-                  ) : isCurrent ? (
-                    "Current plan"
-                  ) : (
-                    `Subscribe to ${plan.name}`
-                  )}
-                </Button>
-              </CardContent>
-            </Card>
-          );
-        })}
-      </div>
+      <SubscriptionPlanCards
+        busyPlan={busyPlan}
+        currentPlan={currentPlan}
+        onSelectPlan={handleCheckout}
+        plans={status.plans}
+      />
     </div>
   );
 }

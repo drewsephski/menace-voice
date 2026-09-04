@@ -209,16 +209,16 @@ export function PhoneNumberDialog({
             {isEdit ? "Edit phone number" : "Add phone number"}
           </DialogTitle>
           <DialogDescription>
-            PSTN numbers (E.164), SIP URIs (sip:user@host), and SIP extensions are all supported.
+            Choose how this number is used and which agent answers incoming calls.
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4">
           <div className="space-y-1">
-            <Label htmlFor="pn-address">Address</Label>
+            <Label htmlFor="pn-address">Phone number</Label>
             <Input
               id="pn-address"
-              placeholder="+19781899185, sip:101@asterisk.local, or 101"
+              placeholder="+1 978 189 9185"
               value={address}
               onChange={(e) => setAddress(e.target.value)}
               onBlur={() => setAddressTouched(true)}
@@ -243,7 +243,7 @@ export function PhoneNumberDialog({
 
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1">
-              <Label htmlFor="pn-country">Country (ISO-2)</Label>
+              <Label htmlFor="pn-country">Country</Label>
               <Input
                 id="pn-country"
                 placeholder="US"
@@ -264,23 +264,22 @@ export function PhoneNumberDialog({
           </div>
 
           <div className="space-y-1">
-            <Label htmlFor="pn-workflow">Inbound workflow</Label>
+              <Label htmlFor="pn-workflow">Agent for incoming calls</Label>
             <Select value={inboundWorkflowId} onValueChange={setInboundWorkflowId}>
               <SelectTrigger id="pn-workflow">
                 <SelectValue placeholder="(none)" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value={NO_WORKFLOW}>(none)</SelectItem>
+                  <SelectItem value={NO_WORKFLOW}>Outgoing calls only</SelectItem>
                 {workflows.map((w) => (
                   <SelectItem key={w.id} value={String(w.id)}>
-                    #{w.id} - {w.name}
+                    {w.name}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
             <p className="text-xs text-muted-foreground">
-              Used when per-number inbound routing is enabled. Today, inbound calls still
-              route by the workflow_id in the webhook URL.
+              Incoming calls to this number are routed to the selected agent.
             </p>
           </div>
 
