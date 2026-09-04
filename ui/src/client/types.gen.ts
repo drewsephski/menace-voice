@@ -3137,6 +3137,14 @@ export type HealthResponse = {
      * Stack Publishable Client Key
      */
     stack_publishable_client_key?: string | null;
+    /**
+     * Stripe Billing Enabled
+     */
+    stripe_billing_enabled?: boolean;
+    /**
+     * Stripe Publishable Key
+     */
+    stripe_publishable_key?: string | null;
 };
 
 /**

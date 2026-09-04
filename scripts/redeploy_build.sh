@@ -33,8 +33,10 @@ if [[ ! -f docker-compose.override.yaml ]]; then
 fi
 
 if [[ $EUID -eq 0 ]] || ! command -v sudo >/dev/null 2>&1; then
+  DOCKER=(docker)
   COMPOSE=(docker compose)
 else
+  DOCKER=(sudo docker)
   COMPOSE=(sudo docker compose)
 fi
 
@@ -55,7 +57,7 @@ fi
 echo "==> Building api and ui..."
 if ! "${COMPOSE[@]}" "${PROFILE[@]}" build "${BUILD_ARGS[@]}" api ui; then
   echo "==> Build failed — pruning Docker build cache and retrying..."
-  "${COMPOSE[@]}" builder prune -af
+  "${DOCKER[@]}" builder prune -af
   "${COMPOSE[@]}" "${PROFILE[@]}" build --no-cache api ui
 fi
 
