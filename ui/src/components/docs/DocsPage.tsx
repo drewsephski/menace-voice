@@ -509,7 +509,13 @@ function DocsNav({
   );
 }
 
-export function DocsPage() {
+export function DocsPage({
+  signInHref = "/auth/login",
+  startBuildingHref = "/auth/signup",
+}: {
+  signInHref?: string;
+  startBuildingHref?: string;
+}) {
   const [mode, setMode] = useState<DocsMode>("builders");
   const [activeSlug, setActiveSlug] = useState("overview");
   const [search, setSearch] = useState("");
@@ -559,7 +565,7 @@ export function DocsPage() {
         <nav className={styles.productNav} aria-label="Product navigation">
           <Link href="/#platform">Platform</Link><Link href="/#use-cases">Use cases</Link><Link href="/#product-walkthrough">Product</Link><Link href="/#integrations">Integrations</Link><Link className={styles.currentNav} href="/docs" aria-current="page">Docs</Link>
         </nav>
-        <div className={styles.topActions}><a href="/auth/login">Sign in</a><a className={styles.startButton} href="/auth/signup">Start building</a></div>
+        <div className={styles.topActions}><a href={signInHref}>Sign in</a><a className={styles.startButton} href={startBuildingHref}>Start building</a></div>
         <button className={styles.mobileMenuButton} type="button" aria-label={mobileNavOpen ? "Close docs navigation" : "Open docs navigation"} onClick={() => setMobileNavOpen((open) => !open)}>{mobileNavOpen ? <X size={18} /> : <Menu size={18} />}</button>
       </header>
 

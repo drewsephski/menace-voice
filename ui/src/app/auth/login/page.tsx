@@ -1,4 +1,6 @@
-import { getSignupEnabled } from "@/lib/auth/config";
+import { redirect } from "next/navigation";
+
+import { getAuthProvider, getSignupEnabled } from "@/lib/auth/config";
 
 import { LoginForm } from "./LoginForm";
 
@@ -9,6 +11,12 @@ import { LoginForm } from "./LoginForm";
 export const dynamic = "force-dynamic";
 
 export default async function LoginPage() {
-  const signupEnabled = await getSignupEnabled();
+  const [authProvider, signupEnabled] = await Promise.all([
+    getAuthProvider(),
+    getSignupEnabled(),
+  ]);
+  if (authProvider === "stack") {
+    redirect("/handler/sign-in");
+  }
   return <LoginForm signupEnabled={signupEnabled} />;
 }

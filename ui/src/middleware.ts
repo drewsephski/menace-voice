@@ -9,7 +9,7 @@ const OSS_TOKEN_COOKIE = 'dograh_auth_token';
 // `/embed` serves the public website widget (e.g. /embed/dograh-widget.js),
 // which must be fetchable without a session cookie so third-party sites can
 // embed it — otherwise the middleware 307-redirects the asset to /auth/login.
-const PUBLIC_PATHS = ['/', '/auth/login', '/auth/signup', '/embed', '/docs'];
+const PUBLIC_PATHS = ['/', '/auth/login', '/auth/signup', '/embed', '/docs', '/handler', '/after-sign-in'];
 const EXACT_PUBLIC_PATHS = ['/pilot'];
 
 let cachedAuthProvider: string | null = null;

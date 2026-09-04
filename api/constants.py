@@ -67,28 +67,64 @@ DEPLOYMENT_MODE = os.getenv("DEPLOYMENT_MODE", "oss")
 CORS_ALLOWED_ORIGINS = [
     o.strip() for o in os.getenv("CORS_ALLOWED_ORIGINS", "").split(",") if o.strip()
 ]
-AUTH_PROVIDER = os.getenv("AUTH_PROVIDER", "local")
 ENABLE_SIGNUP = os.getenv("ENABLE_SIGNUP", "true").lower() == "true"
 # Stack Auth / Hexclave. Public client config is served to the UI at runtime via
 # /api/v1/health. Accept legacy STACK_* and newer HEXCLAVE_* env var names.
 # Publishable client key is optional — newer Hexclave projects often omit it.
-STACK_AUTH_PROJECT_ID = (
-    os.getenv("STACK_AUTH_PROJECT_ID")
-    or os.getenv("HEXCLAVE_PROJECT_ID")
-    or os.getenv("STACK_PROJECT_ID")
-    or os.getenv("NEXT_PUBLIC_HEXCLAVE_PROJECT_ID")
-    or os.getenv("NEXT_PUBLIC_STACK_PROJECT_ID")
+# Compose interpolates missing keys as empty strings — treat those as unset.
+
+
+def _first_env(*names: str) -> str | None:
+    for name in names:
+        value = os.getenv(name)
+        if value and value.strip():
+            return value.strip()
+    return None
+
+
+def resolve_auth_provider(
+    explicit: str | None,
+    *,
+    project_id: str | None,
+    secret: str | None,
+) -> str:
+    """Pick local vs stack.
+
+    Unset/blank AUTH_PROVIDER becomes stack when project id + secret are
+    present, so a compose .env with Hexclave keys is enough. Explicit
+    AUTH_PROVIDER=local always wins.
+    """
+    normalized = (explicit or "").strip().lower()
+    has_creds = bool(project_id) and bool(secret)
+    if normalized == "local":
+        return "local"
+    if normalized == "stack" or (not normalized and has_creds):
+        return "stack"
+    return normalized or "local"
+
+
+STACK_AUTH_PROJECT_ID = _first_env(
+    "STACK_AUTH_PROJECT_ID",
+    "HEXCLAVE_PROJECT_ID",
+    "STACK_PROJECT_ID",
+    "NEXT_PUBLIC_HEXCLAVE_PROJECT_ID",
+    "NEXT_PUBLIC_STACK_PROJECT_ID",
 )
-STACK_PUBLISHABLE_CLIENT_KEY = os.getenv("STACK_PUBLISHABLE_CLIENT_KEY") or os.getenv(
-    "HEXCLAVE_PUBLISHABLE_CLIENT_KEY"
+STACK_PUBLISHABLE_CLIENT_KEY = _first_env(
+    "STACK_PUBLISHABLE_CLIENT_KEY",
+    "HEXCLAVE_PUBLISHABLE_CLIENT_KEY",
 )
-STACK_SECRET_SERVER_KEY = os.getenv("STACK_SECRET_SERVER_KEY") or os.getenv(
-    "HEXCLAVE_SECRET_SERVER_KEY"
+STACK_SECRET_SERVER_KEY = _first_env(
+    "STACK_SECRET_SERVER_KEY",
+    "HEXCLAVE_SECRET_SERVER_KEY",
 )
 STACK_AUTH_API_URL = (
-    os.getenv("STACK_AUTH_API_URL")
-    or os.getenv("HEXCLAVE_API_URL")
-    or "https://api.hexclave.com"
+    _first_env("STACK_AUTH_API_URL", "HEXCLAVE_API_URL") or "https://api.hexclave.com"
+)
+AUTH_PROVIDER = resolve_auth_provider(
+    os.getenv("AUTH_PROVIDER"),
+    project_id=STACK_AUTH_PROJECT_ID,
+    secret=STACK_SECRET_SERVER_KEY,
 )
 DOGRAH_MPS_SECRET_KEY = os.getenv("DOGRAH_MPS_SECRET_KEY", None)
 MPS_API_URL = os.getenv("MPS_API_URL", "https://services.dograh.com")

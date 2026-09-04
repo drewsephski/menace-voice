@@ -150,6 +150,22 @@ services:
       # Set to "false" in .env to disable public signup (invite-only installs).
       ENABLE_SIGNUP: "${ENABLE_SIGNUP:-true}"
 
+      # Stack Auth / Hexclave. Compose's .env is interpolation-only — these
+      # must be listed here or Hexclave keys in .env never reach the container.
+      # Leave AUTH_PROVIDER unset: the API enables stack when project id + secret
+      # are present. HEXCLAVE_* values also populate the legacy STACK_* names so
+      # the Next.js SDK does not see an empty STACK_SECRET_SERVER_KEY. See
+      # docs/deployment/authentication.mdx.
+      AUTH_PROVIDER: "${AUTH_PROVIDER:-}"
+      HEXCLAVE_PROJECT_ID: "${HEXCLAVE_PROJECT_ID:-${STACK_AUTH_PROJECT_ID:-}}"
+      STACK_AUTH_PROJECT_ID: "${STACK_AUTH_PROJECT_ID:-${HEXCLAVE_PROJECT_ID:-}}"
+      HEXCLAVE_SECRET_SERVER_KEY: "${HEXCLAVE_SECRET_SERVER_KEY:-${STACK_SECRET_SERVER_KEY:-}}"
+      STACK_SECRET_SERVER_KEY: "${STACK_SECRET_SERVER_KEY:-${HEXCLAVE_SECRET_SERVER_KEY:-}}"
+      HEXCLAVE_PUBLISHABLE_CLIENT_KEY: "${HEXCLAVE_PUBLISHABLE_CLIENT_KEY:-${STACK_PUBLISHABLE_CLIENT_KEY:-}}"
+      STACK_PUBLISHABLE_CLIENT_KEY: "${STACK_PUBLISHABLE_CLIENT_KEY:-${HEXCLAVE_PUBLISHABLE_CLIENT_KEY:-}}"
+      HEXCLAVE_API_URL: "${HEXCLAVE_API_URL:-${STACK_AUTH_API_URL:-}}"
+      STACK_AUTH_API_URL: "${STACK_AUTH_API_URL:-${HEXCLAVE_API_URL:-}}"
+
       # Public origin for this deployment. The API derives BACKEND_API_ENDPOINT,
       # MINIO_PUBLIC_ENDPOINT and TURN_HOST from PUBLIC_BASE_URL / PUBLIC_HOST when
       # they are not set explicitly (see api/constants.py), so a standard remote
@@ -292,6 +308,15 @@ services:
       # Server-side URL (SSR, internal Docker network)
       BACKEND_URL: "${BACKEND_URL:-http://api:8000}"
       NODE_ENV: "oss"
+
+      # Secret server key for Stack Auth SSR (/handler/*). Public client
+      # config comes from the API at runtime via /api/v1/health. Mirror HEXCLAVE
+      # values onto STACK_* so the SDK does not treat an empty STACK_* as set.
+      HEXCLAVE_SECRET_SERVER_KEY: "${HEXCLAVE_SECRET_SERVER_KEY:-${STACK_SECRET_SERVER_KEY:-}}"
+      STACK_SECRET_SERVER_KEY: "${STACK_SECRET_SERVER_KEY:-${HEXCLAVE_SECRET_SERVER_KEY:-}}"
+      HEXCLAVE_PROJECT_ID: "${HEXCLAVE_PROJECT_ID:-${STACK_AUTH_PROJECT_ID:-}}"
+      HEXCLAVE_API_URL: "${HEXCLAVE_API_URL:-${STACK_AUTH_API_URL:-}}"
+      STACK_AUTH_API_URL: "${STACK_AUTH_API_URL:-${HEXCLAVE_API_URL:-}}"
 
       # Flag to enable/ disable posthog
       ENABLE_TELEMETRY: "${ENABLE_TELEMETRY:-true}"

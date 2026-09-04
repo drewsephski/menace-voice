@@ -182,6 +182,12 @@ ENABLE_TELEMETRY=$ENABLE_TELEMETRY
 
 # Relay-only ICE candidates for explicit TURN diagnostics
 FORCE_TURN_RELAY=$FORCE_TURN_RELAY
+
+# Stack Auth / Hexclave (social login). Fill project id + secret to enable
+# (AUTH_PROVIDER=stack is then optional). See docs/deployment/authentication.mdx.
+# AUTH_PROVIDER=stack
+# HEXCLAVE_PROJECT_ID=
+# HEXCLAVE_SECRET_SERVER_KEY=
 ENV_EOF
 
 if [[ "${ENABLE_COTURN:-false}" == "true" ]]; then

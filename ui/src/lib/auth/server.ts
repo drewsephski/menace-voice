@@ -6,6 +6,7 @@ import { cookies } from 'next/headers';
 import logger from '@/lib/logger';
 
 import { getAuthProvider, getStackConfig } from './config';
+import { getStackApiUrl, getStackSecretServerKey } from './stackEnv';
 import type { LocalUser } from './types';
 
 // Server-side auth utilities for SSR pages
@@ -31,12 +32,22 @@ export async function getStackServerApp(): Promise<StackServerApp<boolean, strin
       }
       const stackModule = await import('@stackframe/stack');
       const { StackServerApp } = stackModule;
+      const secretServerKey = getStackSecretServerKey();
+      const baseUrl = getStackApiUrl();
+      if (!secretServerKey) {
+        logger.error(
+          'Auth provider is "stack" but HEXCLAVE_SECRET_SERVER_KEY / STACK_SECRET_SERVER_KEY is unset on the UI process.'
+        );
+        return null;
+      }
       // projectId / publishableClientKey come from the backend at runtime. The
-      // secret server key stays a server-only runtime env var
-      // (STACK_SECRET_SERVER_KEY), read by the SDK directly.
+      // secret is passed explicitly so we do not depend on the SDK reading env
+      // (empty STACK_* aliases from Compose would otherwise win over HEXCLAVE_*).
       stackServerApp = new StackServerApp({
         tokenStore: "nextjs-cookie",
         projectId: stackConfig.projectId,
+        secretServerKey,
+        ...(baseUrl ? { baseUrl } : {}),
         ...(stackConfig.publishableClientKey
           ? { publishableClientKey: stackConfig.publishableClientKey }
           : {}),

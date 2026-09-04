@@ -373,6 +373,12 @@ ENABLE_TELEMETRY=$ENABLE_TELEMETRY
 
 # Number of uvicorn worker processes; nginx load-balances across them
 FASTAPI_WORKERS=$FASTAPI_WORKERS
+
+# Stack Auth / Hexclave (social login). Fill project id + secret to enable
+# (AUTH_PROVIDER=stack is then optional). See docs/deployment/authentication.mdx.
+# AUTH_PROVIDER=stack
+# HEXCLAVE_PROJECT_ID=
+# HEXCLAVE_SECRET_SERVER_KEY=
 ENV_EOF
 echo -e "${GREEN}✓ .env file created${NC}"
 

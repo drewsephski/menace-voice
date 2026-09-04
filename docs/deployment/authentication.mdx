@@ -8,7 +8,7 @@ Self-hosted Menace Voice ships with a built-in **local** authentication provider
 To offer social logins (Google and other providers), you can delegate sign-in to **[Stack Auth](https://stack-auth.com)**. Enabling it is a **runtime** configuration change — set a few environment variables and restart. The prebuilt `dograhai/dograh-api` and `dograhai/dograh-ui` images work as-is; you do **not** need to rebuild or build from source.
 
 <Note>
-The active provider is controlled by the backend `AUTH_PROVIDER` variable (`local` by default). The frontend discovers the provider — and, for Stack, its public client config — at runtime from the backend's `/api/v1/health` response, so the browser bundle never needs Stack values baked in at build time.
+The active provider is `local` by default. When the deployment `.env` contains a Hexclave/Stack **project id and secret server key**, the API enables `stack` automatically (`AUTH_PROVIDER=local` still forces local). The frontend discovers the provider — and, for Stack, its public client config — at runtime from the backend's `/api/v1/health` response, so the browser bundle never needs Stack values baked in at build time.
 </Note>
 
 ## How it works
@@ -33,42 +33,37 @@ From your project in the [Stack Auth dashboard](https://app.stack-auth.com), gat
 | **Secret server key** | Secret — keep server-side only |
 | **API base URL** | Public. For Stack's hosted service this is `https://api.stack-auth.com` |
 
-## Step 2 — Configure the backend (`api`)
+## Step 2 — Set them in the deployment `.env`
 
-Set these on the `api` service. Add them to the `environment:` block of the `api` service in your `docker-compose.yaml`:
+Put the values in the `.env` next to `docker-compose.yaml` (the file `setup_remote.sh` / `setup_local.sh` created — **not** `api/.env`, which only applies to local `uvicorn`). Compose interpolates that file into both the `api` and `ui` containers; you do not need to edit `docker-compose.yaml`.
 
-```yaml docker-compose.yaml
-services:
-  api:
-    environment:
-      AUTH_PROVIDER: "stack"
-      STACK_AUTH_PROJECT_ID: "<your-project-id>"
-      STACK_PUBLISHABLE_CLIENT_KEY: "<your-publishable-client-key>"
-      STACK_SECRET_SERVER_KEY: "<your-secret-server-key>"
-      STACK_AUTH_API_URL: "https://api.stack-auth.com"
+```bash .env
+HEXCLAVE_PROJECT_ID="<your-project-id>"
+HEXCLAVE_SECRET_SERVER_KEY="<your-secret-server-key>"
+# Optional; set only to force a provider. Unset + keys above enables stack.
+# AUTH_PROVIDER=stack
+# Optional; newer Hexclave projects often omit it
+# STACK_PUBLISHABLE_CLIENT_KEY="<your-publishable-client-key>"
+# Optional; API defaults to https://api.hexclave.com
+# STACK_AUTH_API_URL="https://api.stack-auth.com"
 ```
 
-## Step 3 — Configure the UI (`ui`)
-
-The UI runs server-side code (SSR pages and the `/handler/*` auth routes) that calls Stack with the secret server key, so the `ui` service needs that one value too:
-
-```yaml docker-compose.yaml
-services:
-  ui:
-    environment:
-      STACK_SECRET_SERVER_KEY: "<your-secret-server-key>"
-```
+Legacy `STACK_AUTH_PROJECT_ID` / `STACK_SECRET_SERVER_KEY` names still work.
 
 <Note>
-The `ui` service does **not** need the project id or publishable client key — it receives those from the backend at runtime via `/api/v1/health`. Only the secret server key (used server-side) is set here.
+The UI does **not** need the project id or publishable client key in its own env — it receives those from the backend at runtime via `/api/v1/health`. The secret server key is passed to `ui` as well because SSR pages and `/handler/*` call Stack server-side.
 </Note>
 
-## Step 4 — Restart and verify
+## Step 3 — Restart and verify
 
 Recreate the containers so they pick up the new environment:
 
 ```bash
+# Local Docker install
 docker compose up -d
+
+# Remote install created by setup_remote.sh
+./remote_up.sh
 ```
 
 Confirm the backend reports the active provider and the public client config:
@@ -84,14 +79,14 @@ Then open the UI. The sign-in page should now present your configured Stack Auth
 
 | Variable | Service | Secret | Notes |
 |---|---|---|---|
-| `AUTH_PROVIDER` | `api` | — | Set to `stack` (default `local`) |
-| `STACK_AUTH_PROJECT_ID` | `api` | No | Stack project ID; served to the UI at runtime |
-| `STACK_PUBLISHABLE_CLIENT_KEY` | `api` | No | Publishable key; served to the UI at runtime |
-| `STACK_SECRET_SERVER_KEY` | `api` + `ui` | **Yes** | Server-side only — never exposed to the browser |
-| `STACK_AUTH_API_URL` | `api` | No | Stack REST API base URL |
+| `AUTH_PROVIDER` | `api` | — | `stack` or `local`. Unset + project id + secret enables stack. `local` always wins |
+| `HEXCLAVE_PROJECT_ID` / `STACK_AUTH_PROJECT_ID` | `api` | No | Project ID; served to the UI at runtime |
+| `STACK_PUBLISHABLE_CLIENT_KEY` | `api` | No | Publishable key; served to the UI at runtime. Optional for newer Hexclave projects |
+| `HEXCLAVE_SECRET_SERVER_KEY` / `STACK_SECRET_SERVER_KEY` | `api` + `ui` | **Yes** | Server-side only — never exposed to the browser |
+| `STACK_AUTH_API_URL` / `HEXCLAVE_API_URL` | `api` | No | REST API base URL. Defaults to `https://api.hexclave.com` |
 
 <Warning>
-`STACK_SECRET_SERVER_KEY` is the only secret here. Keep it out of any client-visible config and never bake it into an image. The project ID and publishable client key are public by design — the backend deliberately serves them to the browser so Stack can initialize at runtime.
+`HEXCLAVE_SECRET_SERVER_KEY` / `STACK_SECRET_SERVER_KEY` is the only secret here. Keep it out of any client-visible config and never bake it into an image. The project ID and publishable client key are public by design — the backend deliberately serves them to the browser so Stack can initialize at runtime.
 </Warning>
 
 ## Reverting to local auth
