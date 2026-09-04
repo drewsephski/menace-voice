@@ -1,6 +1,6 @@
 "use client";
 
-import { Copy, ExternalLink } from "lucide-react";
+import { Copy } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
@@ -14,8 +14,7 @@ import type {
   TelephonyConfigurationDetail,
   TelephonyProviderMetadata,
 } from "@/client/types.gen";
-
-type TelephonyConfigPayload = TelephonyConfigurationCreateRequest["config"];
+import { ProviderSetupResources } from "@/components/telephony/ProviderSetupResources";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -39,6 +38,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { detailFromError } from "@/lib/apiError";
 import { useAuth } from "@/lib/auth";
 import { copyTextToClipboard } from "@/lib/clipboard";
+
+type TelephonyConfigPayload = TelephonyConfigurationCreateRequest["config"];
 
 interface ConfigFormDialogProps {
   open: boolean;
@@ -302,15 +303,11 @@ export function ConfigFormDialog({
                 Provider cannot be changed after creation.
               </p>
             )}
-            {currentProvider?.docs_url && (
-              <a
-                href={currentProvider.docs_url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-1 text-xs text-blue-600 underline"
-              >
-                {currentProvider.display_name} docs <ExternalLink className="h-3 w-3" />
-              </a>
+            {currentProvider && (
+              <ProviderSetupResources
+                provider={currentProvider}
+                className="rounded-lg border bg-muted/20 px-3 py-2.5"
+              />
             )}
           </div>
 

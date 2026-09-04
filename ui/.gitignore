@@ -14,8 +14,11 @@
 /coverage
 
 # next.js
-/.next/
+/.next*/
 /out/
+
+# generated QA workspaces
+/tmp/
 
 # production
 /build

@@ -186,6 +186,9 @@ class TelephonyProviderMetadata(BaseModel):
     connectivity: ProviderConnectivity = "api"
     fields: List[TelephonyProviderUIField]
     docs_url: Optional[str] = None
+    estimated_phone_number_price: Optional[str] = None
+    phone_number_url: Optional[str] = None
+    pricing_url: Optional[str] = None
 
 
 class TelephonyProvidersMetadataResponse(BaseModel):
@@ -289,6 +292,11 @@ async def get_telephony_providers_metadata(user: UserModel = Depends(get_user)):
                     )
                 ],
                 docs_url=spec.ui_metadata.docs_url,
+                estimated_phone_number_price=(
+                    spec.ui_metadata.estimated_phone_number_price
+                ),
+                phone_number_url=spec.ui_metadata.phone_number_url,
+                pricing_url=spec.ui_metadata.pricing_url,
             )
         )
     return TelephonyProvidersMetadataResponse(providers=providers)

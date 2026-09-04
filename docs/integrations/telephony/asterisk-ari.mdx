@@ -9,6 +9,20 @@ Asterisk ARI (Asterisk REST Interface) allows you to connect Menace Agents to yo
 
 This guide focuses on the Menace Voice-specific configuration. For general Asterisk installation and administration, refer to the [official Asterisk documentation](https://docs.asterisk.org/).
 
+## Is Asterisk the right option?
+
+Asterisk is PBX software, not a phone-number provider. Use this integration if
+you already operate an Asterisk server or have someone who manages it for you.
+If you simply need to buy a number and connect it, choose Twilio, Telnyx,
+Plivo, Vobiz, or Vonage from the [telephony overview](/integrations/telephony/overview).
+
+## Estimated price
+
+Asterisk does not publish a phone-number price because it does not sell
+numbers. Your SIP carrier bills the DID and call usage, and you are responsible
+for Asterisk hosting and administration. Confirm those amounts with the carrier
+and hosting provider you choose.
+
 ## Prerequisites
 
 Before setting up the ARI integration, ensure you have:
@@ -129,10 +143,10 @@ Changes to `http.conf` require a full Asterisk reload (`core reload`) or a servi
 
 ## Part 2: Create the configuration in Menace Voice
 
-### Step 1: Navigate to Telephony Settings
+### Step 1: Start the phone-number wizard
 
-1. Navigate to **/telephony-configurations** and click **Add configuration**
-2. Select **Asterisk ARI** as your provider
+1. Open **Phone numbers** and click **Add phone number**.
+2. Select **Asterisk ARI** and continue.
 
 ### Step 2: Enter Your ARI Credentials
 
@@ -150,7 +164,10 @@ Configure the following fields:
 
 ### Step 3: Save and copy the Stasis App Name
 
-Click **Save Configuration**. Menace Voice assigns a **Stasis App Name** to this configuration — something like `dograh_a1b2c3d4e5f6` — and shows it on the configuration page. Copy it; you need it for [Part 3](#part-3-route-calls-into-the-stasis-application).
+Complete the number and agent steps, then finish setup. Open the saved Asterisk
+provider connection. Menace Voice assigns it a **Stasis App Name** — something
+like `dograh_a1b2c3d4e5f6`. Copy it; you need it for
+[Part 3](#part-3-route-calls-into-the-stasis-application).
 
 <Note>
 The Stasis App Name is generated, not chosen. Asterisk gives a Stasis application to whichever ARI connection registered for it most recently and stops delivering events to the previous one, with no error on either side. If two configurations named the same application on one Asterisk, one would silently stop receiving calls while the other received calls that were not its own. Generating the name is what prevents that.

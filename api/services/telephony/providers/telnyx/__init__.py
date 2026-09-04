@@ -114,6 +114,11 @@ async def _ensure_connection_id(
 _UI_METADATA = ProviderUIMetadata(
     display_name="Telnyx",
     docs_url="https://voice.menaceui.com/docs/integrations/telephony/telnyx",
+    estimated_phone_number_price="From $1/mo · local/toll-free",
+    phone_number_url=(
+        "https://support.telnyx.com/en/articles/4380325-search-and-buy-numbers"
+    ),
+    pricing_url="https://telnyx.com/pricing/numbers",
     fields=[
         ProviderUIField(
             name="api_key", label="API Key", type="password", sensitive=True

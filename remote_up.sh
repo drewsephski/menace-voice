@@ -37,6 +37,7 @@ DOGRAH_DEPLOY_PROJECT_DIR="$SCRIPT_DIR"
 
 VALIDATE_ONLY=0
 MODE="pull"
+PULL_POLICY="always"
 EXTRA_ARGS=()
 
 while [[ $# -gt 0 ]]; do
@@ -46,6 +47,10 @@ while [[ $# -gt 0 ]]; do
             ;;
         --preflight-only|--validate-only)
             VALIDATE_ONLY=1
+            ;;
+        --local-images|--no-pull)
+            PULL_POLICY="never"
+            EXTRA_ARGS+=(--no-build)
             ;;
         --)
             shift
@@ -94,7 +99,7 @@ fi
 if [[ "$MODE" == "build" ]]; then
     CMD=("${COMPOSE_CMD[@]}" "${PROFILE_ARGS[@]}" up -d --build --force-recreate)
 else
-    CMD=("${COMPOSE_CMD[@]}" "${PROFILE_ARGS[@]}" up -d --pull always --force-recreate)
+    CMD=("${COMPOSE_CMD[@]}" "${PROFILE_ARGS[@]}" up -d --pull "$PULL_POLICY" --force-recreate)
 fi
 
 # Bash 3.2 on macOS treats "${empty_array[@]}" as unbound under `set -u`.

@@ -79,3 +79,33 @@ def test_provider_that_can_dial_without_a_number_has_no_checklist():
         )
         is None
     )
+
+
+def test_provider_cards_have_setup_and_price_resources():
+    expected_price_labels = {
+        "ari": "Carrier priced separately",
+        "cloudonix": "SIP carrier priced separately",
+        "plivo": "From $0.50/mo · US local",
+        "telnyx": "From $1/mo · local/toll-free",
+        "twilio": "From $1.15/mo · US local",
+        "vobiz": "Varies by country and number type",
+        "vonage": "Shown in live number search",
+    }
+    providers_with_number_links = {"plivo", "telnyx", "twilio", "vobiz", "vonage"}
+    providers_with_pricing_links = {"plivo", "telnyx", "twilio", "vonage"}
+
+    for provider_name, price_label in expected_price_labels.items():
+        spec = registry.get(provider_name)
+        assert spec is not None and spec.ui_metadata is not None
+        metadata = spec.ui_metadata
+        assert metadata.docs_url == (
+            "https://voice.menaceui.com/docs/integrations/telephony/"
+            + ("asterisk-ari" if provider_name == "ari" else provider_name)
+        )
+        assert metadata.estimated_phone_number_price == price_label
+        assert bool(metadata.phone_number_url) == (
+            provider_name in providers_with_number_links
+        )
+        assert bool(metadata.pricing_url) == (
+            provider_name in providers_with_pricing_links
+        )

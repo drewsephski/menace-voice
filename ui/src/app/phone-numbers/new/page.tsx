@@ -30,6 +30,7 @@ import type {
   TelephonyConfigurationListItem,
   TelephonyProviderMetadata,
 } from "@/client/types.gen";
+import { ProviderSetupResources } from "@/components/telephony/ProviderSetupResources";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -389,33 +390,46 @@ export default function NewPhoneNumberPage() {
                         {connections.map((connection) => {
                           const value: ConnectionChoice = `existing:${connection.id}`;
                           const selected = choice === value;
+                          const provider = providers.find(
+                            (item) => item.provider === connection.provider,
+                          );
                           return (
-                            <button
+                            <div
                               key={connection.id}
-                              type="button"
-                              onClick={() => {
-                                setCreatedConnectionId(null);
-                                setChoice(value);
-                              }}
                               className={cn(
-                                "flex items-start gap-3 rounded-xl border p-4 text-left transition-colors hover:bg-muted/40",
+                                "overflow-hidden rounded-xl border transition-colors hover:bg-muted/40",
                                 selected && "border-primary bg-primary/5 ring-1 ring-primary",
                               )}
                             >
-                              <span className="mt-0.5 flex size-8 items-center justify-center rounded-lg bg-muted">
-                                <Radio className="size-4" />
-                              </span>
-                              <span className="min-w-0 flex-1">
-                                <span className="block truncate text-sm font-medium">
-                                  {connection.name}
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setCreatedConnectionId(null);
+                                  setChoice(value);
+                                }}
+                                className="flex w-full items-start gap-3 p-4 text-left"
+                              >
+                                <span className="mt-0.5 flex size-8 items-center justify-center rounded-lg bg-muted">
+                                  <Radio className="size-4" />
                                 </span>
-                                <span className="mt-1 block text-xs text-muted-foreground">
-                                  {providerLabel(connection.provider)} ·{" "}
-                                  {connection.phone_number_count ?? 0} numbers
+                                <span className="min-w-0 flex-1">
+                                  <span className="block truncate text-sm font-medium">
+                                    {connection.name}
+                                  </span>
+                                  <span className="mt-1 block text-xs text-muted-foreground">
+                                    {providerLabel(connection.provider)} ·{" "}
+                                    {connection.phone_number_count ?? 0} numbers
+                                  </span>
                                 </span>
-                              </span>
-                              {selected && <CheckCircle2 className="size-4 text-primary" />}
-                            </button>
+                                {selected && <CheckCircle2 className="size-4 text-primary" />}
+                              </button>
+                              {provider && (
+                                <ProviderSetupResources
+                                  provider={provider}
+                                  className="border-t px-4 py-3"
+                                />
+                              )}
+                            </div>
                           );
                         })}
                       </div>
@@ -428,23 +442,31 @@ export default function NewPhoneNumberPage() {
                       {providers.map((provider) => {
                         const selected = choice === `new:${provider.provider}`;
                         return (
-                          <button
+                          <div
                             key={provider.provider}
-                            type="button"
-                            onClick={() => chooseNewProvider(provider)}
                             className={cn(
-                              "flex items-center gap-3 rounded-xl border p-4 text-left transition-colors hover:bg-muted/40",
+                              "overflow-hidden rounded-xl border transition-colors hover:bg-muted/40",
                               selected && "border-primary bg-primary/5 ring-1 ring-primary",
                             )}
                           >
-                            <span className="flex size-9 items-center justify-center rounded-lg border bg-background text-sm font-semibold uppercase">
-                              {provider.display_name.slice(0, 1)}
-                            </span>
-                            <span className="flex-1 text-sm font-medium">
-                              {provider.display_name}
-                            </span>
-                            {selected && <CheckCircle2 className="size-4 text-primary" />}
-                          </button>
+                            <button
+                              type="button"
+                              onClick={() => chooseNewProvider(provider)}
+                              className="flex w-full items-center gap-3 p-4 text-left"
+                            >
+                              <span className="flex size-9 items-center justify-center rounded-lg border bg-background text-sm font-semibold uppercase">
+                                {provider.display_name.slice(0, 1)}
+                              </span>
+                              <span className="flex-1 text-sm font-medium">
+                                {provider.display_name}
+                              </span>
+                              {selected && <CheckCircle2 className="size-4 text-primary" />}
+                            </button>
+                            <ProviderSetupResources
+                              provider={provider}
+                              className="border-t px-4 py-3"
+                            />
+                          </div>
                         );
                       })}
                     </div>

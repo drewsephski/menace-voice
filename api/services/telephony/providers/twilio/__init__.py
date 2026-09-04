@@ -27,6 +27,11 @@ def _config_loader(value: Dict[str, Any]) -> Dict[str, Any]:
 _UI_METADATA = ProviderUIMetadata(
     display_name="Twilio",
     docs_url="https://voice.menaceui.com/docs/integrations/telephony/twilio",
+    estimated_phone_number_price="From $1.15/mo · US local",
+    phone_number_url=(
+        "https://www.twilio.com/docs/numbers-and-senders/phone-number-senders"
+    ),
+    pricing_url="https://www.twilio.com/en-us/voice/pricing/us",
     fields=[
         ProviderUIField(
             name="account_sid",

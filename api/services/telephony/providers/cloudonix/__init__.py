@@ -717,6 +717,7 @@ async def _preprocess_credentials_on_save(
 _UI_METADATA = ProviderUIMetadata(
     display_name="Cloudonix",
     docs_url="https://voice.menaceui.com/docs/integrations/telephony/cloudonix",
+    estimated_phone_number_price="SIP carrier priced separately",
     fields=[
         ProviderUIField(
             name="bearer_token",

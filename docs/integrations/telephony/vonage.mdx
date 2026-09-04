@@ -3,59 +3,65 @@ title: "Vonage Integration"
 description: "Configure Vonage (Nexmo) for voice communication in Menace Voice"
 ---
 
-## Overview
+## What you need
 
-Vonage (formerly Nexmo) is a cloud communications platform that provides global voice, messaging, and video capabilities. Menace Voice's Vonage integration enables high-quality voice interactions with your agents using Vonage's robust infrastructure.
+- A [Vonage API account](https://www.vonage.com/communications-apis/) with
+  credit added.
+- One Vonage number with Voice capability.
+- A Vonage Application with Voice enabled and the number linked to it.
+- The Application ID, downloaded private key, API Key, API Secret, and
+  Signature Secret.
 
-## Prerequisites
+## Estimated price
 
-Before setting up Vonage integration, you'll need:
+Vonage shows the monthly and setup price in **Buy Numbers** before purchase.
+The amount varies by country, number type, and availability, so there is no
+safe universal estimate. Usage is billed separately. Check the live result and
+[current Vonage Voice pricing](https://www.vonage.com/communications-apis/voice/pricing/).
 
-- A [Vonage account](https://www.vonage.com/communications-apis/)
-- Vonage Application with Voice capability enabled
-- Application ID and Private Key from your Vonage Dashboard
-- API Key and API Secret from your Vonage Dashboard
-- Signature Secret from your Vonage Dashboard
-- At least one Vonage phone number linked to the application
-- Menace Voice instance running and accessible
+## Set up Vonage step by step
 
-## Configuration
+### 1. Buy a voice-capable number
 
-### Step 1: Create Vonage Application
+1. Sign in to the [Vonage API Dashboard](https://dashboard.nexmo.com/).
+2. Add credit, then open **Buy Numbers**.
+3. Choose a country, select the **Voice** feature, and choose a number type.
+4. Review the monthly and setup prices, click **Buy**, and complete any
+   country-specific document request.
 
-1. Log in to your [Vonage Dashboard](https://dashboard.nexmo.com/)
-2. Navigate to **Applications** → **Create a new application**
-3. Enable **Voice** capability
-4. Generate a private key (save this securely - you'll need it)
-5. Note your **Application ID**
+See Vonage's official [Buy Numbers guide](https://developer.vonage.com/en/dashboard/build/phone-numbers/buy-numbers).
 
-### Step 2: Get API Credentials
+### 2. Create a Voice Application
 
-1. Find your **API Key** and **API Secret** in the dashboard under **API Settings**
-2. Copy your **Signature Secret** from the same Vonage account. Menace Voice uses it
-   to verify [Vonage signed webhooks](https://developer.vonage.com/en/getting-started/concepts/webhooks).
-3. Navigate to **Numbers** → **Your Numbers**
-4. Copy your phone number(s)
-5. Link each inbound number to your Voice application
+1. Open **Applications** and click **Create a new application**.
+2. Give the Application a recognizable name.
+3. Click **Generate public and private key**. Save the downloaded private key;
+   Vonage cannot show it to you again.
+4. Enable the **Voice** capability and create the Application.
+5. Copy its **Application ID**.
+6. Link the purchased number to this Application.
 
-### Step 3: Configure in Menace Voice
+Vonage documents these controls in [Applications](https://developer.vonage.com/en/dashboard/build/applications).
 
-1. Navigate to **/telephony-configurations** and click **Add configuration**
-2. Select **Vonage** as your provider
-3. Enter your credentials:
-   - Application ID
-   - Private Key (entire key including BEGIN/END lines)
-   - API Key
-   - API Secret
-   - Signature Secret
-4. Click **Save Configuration**
-5. Open the configuration you just created and add at least one **phone number** (without `+` prefix, e.g. `14155551234`). The default caller ID is used for outbound calls.
+### 3. Copy the account credentials
 
-### Step 4: Test Your Configuration
+In **API Settings**, copy the **API Key**, **API Secret**, and **Signature
+Secret**. The Signature Secret lets Menace Voice verify signed webhooks.
 
-1. Create a test workflow
-2. Click "Call" to verify connection
-3. Check call logs for successful connection
+### 4. Connect Vonage in Menace Voice
+
+1. Open **Phone numbers** and click **Add phone number**.
+2. Choose **Vonage** and continue.
+3. Paste the **Application ID** and the entire private key, including the
+   `BEGIN PRIVATE KEY` and `END PRIVATE KEY` lines.
+4. Paste the **API Key**, **API Secret**, and **Signature Secret**.
+5. Enter the purchased number and choose an inbound agent.
+6. Finish setup.
+
+### 5. Test the number
+
+Call the number from another phone and confirm the selected agent answers.
+Then place one outbound test call before using the connection in a campaign.
 
 ## Inbound Calling Setup
 

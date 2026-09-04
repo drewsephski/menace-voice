@@ -3,10 +3,11 @@ api/.env
 .github
 .claude
 **/.claude
-**/.next
+**/.next*
 **/__pycache__
 **/*.pyc
 **/node_modules
+ui/tmp/
 .mypy_cache
 .pytest_cache
 .ruff_cache

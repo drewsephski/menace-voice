@@ -3,53 +3,52 @@ title: "Vobiz Integration"
 description: "Configure Vobiz for voice communication in Menace Voice"
 ---
 
-## Overview
+## What you need
 
-Vobiz is a cloud-based telephony service provider that offers global reach with competitive pricing. Menace Voice's Vobiz integration provides reliable voice connectivity for your conversational AI agents.
+- A [Vobiz account](https://vobiz.ai) with eKYC completed where required.
+- One Vobiz local, national, or toll-free number with Voice capability.
+- Your Vobiz **Auth ID** and **Auth Token**.
+- A Vobiz Application. Menace Voice can create this for you.
 
-## Prerequisites
+## Estimated price
 
-Before setting up Vobiz integration, you'll need:
+Vobiz publishes pay-per-minute pricing with no monthly minimum, but its public
+pages do not publish one universal DID rental amount. The number price varies
+by country and number type. Review the live price before provisioning on the
+[Vobiz Number Provisioning page](https://www.vobiz.ai/products/number-provisioning/).
 
-- A [Vobiz account](https://vobiz.ai)
-- Auth ID and Auth Token from your Vobiz dashboard
-- A Vobiz **Application** (optional — leave the field blank in Menace Voice and we'll auto-create one for you on save, with the `answer_url` pre-set)
-- At least one Vobiz phone number
-- Menace Voice instance running and accessible
+## Set up Vobiz step by step
 
-## Configuration
+### 1. Provision a number
 
-### Step 1: Get Vobiz Credentials
+1. Sign in to [Vobiz Console](https://console.vobiz.ai/).
+2. Complete the requested eKYC and business verification.
+3. Open number provisioning and choose the country, area code, and local,
+   national, or toll-free number type.
+4. Select a Voice-capable number and review its price and requirements.
+5. Purchase the number and wait for it to become active.
 
-1. Log in to your Vobiz dashboard
-2. Find your **Auth ID** and generate an **Auth Token** for API access
-3. (Optional) Navigate to the **Applications** section and create (or open) the application you'll use with Menace Voice, then copy its **Application ID**. Skip this if you want Menace Voice to auto-create the application for you on save.
-4. Navigate to **Phone Numbers** and copy the numbers you plan to use
+### 2. Copy your credentials
 
-### Step 2: Configure in Menace Voice
+Copy the account **Auth ID** and **Auth Token**. Vobiz sends these as
+`X-Auth-ID` and `X-Auth-Token`; the Auth ID is the account identifier, not your
+phone number. See [Vobiz authentication](https://www.docs.vobiz.ai/authentication).
 
-1. Navigate to **/telephony-configurations** and click **Add configuration**
-2. Select **Vobiz** as your provider
-3. Enter your credentials:
-   - Auth ID
-   - Auth Token
-   - Application ID — *optional*. Leave blank and Menace Voice will auto-create a Vobiz Application on save (with the `answer_url` already configured) and store its Application ID on this configuration.
-4. Click **Save Configuration**
-5. Open the configuration you just created and add at least one **phone number** (with country code, in [E.164](https://en.wikipedia.org/wiki/E.164) format — `+` then country code then number, no spaces or dashes, e.g. `+1234567890`). The default caller ID is used for outbound calls.
+### 3. Connect Vobiz in Menace Voice
 
-   <Note>
-     If Menace Voice auto-created the Vobiz Application for you, you still need to
-     attach your Vobiz numbers to that application in the Vobiz Console under
-     **Applications**. The auto-created application is named
-     `dograh-<random>` — its Application ID is shown on the saved
-     configuration.
-   </Note>
+1. Open **Phone numbers** and click **Add phone number**.
+2. Choose **Vobiz** and continue.
+3. Paste the **Auth ID** and **Auth Token**.
+4. Leave **Application ID** blank unless you already have a dedicated Vobiz
+   Application. Menace Voice creates one when the field is blank.
+5. Enter the number with its country code and choose an inbound agent.
+6. Finish setup. Menace Voice attempts to attach the number to the Application
+   and set its answer URL.
 
-### Step 3: Test Your Configuration
+### 4. Test the number
 
-1. Create a test workflow
-2. Click "Call" to verify connection
-3. Check call logs for successful connection
+Call the number from another phone and confirm the selected agent answers.
+If Menace Voice reports a sync warning, use the manual application checks below.
 
 ## Inbound Calling Setup
 

@@ -28,41 +28,42 @@ yours — there are two ways to bring it.
   </Card>
 </CardGroup>
 
-## Supported Providers
+## Choose a provider
 
-<CardGroup cols={3}>
-  <Card title="Twilio" href="/integrations/telephony/twilio">
-    Industry-leading cloud communications platform with global reach
-  </Card>
-  <Card title="Vonage" href="/integrations/telephony/vonage">
-    High-quality voice with 16kHz audio and excellent international coverage
-  </Card>
-  <Card title="Plivo" href="/integrations/telephony/plivo">
-    Cloud communications platform with programmable voice and global PSTN reach
-  </Card>
-  <Card title="Cloudonix" href="/integrations/telephony/cloudonix">
-    SIP-based telephony with flexible trunk configuration
-  </Card>
-  <Card title="Vobiz" href="/integrations/telephony/vobiz">
-    Cloud-based telephony with global reach and competitive pricing
-  </Card>
-  <Card title="Asterisk ARI" href="/integrations/telephony/asterisk-ari">
-    Connect to your own Asterisk PBX via the Asterisk REST Interface
-  </Card>
-  <Card title="Custom Provider" href="/integrations/telephony/custom">
-    Build your own telephony provider integration
-  </Card>
-</CardGroup>
+Prices below are starting estimates checked on September 4, 2026. Your final
+price depends on the country, number type, capabilities, regulatory fees,
+taxes, and call usage. The provider's checkout price is always authoritative.
+
+| Provider | Best fit | Estimated number price | Guide |
+| --- | --- | --- | --- |
+| Twilio | A straightforward first cloud phone account | US local from $1.15/month | [Set up Twilio](/integrations/telephony/twilio) |
+| Telnyx | Programmable voice with detailed number controls | Numbers from $1/month | [Set up Telnyx](/integrations/telephony/telnyx) |
+| Plivo | Low-cost US local-number starting price | US local from $0.50/month | [Set up Plivo](/integrations/telephony/plivo) |
+| Vobiz | International self-serve number provisioning | Varies by country and type | [Set up Vobiz](/integrations/telephony/vobiz) |
+| Vonage | Voice API accounts that use Vonage applications | Shown in live number search | [Set up Vonage](/integrations/telephony/vonage) |
+| Cloudonix | Connecting an existing SIP carrier or trunk | SIP carrier priced separately | [Set up Cloudonix](/integrations/telephony/cloudonix) |
+| Asterisk ARI | Teams that already operate an Asterisk PBX | Carrier and hosting priced separately | [Set up Asterisk ARI](/integrations/telephony/asterisk-ari) |
+
+<Note>
+  Asterisk does not sell phone numbers. Cloudonix connects Menace Voice to SIP
+  infrastructure; your carrier usually owns and bills the number. If you do
+  not already operate phone infrastructure, start with Twilio, Telnyx, Plivo,
+  Vobiz, or Vonage.
+</Note>
 
 ## Configuration
 
-All telephony providers are configured from a single page in Menace Voice:
+All telephony providers use the same guided setup:
 
-1. Navigate to **/telephony-configurations** and click **Add configuration**
-2. Select your provider
-3. Enter your credentials and save
-4. Open the new configuration and add at least one **phone number**
-5. (Optional) Assign an **Inbound workflow** to a phone number to enable inbound calling
+1. Open **Phone numbers** and click **Add phone number**.
+2. Choose your provider. Open its setup guide directly from the provider card.
+3. Follow the linked provider steps to buy a voice-capable number and find the
+   exact credentials Menace Voice requests.
+4. Paste the credentials into Menace Voice. Treat tokens, secrets, and private
+   keys like passwords.
+5. Enter the phone number exactly as it appears in the provider account.
+6. Choose the agent that should answer incoming calls, then finish setup.
+7. Call the number from another phone before using it in a campaign.
 
 <iframe
   className="w-full aspect-video rounded-xl"

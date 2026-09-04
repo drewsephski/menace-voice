@@ -33,10 +33,11 @@
     "**/*.ts",
     "**/*.tsx",
     ".next/types/**/*.ts",
-    "next-env.d.ts",
-    ".next-pilot-page-qa/types/**/*.ts"
+    "next-env.d.ts"
   ],
   "exclude": [
-    "node_modules"
+    "node_modules",
+    ".next-*",
+    "tmp"
   ]
 }

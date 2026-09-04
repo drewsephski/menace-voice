@@ -6334,6 +6334,18 @@ export type TelephonyProviderMetadata = {
      * Docs Url
      */
     docs_url?: string | null;
+    /**
+     * Estimated Phone Number Price
+     */
+    estimated_phone_number_price?: string | null;
+    /**
+     * Phone Number Url
+     */
+    phone_number_url?: string | null;
+    /**
+     * Pricing Url
+     */
+    pricing_url?: string | null;
 };
 
 /**

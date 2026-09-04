@@ -3,43 +3,64 @@ title: "Twilio Integration"
 description: "Configure Twilio for voice communication in Menace Voice"
 ---
 
-## Overview
+## What you need
 
-Twilio is a cloud communications platform that enables voice calling, messaging, and video capabilities. Menace Voice's Twilio integration provides seamless connectivity for your voice agents.
+- A [Twilio account](https://www.twilio.com/try-twilio). Trial accounts can
+  test with restrictions; upgrade before production use.
+- One Twilio number with **Voice** capability.
+- The **Account SID** and **Auth Token** for the Twilio project that owns the
+  number.
 
-## Prerequisites
+## Estimated price
 
-Before setting up Twilio integration, you'll need:
+Twilio lists US local numbers from **$1.15 per month**, plus inbound/outbound
+usage. Country, number type, capabilities, and regulatory requirements change
+the price. Confirm the monthly fee in Twilio Console before buying and check
+the [current Twilio Voice pricing](https://www.twilio.com/en-us/voice/pricing/us).
 
-- A [Twilio account](https://www.twilio.com/try-twilio)
-- Account SID and Auth Token from your Twilio Console
-- At least one Twilio phone number
-- Menace Voice instance running and accessible
+## Set up Twilio step by step
 
-## Configuration
+### 1. Buy a voice-capable number
 
-### Step 1: Get Twilio Credentials
+1. Sign in to [Twilio Console](https://console.twilio.com/).
+2. Open **Products & Services → Numbers & Senders → Phone Numbers**.
+3. Click **Set up a new phone number**. In the legacy Console this is
+   **Develop → Phone Numbers → Manage → Buy a number**.
+4. Choose the country and select **Voice** under capabilities.
+5. Review the number's monthly fee and any address or identity requirements.
+6. Click **Buy** and complete any required compliance registration.
 
-1. Log in to your [Twilio Console](https://console.twilio.com/)
-2. Find your **Account SID** and **Auth Token** on the dashboard
-3. Navigate to **Phone Numbers** → **Manage** → **Active Numbers**
-4. Copy your phone number(s)
+Twilio documents this flow in [Phone Numbers](https://www.twilio.com/docs/numbers-and-senders/phone-number-senders)
+and [How to buy a number](https://help.twilio.com/articles/223135247-How-to-Search-for%20-and-Buy-a-Twilio-Phone-Number-from-Console).
 
-### Step 2: Configure in Menace Voice
+### 2. Copy the credentials Menace Voice requests
 
-1. Navigate to **/telephony-configurations** and click **Add configuration**
-2. Select **Twilio** as your provider
-3. Enter your credentials:
-   - Account SID
-   - Auth Token
-4. Click **Save Configuration**
-5. Open the configuration you just created and add at least one **phone number** (with country code, in [E.164](https://en.wikipedia.org/wiki/E.164) format — `+` then country code then number, no spaces or dashes, e.g. `+1234567890`). The default caller ID is used for outbound calls.
+1. Return to the Console home page and find **Account Info**.
+2. Copy the **Account SID**. It starts with `AC`.
+3. Reveal and copy the **Auth Token**.
 
-### Step 3: Test Your Configuration
+<Warning>
+  Paste the Auth Token only into the **Auth Token** field. A Twilio API Key SID
+  is a different credential and is not accepted by this integration.
+</Warning>
 
-1. Create a test workflow
-2. Click "Call" to verify connection
-3. Check call logs for successful connection
+### 3. Connect Twilio in Menace Voice
+
+1. Open **Phone numbers** and click **Add phone number**.
+2. Choose **Twilio**, then click **Continue**.
+3. Enter a recognizable connection name, such as `Main Twilio account`.
+4. Paste the **Account SID** and **Auth Token**, then click **Continue**.
+5. Enter the purchased number with its country code, for example
+   `+1 415 555 1234`.
+6. Choose the agent that should answer incoming calls, or choose
+   **Outgoing calls only**.
+7. Finish setup.
+
+### 4. Test the number
+
+Call the Twilio number from another phone. Confirm that the selected agent
+answers and that the call appears in **Agent Runs**. If Menace Voice reports a
+provider-sync warning, follow the inbound checks below.
 
 ## Inbound Calling Setup
 

@@ -20,16 +20,22 @@ a full suite of call-control capabilities and more.
   configuration.
 </Note>
 
-## Prerequisites
-
-Before setting up Cloudonix integration, you'll need:
+## What you need
 
 - A [Cloudonix account](https://cockpit.cloudonix.io/onboarding?affiliate=DOGRAH)
 - A Cloudonix domain UUID (or the domain name)
 - A Cloudonix domain API Key (Bearer Token)
 - A Cloudonix **Voice Application** on that domain (optional — leave the field blank in Menace Voice and we'll auto-create one for you on save, with the application `url` pre-set)
-- A Cloudonix outbound voice trunk service provider connection
-- Menace Voice instance running and accessible
+- A SIP carrier or trunk that owns your phone numbers and can route calls to
+  Cloudonix
+
+## Estimated price
+
+Cloudonix connects Menace Voice to SIP infrastructure; it is not the source of
+a universal phone-number price. Your carrier bills the DID, trunk, and usage,
+and Cloudonix account pricing may be quote-based. Check your carrier's current
+rate card and your [Cloudonix account](https://cockpit.cloudonix.io/onboarding?affiliate=DOGRAH)
+before continuing.
 
 ## Video Tutorial
 
@@ -43,25 +49,34 @@ Watch this step-by-step guide to set up Cloudonix with Menace Voice:
   allowFullScreen
 ></iframe>
 
-## Configuration
+## Set up Cloudonix step by step
 
-### Step 1: Get Cloudonix Credentials
+### 1. Prepare your Cloudonix domain and SIP carrier
 
 1. Log in to your [Cloudonix Console](https://cockpit.cloudonix.io/onboarding?affiliate=DOGRAH)
-2. Find your **Domain ID** (UUID or domain name) and **Bearer Token** (Domain API Key) on the dashboard
-3. (Optional) Navigate to your domain's **Applications** and create (or open) the application you'll use with Menace Voice, then copy its **Application Name**. Skip this if you want Menace Voice to auto-create the Voice Application for you on save.
+2. Create or select the domain that will carry these calls.
+3. Connect the SIP carrier or trunk that owns your number. Use the exact host,
+   authentication, routing, and codec settings supplied by that carrier.
+4. Confirm the number reaches the Cloudonix domain before adding Menace Voice.
 
-### Step 2: Configure in Menace Voice
+### 2. Copy the credentials Menace Voice requests
 
-1. Navigate to **/telephony-configurations** and click **Add configuration**
-2. Watch the Cloudonix setup video tutorial above for detailed guidance
-3. Select **Cloudonix** as your provider
-4. Enter your credentials:
-   - Bearer Token
-   - Domain ID
-   - Application Name — *optional*. Leave blank and Menace Voice will auto-create a Voice Application on save (with the application `url` and CXML runtime already configured) and store its name on this configuration.
-5. Click **Save Configuration**
-6. Open the configuration you just created and add at least one **phone number** (with country code, in [E.164](https://en.wikipedia.org/wiki/E.164) format — `+` then country code then number, no spaces or dashes, e.g. `+1234567890`). The default caller ID is used for outbound calls.
+1. Copy the domain name, for example `your-company.cloudonix.net`.
+2. Create or copy the domain API **Bearer Token**.
+3. Optionally create a dedicated **Voice Application** and copy its Application
+   Name. You can leave this blank and let Menace Voice create it.
+
+Cloudonix explains Voice Applications in its [official guide](https://docs.cloudonix.com/docs/voice-applications/).
+
+### 3. Connect Cloudonix in Menace Voice
+
+1. Open **Phone numbers** and click **Add phone number**.
+2. Choose **Cloudonix** and continue.
+3. Paste the **Bearer Token** and **Domain Name**.
+4. Paste the **Application Name**, or leave it blank so Menace Voice creates a
+   dedicated Application.
+5. Enter the carrier-owned number with its country code.
+6. Choose an agent for incoming calls and finish setup.
 
    <Note>
      If Menace Voice auto-created the Voice Application for you, you still need to
@@ -71,11 +86,12 @@ Watch this step-by-step guide to set up Cloudonix with Menace Voice:
      shown on the saved configuration.
    </Note>
 
-### Step 3: Test Your Configuration
+### 4. Bind the number and test
 
-1. Create a test workflow
-2. Click "Call" to verify connection
-3. Check call logs for successful connection
+1. In Cloudonix, bind the number's DNID to the Voice Application used by Menace
+   Voice.
+2. Call the number from another phone and confirm the selected agent answers.
+3. Place one outbound test call before using the connection in a campaign.
 
 ## Inbound Calling Setup
 

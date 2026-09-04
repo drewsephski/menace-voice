@@ -29,6 +29,11 @@ def _config_loader(value: Dict[str, Any]) -> Dict[str, Any]:
 _UI_METADATA = ProviderUIMetadata(
     display_name="Vonage",
     docs_url="https://voice.menaceui.com/docs/integrations/telephony/vonage",
+    estimated_phone_number_price="Shown in live number search",
+    phone_number_url=(
+        "https://developer.vonage.com/en/dashboard/build/phone-numbers/buy-numbers"
+    ),
+    pricing_url="https://www.vonage.com/communications-apis/voice/pricing/",
     fields=[
         ProviderUIField(name="application_id", label="Application ID", type="text"),
         ProviderUIField(

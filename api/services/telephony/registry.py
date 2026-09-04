@@ -82,6 +82,9 @@ class ProviderUIMetadata:
     display_name: str
     fields: List[ProviderUIField]
     docs_url: Optional[str] = None
+    estimated_phone_number_price: Optional[str] = None
+    phone_number_url: Optional[str] = None
+    pricing_url: Optional[str] = None
 
 
 # How a customer gets phone service through this provider. Presentation only —

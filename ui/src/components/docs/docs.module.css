@@ -87,6 +87,9 @@
 .readTime { flex: 0 0 auto; padding-bottom: 5px; color: var(--docs-dim); font-family: var(--font-geist-mono), monospace; font-size: 10px; }
 .articleRule { height: 1px; margin: 30px 0 28px; background: var(--docs-border); }
 .bodyCopy { max-width: 680px; margin: 0 0 25px; color: #c4c4c4; font-size: 15px; line-height: 1.7; }
+.sectionHeading { max-width: 700px; margin: 42px 0 17px; color: var(--docs-text); font-size: 21px; font-weight: 520; letter-spacing: -0.025em; line-height: 1.3; scroll-margin-top: 24px; }
+.inlineLink { color: var(--docs-accent); font-weight: 520; text-decoration: underline; text-decoration-color: rgb(240 68 56 / 45%); text-underline-offset: 3px; }
+.inlineLink:hover { color: #ff766c; text-decoration-color: currentColor; }
 .checkList { display: grid; max-width: 720px; gap: 12px; margin: 24px 0 30px; padding: 0; list-style: none; color: #c4c4c4; font-size: 14px; line-height: 1.55; }
 .checkList li { position: relative; padding-left: 22px; }
 .checkList li::before { position: absolute; top: 0.55em; left: 0; width: 7px; height: 7px; border-radius: 50%; background: var(--docs-accent); content: ""; }

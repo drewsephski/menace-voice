@@ -109,6 +109,8 @@ async def _ensure_application_id(
 _UI_METADATA = ProviderUIMetadata(
     display_name="Vobiz",
     docs_url="https://voice.menaceui.com/docs/integrations/telephony/vobiz",
+    estimated_phone_number_price="Varies by country and number type",
+    phone_number_url="https://www.vobiz.ai/products/number-provisioning/",
     fields=[
         ProviderUIField(
             name="auth_id",

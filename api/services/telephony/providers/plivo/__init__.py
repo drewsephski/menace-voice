@@ -105,6 +105,9 @@ async def _ensure_application_id(
 _UI_METADATA = ProviderUIMetadata(
     display_name="Plivo",
     docs_url="https://voice.menaceui.com/docs/integrations/telephony/plivo",
+    estimated_phone_number_price="From $0.50/mo · US local",
+    phone_number_url="https://docs.plivo.com/docs/numbers",
+    pricing_url="https://www.plivo.com/phone-numbers/pricing/",
     fields=[
         ProviderUIField(name="auth_id", label="Auth ID", type="text", sensitive=True),
         ProviderUIField(

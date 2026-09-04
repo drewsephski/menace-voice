@@ -3,53 +3,59 @@ title: "Plivo Integration"
 description: "Configure Plivo for voice communication in Menace Voice"
 ---
 
-## Overview
+## What you need
 
-Plivo is a cloud communications platform that provides global voice and messaging APIs. Menace Voice's Plivo integration uses Plivo's XML and WebSocket streaming to power your voice agents.
+- A [Plivo account](https://www.plivo.com/) with enough credit to rent a
+  number.
+- One Plivo number with Voice capability.
+- The **Auth ID** and **Auth Token** shown in Plivo Console.
+- A Plivo Application. Menace Voice can create this for you.
 
-## Prerequisites
+## Estimated price
 
-Before setting up Plivo integration, you'll need:
+Plivo lists US local numbers from **$0.50 per month** and US toll-free numbers
+from **$1 per month**, plus call usage. Other countries and number types can
+have different monthly and one-time setup fees. Confirm the live amount on
+[Plivo Phone Number Pricing](https://www.plivo.com/phone-numbers/pricing/).
 
-- A [Plivo account](https://www.plivo.com/)
-- Auth ID and Auth Token from your Plivo Console
-- A Plivo **Application** with Voice capability (optional — leave the field blank in Menace Voice and we'll auto-create one for you on save, with the `answer_url` pre-set)
-- At least one Plivo phone number
-- Menace Voice instance running and accessible
+## Set up Plivo step by step
 
-## Configuration
+### 1. Buy a voice-capable number
 
-### Step 1: Get Plivo Credentials
+1. Sign in to [Plivo Console](https://console.plivo.com/).
+2. Open **Phone Numbers → Buy Numbers**.
+3. Filter by country, number type, and **Voice** capability.
+4. Select a number, review its charges, and click **Buy Number**.
+5. Complete any country-specific compliance application Plivo requests.
 
-1. Log in to your [Plivo Console](https://console.plivo.com/)
-2. Find your **Auth ID** and **Auth Token** on the dashboard
-3. (Optional) Navigate to **Voice** → **Applications** and create (or open) the application you'll use with Menace Voice, then copy its **Application ID** (a UUID). Skip this if you want Menace Voice to auto-create the application for you on save.
-4. Navigate to **Phone Numbers** → **Your Numbers** and copy the numbers you plan to use
+See Plivo's official [Phone Numbers overview](https://docs.plivo.com/docs/numbers).
 
-### Step 2: Configure in Menace Voice
+### 2. Copy your credentials
 
-1. Navigate to **/telephony-configurations** and click **Add configuration**
-2. Select **Plivo** as your provider
-3. Enter your credentials:
-   - Auth ID
-   - Auth Token
-   - Application ID — *optional*. Leave blank and Menace Voice will auto-create a Plivo Application on save (with the `answer_url` already configured) and store its Application ID on this configuration.
-4. Click **Save Configuration**
-5. Open the configuration you just created and add at least one **phone number** (with country code, in [E.164](https://en.wikipedia.org/wiki/E.164) format — `+` then country code then number, no spaces or dashes, e.g. `+1234567890`). The default caller ID is used for outbound calls.
+On the Plivo Console dashboard, copy the **Auth ID** and **Auth Token** for the
+account that owns the number. Keep the Auth Token private.
 
-   <Note>
-     If Menace Voice auto-created the Plivo Application for you, you still need to
-     link your Plivo numbers to that application in the Plivo Console under
-     **Phone Numbers** → **Your Numbers**. The auto-created application is
-     named `dograh-<random>` — its Application ID is shown on the saved
-     configuration.
-   </Note>
+### 3. Connect Plivo in Menace Voice
 
-### Step 3: Test Your Configuration
+1. Open **Phone numbers** and click **Add phone number**.
+2. Choose **Plivo** and continue.
+3. Paste the **Auth ID** and **Auth Token**.
+4. Leave **Application ID** blank unless you already have a dedicated Plivo
+   Application. Menace Voice creates one with the correct answer URL when the
+   field is blank.
+5. Enter the purchased number with its country code.
+6. Choose an agent for incoming calls and finish setup.
 
-1. Create a test workflow
-2. Click "Call" to verify connection
-3. Check call logs for successful connection
+### 4. Link the number to the Plivo Application
+
+In Plivo Console, open **Phone Numbers → Your Numbers**, select the number, and
+assign it to the Application used by Menace Voice. If Menace Voice created the
+Application, use the Application ID shown on the saved provider connection.
+
+### 5. Test the number
+
+Call the number from another phone and confirm the selected agent answers.
+Then place one outbound test call before starting a campaign.
 
 ## Inbound Calling Setup
 
