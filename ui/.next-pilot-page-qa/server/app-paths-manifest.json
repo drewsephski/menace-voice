@@ -1,0 +1,7 @@
+{
+  "/api/auth/oss/route": "app/api/auth/oss/route.js",
+  "/api/config/auth/route": "app/api/config/auth/route.js",
+  "/api/config/version/route": "app/api/config/version/route.js",
+  "/favicon.ico/route": "app/favicon.ico/route.js",
+  "/pilot/page": "app/pilot/page.js"
+}

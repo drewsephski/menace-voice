@@ -1,0 +1,36 @@
+globalThis.__BUILD_MANIFEST = {
+  "pages": {
+    "/_app": []
+  },
+  "devFiles": [],
+  "ampDevFiles": [],
+  "polyfillFiles": [
+    "static/chunks/3146f_next_dist_build_polyfills_polyfill-nomodule.js"
+  ],
+  "lowPriorityFiles": [],
+  "rootMainFiles": [
+    "static/chunks/[turbopack]_browser_dev_hmr-client_hmr-client_ts_6706d3eb._.js",
+    "static/chunks/3146f_next_dist_compiled_react-dom_84d07769._.js",
+    "static/chunks/3146f_next_dist_compiled_next-devtools_index_f04b24dc.js",
+    "static/chunks/3146f_next_dist_compiled_f56ea1e5._.js",
+    "static/chunks/3146f_next_dist_client_d71e15aa._.js",
+    "static/chunks/3146f_next_dist_shared_lib_e62c7cd9._.js",
+    "static/chunks/3146f_next_dist_36c33e8f._.js",
+    "static/chunks/3146f_next_router_fdfbb003.js",
+    "static/chunks/12e3c_@sentry_core_build_esm_dda7c3f3._.js",
+    "static/chunks/bb763_@sentry_browser_build_npm_esm_dev_ed64ce14._.js",
+    "static/chunks/aa9db_@sentry_conventions_dist_attributes_mjs_8318912d._.js",
+    "static/chunks/6c7ea_@sentry_browser-utils_build_esm_9758afb9._.js",
+    "static/chunks/0538e_posthog-js_dist_module_7c958378.js",
+    "static/chunks/34c60__pnpm_5e873e0c._.js",
+    "static/chunks/dograh-1_ui_src_instrumentation-client_ts_13edc9d4._.js",
+    "static/chunks/dograh-1_ui_a0ff3932._.js",
+    "static/chunks/turbopack-dograh-1_ui_9da07899._.js"
+  ],
+  "ampFirstPages": []
+};
+globalThis.__BUILD_MANIFEST.lowPriorityFiles = [
+"/static/" + process.env.__NEXT_BUILD_ID + "/_buildManifest.js",
+,"/static/" + process.env.__NEXT_BUILD_ID + "/_ssgManifest.js",
+
+];

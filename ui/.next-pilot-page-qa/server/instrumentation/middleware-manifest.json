@@ -1,0 +1,13 @@
+{
+  "sorted_middleware": [],
+  "middleware": {},
+  "instrumentation": {
+    "files": [
+      "server/edge/chunks/34c60__pnpm_320dc036._.js",
+      "server/edge/chunks/dograh-1_ui_75f9eedb._.js",
+      "server/edge/chunks/turbopack-dograh-1_ui_edge-wrapper_da0f8f42.js"
+    ],
+    "name": "instrumentation"
+  },
+  "functions": {}
+}

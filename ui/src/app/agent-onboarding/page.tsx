@@ -254,7 +254,7 @@ const MCP_PRESETS: McpPreset[] = [
       "Look up current, version-specific documentation and examples for modern libraries.",
     url: "https://mcp.context7.com/mcp",
     icon: BookOpen,
-    iconClassName: "h-5 w-5 text-sky-400",
+    logoUrl: "/integrations/context7.png",
   },
   {
     id: "deepwiki",
@@ -263,7 +263,7 @@ const MCP_PRESETS: McpPreset[] = [
       "Explain public GitHub repositories and their architecture from generated documentation.",
     url: "https://mcp.deepwiki.com/mcp",
     icon: GitBranch,
-    iconClassName: "h-5 w-5 text-violet-400",
+    logoUrl: "/integrations/deepwiki.png",
   },
   {
     id: "exa",

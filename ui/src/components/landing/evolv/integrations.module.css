@@ -1,5 +1,4 @@
 .section {
-  min-height: 1269px;
   padding: 126px 32px 120px;
   overflow: hidden;
   border-top: 1px solid rgb(255 255 255 / 10%);
@@ -52,7 +51,6 @@
   width: 56px;
   height: 56px;
   object-fit: contain;
-  filter: grayscale(1);
 }
 
 .cell:hover,
@@ -68,22 +66,6 @@
     transparent 0 8px,
     rgb(255 255 255 / 5%) 8px 9px
   );
-}
-
-.sparkle {
-  opacity: 1;
-}
-
-.sparkle span {
-  display: grid;
-  width: 64px;
-  height: 64px;
-  place-items: center;
-  border: 1px solid rgb(240 68 56 / 34%);
-  border-radius: 50%;
-  background: rgb(240 68 56 / 10%);
-  color: var(--evolv-accent);
-  box-shadow: 0 0 45px rgb(240 68 56 / 22%);
 }
 
 .action {
@@ -106,7 +88,6 @@
 
 @media (max-width: 900px) {
   .section {
-    min-height: 1122px;
     padding-block: 104px;
   }
 
@@ -123,7 +104,6 @@
 
 @media (max-width: 600px) {
   .section {
-    min-height: 757px;
     padding: 76px 20px 72px;
   }
 
@@ -147,11 +127,6 @@
   .cell img {
     width: 40px;
     height: 40px;
-  }
-
-  .sparkle span {
-    width: 46px;
-    height: 46px;
   }
 
   .action {

@@ -38,6 +38,8 @@ def build_pipeline(
     termination_funnel,
     voicemail_detector=None,
     recording_router=None,
+    guardrail_input_processor=None,
+    guardrail_output_processor=None,
 ):
     """Build the main pipeline with all components.
 
@@ -86,9 +88,14 @@ def build_pipeline(
     if voicemail_detector:
         processors.append(voicemail_detector.llm_gate())
 
+    if guardrail_input_processor:
+        processors.append(guardrail_input_processor)
+
+    processors.append(llm)  # LLM
+    if guardrail_output_processor:
+        processors.append(guardrail_output_processor)
     processors.extend(
         [
-            llm,  # LLM
             *post_llm,
             tts,  # TTS
             transport.output(),  # Transport bot output

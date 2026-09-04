@@ -77,6 +77,10 @@ from api.services.pipecat.worker_runner import run_pipeline_worker
 from api.services.pipecat.ws_sender_registry import get_ws_sender
 from api.services.telephony import registry as telephony_registry
 from api.services.workflow.dto import ReactFlowDTO
+from api.services.workflow.guardrails import (
+    GuardrailInputProcessor,
+    GuardrailOutputProcessor,
+)
 from api.services.workflow.initial_context import merge_external_initial_context
 from api.services.workflow.pipecat_engine import PipecatEngine
 from api.services.workflow.workflow_graph import WorkflowGraph
@@ -867,6 +871,7 @@ async def _run_pipeline_impl(
         has_recordings=has_recordings,
         context_compaction_enabled=context_compaction_enabled,
         call_dispositions=call_dispositions,
+        workflow_configurations=run_configs,
     )
 
     # Create pipeline components
@@ -1067,6 +1072,8 @@ async def _run_pipeline_impl(
             voicemail_detector=voicemail_detector,
         )
     else:
+        guardrail_input_processor = GuardrailInputProcessor(engine.guardrails)
+        guardrail_output_processor = GuardrailOutputProcessor(engine.guardrails)
         pipeline = build_pipeline(
             transport,
             stt,
@@ -1080,6 +1087,8 @@ async def _run_pipeline_impl(
             termination_funnel,
             voicemail_detector=voicemail_detector,
             recording_router=recording_router,
+            guardrail_input_processor=guardrail_input_processor,
+            guardrail_output_processor=guardrail_output_processor,
         )
 
     # Create pipeline task with audio configuration

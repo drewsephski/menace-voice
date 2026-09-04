@@ -8,9 +8,10 @@ import type { AuthUser, LocalUser } from '../types';
 import { AuthContext } from './AuthProvider';
 
 const PUBLIC_PATHS = ['/', '/auth/login', '/auth/signup', '/embed', '/docs'];
+const EXACT_PUBLIC_PATHS = ['/pilot'];
 
 export function isPublicAuthPath(pathname: string) {
-  return PUBLIC_PATHS.some(
+  return EXACT_PUBLIC_PATHS.includes(pathname) || PUBLIC_PATHS.some(
     (path) => pathname === path || pathname.startsWith(`${path}/`),
   );
 }

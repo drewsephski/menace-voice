@@ -10,8 +10,13 @@ const OSS_TOKEN_COOKIE = 'dograh_auth_token';
 // which must be fetchable without a session cookie so third-party sites can
 // embed it — otherwise the middleware 307-redirects the asset to /auth/login.
 const PUBLIC_PATHS = ['/', '/auth/login', '/auth/signup', '/embed', '/docs'];
+const EXACT_PUBLIC_PATHS = ['/pilot'];
 
 let cachedAuthProvider: string | null = null;
+
+export function isPublicPath(pathname: string) {
+  return EXACT_PUBLIC_PATHS.includes(pathname) || PUBLIC_PATHS.some((path) => pathname === path || pathname.startsWith(`${path}/`));
+}
 
 async function fetchAuthProvider(): Promise<string> {
   if (cachedAuthProvider) {
@@ -43,6 +48,12 @@ async function fetchAuthProvider(): Promise<string> {
 }
 
 export async function middleware(request: NextRequest) {
+  const { pathname } = request.nextUrl;
+
+  if (isPublicPath(pathname)) {
+    return NextResponse.next();
+  }
+
   const authProvider = await fetchAuthProvider();
 
   // Only handle OSS mode
@@ -51,17 +62,11 @@ export async function middleware(request: NextRequest) {
   }
 
   const token = request.cookies.get(OSS_TOKEN_COOKIE)?.value;
-  const { pathname } = request.nextUrl;
-
   // Allow public paths without auth. Match on a path-segment boundary (exact
   // match or a `/`-delimited subpath) rather than a bare prefix, so a public
   // entry like `/embed` exempts `/embed` and `/embed/...` but NOT sibling
   // routes such as `/embed-admin` — a bare startsWith would let those bypass
   // authentication.
-  if (PUBLIC_PATHS.some((p) => pathname === p || pathname.startsWith(`${p}/`))) {
-    return NextResponse.next();
-  }
-
   // If no token, redirect to login
   if (!token) {
     const loginUrl = new URL('/auth/login', request.url);

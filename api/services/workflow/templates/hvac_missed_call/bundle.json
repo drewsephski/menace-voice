@@ -1,0 +1,245 @@
+{
+  "template_bundle": {
+    "slug": "hvac-missed-call-recovery",
+    "version": 1,
+    "schema_version": 1,
+    "checksum": "sha256:59db64fc868d1f6709a6272a9a27dac542c786c0b212ca778dad3d7d84e0e81a",
+    "name": "HVAC missed-call recovery",
+    "description": "Configuration-driven missed-call intake, guarded escalation, and callback recovery for HVAC operators.",
+    "default_workflow_configuration": {
+      "max_call_duration": 300,
+      "call_dispositions": [
+        {"code": "qualified_callback", "description": "Mandatory intake is complete and a callback is requested."},
+        {"code": "successful_escalation", "description": "The configured escalation destination answered."},
+        {"code": "caller_requested_callback", "description": "The caller requested a callback without completing qualification."},
+        {"code": "incomplete_intake", "description": "The call ended with some but not all mandatory intake fields."},
+        {"code": "caller_abandoned", "description": "The caller ended before a useful intake could be recorded."},
+        {"code": "transfer_failed", "description": "A configured escalation was attempted but did not connect."},
+        {"code": "technical_failure", "description": "A system or provider failure prevented normal completion."},
+        {"code": "safety_fallback", "description": "Configured immediate-danger handling replaced normal intake."},
+        {"code": "other", "description": "The outcome does not match another configured disposition."}
+      ],
+      "guardrails": {
+        "enabled": true,
+        "policy_schema_version": 1,
+        "input_rules": [
+          {
+            "id": "configured-immediate-danger",
+            "patterns": [
+              "\\b(?:gas (?:odor|smell|leak)|(?:odor|smell)(?: of)? gas)\\b",
+              "\\bcarbon monoxide (?:alarm|detector)\\b",
+              "\\bCO alarm\\b",
+              "\\b(?:fire|smoke)\\b",
+              "\\b(?:sparking|electrical(?:ly)? dangerous)\\b"
+            ],
+            "action": "bypass",
+            "response": "If there is immediate danger, leave the area and contact the emergency service appropriate for your location. I will continue with the configured callback process.",
+            "category": "immediate_danger",
+            "escalation": "configured_escalation"
+          }
+        ],
+        "output_rules": [
+          {
+            "id": "prohibited-safety-or-technical-advice",
+            "patterns": ["\\b(?:diagnosis is|repair it by|reset the breaker|turn off the gas)\\b"],
+            "action": "replace",
+            "response": "I can collect your details and arrange follow-up, but I cannot provide diagnosis or repair advice.",
+            "category": "prohibited_safety_or_technical_advice"
+          },
+          {
+            "id": "fabricated-pricing-or-quote",
+            "patterns": ["\\b(?:price is|quote is|will cost)\\b"],
+            "action": "replace",
+            "response": "I can collect your details and arrange follow-up, but I cannot provide pricing or a quote.",
+            "category": "fabricated_pricing_or_quote"
+          },
+          {
+            "id": "fabricated-appointment-or-availability",
+            "patterns": ["\\b(?:appointment (?:is )?booked|technician (?:is )?available|technician (?:is )?on the way)\\b"],
+            "action": "replace",
+            "response": "I recorded the request, but I cannot confirm an appointment or technician availability.",
+            "category": "fabricated_appointment_or_technician_availability"
+          },
+          {
+            "id": "false-escalation-or-delivery-success",
+            "patterns": ["\\b(?:transferred you successfully|a human received|delivered successfully)\\b"],
+            "action": "replace",
+            "response": "I recorded the request. I can only confirm escalation or delivery when the system provides matching evidence.",
+            "category": "false_escalation_or_delivery_success"
+          },
+          {
+            "id": "autonomous-dispatch-or-service-guarantee",
+            "patterns": ["\\b(?:we are dispatching|service is guaranteed|guarantee service)\\b"],
+            "action": "replace",
+            "response": "I can arrange follow-up, but I cannot dispatch service or make a service guarantee.",
+            "category": "fabricated_appointment_or_technician_availability"
+          },
+          {
+            "id": "licensed-technician-impersonation",
+            "patterns": ["\\b(?:as a licensed technician|I am your technician)\\b"],
+            "action": "replace",
+            "response": "I am an automated assistant that can collect details and arrange follow-up.",
+            "category": "prohibited_safety_or_technical_advice"
+          }
+        ]
+      }
+    },
+    "template_context": {
+      "schema": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "business_name",
+          "service_area",
+          "business_hours",
+          "disclosure_message",
+          "danger_message",
+          "callback_confirmation"
+        ],
+        "properties": {
+          "business_name": {"type": "string", "minLength": 1},
+          "service_area": {"type": "string", "minLength": 1},
+          "business_hours": {"type": "string", "minLength": 1},
+          "disclosure_message": {"type": "string", "minLength": 1},
+          "danger_message": {"type": "string", "minLength": 1},
+          "callback_confirmation": {"type": "string", "minLength": 1}
+        }
+      },
+      "defaults": {
+        "business_name": "Your HVAC company",
+        "service_area": "Configured service area",
+        "business_hours": "Configured business hours",
+        "disclosure_message": "I am an automated assistant for {{business_name}}.",
+        "danger_message": "If there is immediate danger, leave the area and contact the emergency service appropriate for your location.",
+        "callback_confirmation": "I recorded your callback request for {{business_name}}. This does not confirm that a person received it or that an appointment was scheduled."
+      }
+    },
+    "required_fields": [
+      "caller_name",
+      "callback_phone",
+      "service_location",
+      "reason_for_call",
+      "urgency"
+    ],
+    "optional_fields": ["existing_customer", "high_level_symptoms"],
+    "disposition_map": {
+      "qualified_callback": "qualified_callback",
+      "successful_escalation": "successful_escalation",
+      "caller_requested_callback": "caller_requested_callback",
+      "incomplete_intake": "incomplete_intake",
+      "caller_abandoned": "caller_abandoned",
+      "transfer_failed": "transfer_failed",
+      "technical_failure": "technical_failure",
+      "safety_fallback": "safety_fallback",
+      "other": "other"
+    },
+    "severe_categories": [
+      "prohibited_safety_or_technical_advice",
+      "fabricated_pricing_or_quote",
+      "fabricated_appointment_or_technician_availability",
+      "false_escalation_or_delivery_success",
+      "broken_escalation_without_fallback",
+      "caller_stranding_runtime_failure",
+      "configured_disclosure_omission"
+    ],
+    "safety_policy": {
+      "immediate_danger_patterns": [
+        "gas odor",
+        "carbon monoxide alarm",
+        "fire",
+        "smoke",
+        "sparking electrical"
+      ],
+      "configured_message_context_key": "danger_message",
+      "bypass_model": true,
+      "continue_normal_intake": false
+    },
+    "escalation_policy": {
+      "enabled": true,
+      "conditions": ["configured_immediate_danger", "caller_requests_live_help"],
+      "destinations": [],
+      "timeout_seconds": 20,
+      "success_requires": "destination_answered",
+      "fallback_on": ["unsupported", "rejected", "timeout", "no_answer"],
+      "fallback": "callback"
+    },
+    "callback_policy": {
+      "enabled": true,
+      "required_fields": [
+        "caller_name",
+        "callback_phone",
+        "service_location",
+        "reason_for_call",
+        "urgency"
+      ],
+      "conditionally_required_fields": {
+        "preferred_callback_time": "live_escalation_not_successful"
+      },
+      "delivery": "durable_webhook",
+      "success_requires": "delivery_evidence",
+      "final_confirmation_context_key": "callback_confirmation"
+    }
+  },
+  "nodes": [
+    {
+      "id": "hvac-start",
+      "type": "startCall",
+      "position": {"x": 0, "y": 0},
+      "data": {
+        "name": "Disclosure and reason",
+        "greeting_type": "text",
+        "greeting": "Thank you for calling {{business_name}}. {{disclosure_message}} How can I help?",
+        "prompt": "State the configured disclosure and gather the caller's reason for calling. Do not diagnose, quote, promise service, or claim that escalation or delivery succeeded without evidence.",
+        "allow_interrupt": true,
+        "add_global_prompt": false
+      }
+    },
+    {
+      "id": "hvac-intake",
+      "type": "agentNode",
+      "position": {"x": 320, "y": 0},
+      "data": {
+        "name": "Callback intake",
+        "prompt": "Gather each configured required callback field. Ask only for high-level symptoms. Apply the configured safety and escalation policies. Never provide repair advice, pricing, appointment availability, dispatch confirmation, or guarantees.",
+        "allow_interrupt": true,
+        "add_global_prompt": false,
+        "extraction_enabled": true,
+        "extraction_prompt": "Extract only facts the caller supplied. Leave unknown fields empty.",
+        "extraction_variables": [
+          {"name": "caller_name", "type": "string", "prompt": "Caller's stated name"},
+          {"name": "callback_phone", "type": "string", "prompt": "Caller's stated callback number"},
+          {"name": "service_location", "type": "string", "prompt": "Caller's stated service location"},
+          {"name": "reason_for_call", "type": "string", "prompt": "Caller's stated reason for calling"},
+          {"name": "urgency", "type": "string", "prompt": "Caller's stated urgency"},
+          {"name": "preferred_callback_time", "type": "string", "prompt": "Requested callback time"},
+          {"name": "existing_customer", "type": "boolean", "prompt": "Whether caller states they are an existing customer"},
+          {"name": "high_level_symptoms", "type": "string", "prompt": "High-level symptoms without diagnosis"}
+        ]
+      }
+    },
+    {
+      "id": "hvac-end",
+      "type": "endCall",
+      "position": {"x": 640, "y": 0},
+      "data": {
+        "name": "Truthful confirmation",
+        "prompt": "Use the configured final confirmation. Do not state or imply that a person received the request, an appointment exists, or service will be dispatched unless matching system evidence is present.",
+        "add_global_prompt": false
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "hvac-start-intake",
+      "source": "hvac-start",
+      "target": "hvac-intake",
+      "data": {"label": "Gather intake", "condition": "The caller states a reason for calling."}
+    },
+    {
+      "id": "hvac-intake-end",
+      "source": "hvac-intake",
+      "target": "hvac-end",
+      "data": {"label": "Confirm callback", "condition": "The intake is complete or the caller wants to end."}
+    }
+  ]
+}

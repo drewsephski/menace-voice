@@ -24,4 +24,9 @@ export const PostHogEvent = {
   ONBOARDING_SHOWN: "onboarding_shown",
   ONBOARDING_SUBMITTED: "onboarding_submitted",
   ONBOARDING_SKIPPED: "onboarding_skipped",
+  PILOT_PAGE_VIEWED: "pilot_page_viewed",
+  PILOT_PRIMARY_CTA_CLICKED: "pilot_primary_cta_clicked",
+  PILOT_QUALIFICATION_STARTED: "pilot_qualification_started",
+  PILOT_QUALIFICATION_SUBMISSION_ATTEMPTED: "pilot_qualification_submission_attempted",
+  PILOT_QUALIFICATION_SUBMITTED: "pilot_qualification_submitted",
 } as const;

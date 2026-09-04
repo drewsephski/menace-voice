@@ -1,0 +1,83 @@
+{
+  "results": [
+    {
+      "observed_at": "2026-09-03T00:03:00Z",
+      "caller": {
+        "caller_name": "Avery Synthetic",
+        "callback_phone": "+15555550123",
+        "service_location": "123 Synthetic Street",
+        "reason_for_call": "The air conditioner stopped cooling",
+        "urgency": "high",
+        "preferred_callback_time": "weekday afternoon",
+        "existing_customer": true
+      },
+      "classification": {
+        "outcome": "qualified_callback",
+        "urgency": "high"
+      },
+      "escalation": {
+        "status": "failed",
+        "fallback_offered": true
+      },
+      "delivery": {
+        "status": "queued"
+      },
+      "costs": {
+        "entries": [
+          {
+            "component": "telephony",
+            "state": "known",
+            "amount": "1.25",
+            "currency": "USD",
+            "authoritative_source": "synthetic_provider_invoice",
+            "source_record_id": "synthetic-cost-1",
+            "observed_at": "2026-09-03T00:00:00Z",
+            "idempotency_key": "synthetic-cost-1"
+          },
+          {
+            "component": "llm",
+            "state": "pending",
+            "amount": null,
+            "currency": null,
+            "authoritative_source": "synthetic_provider_invoice",
+            "observed_at": "2026-09-03T00:01:00Z",
+            "idempotency_key": "synthetic-cost-2"
+          }
+        ]
+      }
+    },
+    {
+      "caller": {
+        "caller_name": "Blair Synthetic",
+        "callback_phone": "+15555550124",
+        "service_location": "456 Synthetic Avenue",
+        "reason_for_call": "Need a repair quote",
+        "urgency": "normal",
+        "preferred_callback_time": "tomorrow morning"
+      },
+      "classification": {
+        "outcome": "safety_fallback"
+      },
+      "escalation": {
+        "status": "not_attempted"
+      },
+      "delivery": {
+        "status": "not_attempted"
+      },
+      "response_text": "The repair will cost $299.",
+      "costs": {
+        "entries": [
+          {
+            "component": "telephony",
+            "state": "unavailable",
+            "amount": null,
+            "currency": null,
+            "authoritative_source": "synthetic_provider_invoice",
+            "observed_at": "2026-09-03T00:02:00Z",
+            "idempotency_key": "synthetic-cost-3"
+          }
+        ]
+      }
+    }
+  ]
+}

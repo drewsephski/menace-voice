@@ -9,7 +9,8 @@ export type LeadSource =
   | "onboarding"
   | "pricing_custom_volume"
   | "landing_contact"
-  | "auth_page";
+  | "auth_page"
+  | "pilot";
 
 export type LeadKind = "hire_expert" | "enterprise";
 

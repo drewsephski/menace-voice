@@ -1460,7 +1460,7 @@ async def update_workflow(
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.post("/{workflow_id}/duplicate")
+@router.post("/{workflow_id:int}/duplicate")
 async def duplicate_workflow_endpoint(
     workflow_id: int,
     user: UserModel = Depends(get_user),

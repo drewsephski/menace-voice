@@ -61,6 +61,7 @@ from api.services.workflow.disposition_mapping import (
     apply_disposition_mapping,
     get_disposition_mapping,
 )
+from api.services.workflow.guardrails import GuardrailService, GuardrailViolation
 from api.services.workflow.initial_context import GREETING_OVERRIDE_CONTEXT_KEY
 from api.services.workflow.mcp_tool_session import McpToolSession
 from api.services.workflow.pipecat_engine_context_composer import (
@@ -131,6 +132,7 @@ class PipecatEngine:
         context_compaction_enabled: bool = False,
         run_transition_variable_extraction_in_background: bool = True,
         call_dispositions: Sequence[CallDispositionOption] | None = None,
+        workflow_configurations: Mapping[str, object] | None = None,
     ):
         self.task = task
         self.llm = llm
@@ -156,6 +158,10 @@ class PipecatEngine:
         self._call_disposed = False
         self._current_node: Optional[Node] = None
         self._gathered_context: dict = {}
+        self.guardrails = GuardrailService.from_workflow_configuration(
+            workflow_configurations,
+            record_violation=self.record_guardrail_violation,
+        )
         self._user_response_timeout_task: Optional[asyncio.Task] = None
         self._pending_extraction_tasks: set[asyncio.Task] = set()
         # True once terminal call disposal has run its synchronous extraction.
@@ -1293,6 +1299,12 @@ class PipecatEngine:
         result as read-only rather than as an isolated snapshot.
         """
         return self._gathered_context.copy()
+
+    async def record_guardrail_violation(
+        self, violation: GuardrailViolation
+    ) -> None:
+        violations = self._gathered_context.setdefault("guardrail_violations", [])
+        violations.append(violation.to_dict())
 
     async def _open_mcp_sessions(self) -> None:
         """Connect every MCP-category tool referenced by any workflow node.

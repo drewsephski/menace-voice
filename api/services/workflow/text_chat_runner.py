@@ -50,6 +50,10 @@ from api.services.pipecat.worker_runner import (
     wait_for_pipeline_worker_started,
 )
 from api.services.workflow.dto import ReactFlowDTO
+from api.services.workflow.guardrails import (
+    GuardrailInputProcessor,
+    GuardrailOutputProcessor,
+)
 from api.services.workflow.initial_context import merge_external_initial_context
 from api.services.workflow.pipecat_engine import PipecatEngine
 from api.services.workflow.workflow_graph import WorkflowGraph
@@ -625,6 +629,7 @@ async def execute_text_chat_pending_turn(
         # Each text turn owns a short-lived pipeline. Complete extraction before
         # leaving a node so teardown cannot discard the result before checkpointing.
         run_transition_variable_extraction_in_background=False,
+        workflow_configurations=run_configs,
     )
     engine._gathered_context = dict(base_checkpoint["gathered_context"])
 
@@ -657,9 +662,20 @@ async def execute_text_chat_pending_turn(
     trace_span_attributes = {
         "langfuse.trace.name": workflow_run.name or f"text-chat-{workflow_run_id}"
     }
+    async def note_guardrail_bypass() -> None:
+        if response_window.pending_context_requests > 0:
+            response_window.pending_context_requests -= 1
+
+    guardrail_input_processor = GuardrailInputProcessor(
+        engine.guardrails,
+        bypass_callback=note_guardrail_bypass,
+    )
+    guardrail_output_processor = GuardrailOutputProcessor(engine.guardrails)
     pipeline = Pipeline(
         [
+            guardrail_input_processor,
             llm,
+            guardrail_output_processor,
             capture_processor,
             assistant_context_aggregator,
             pipeline_metrics_aggregator,
@@ -725,7 +741,7 @@ async def execute_text_chat_pending_turn(
             context.add_message({"role": "user", "content": pending_user_message})
             generation_marker = capture_processor.activity_count
             response_window.note_direct_context_request()
-            await llm.queue_frame(LLMContextFrame(context))
+            await guardrail_input_processor.queue_frame(LLMContextFrame(context))
             await _wait_for_quiescence(
                 capture_processor=capture_processor,
                 response_window=response_window,
