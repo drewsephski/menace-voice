@@ -29,6 +29,14 @@ export interface SubscriptionStatus {
   plans: SubscriptionPlan[];
 }
 
+interface CheckoutSessionResponse {
+  checkout_url: string;
+}
+
+interface PortalSessionResponse {
+  portal_url: string;
+}
+
 export async function fetchSubscriptionStatus(): Promise<SubscriptionStatus> {
   const response = await client.get<SubscriptionStatus>({
     url: "/api/v1/organizations/billing/subscription",
@@ -40,7 +48,7 @@ export async function fetchSubscriptionStatus(): Promise<SubscriptionStatus> {
 }
 
 export async function startSubscriptionCheckout(plan: "starter" | "pro"): Promise<string> {
-  const response = await client.post<{ checkout_url: string }>({
+  const response = await client.post<CheckoutSessionResponse>({
     url: "/api/v1/organizations/billing/subscription/checkout",
     body: { plan },
   });
@@ -51,7 +59,7 @@ export async function startSubscriptionCheckout(plan: "starter" | "pro"): Promis
 }
 
 export async function openSubscriptionPortal(): Promise<string> {
-  const response = await client.post<{ portal_url: string }>({
+  const response = await client.post<PortalSessionResponse>({
     url: "/api/v1/organizations/billing/subscription/portal",
   });
   if (response.error || !response.data?.portal_url) {

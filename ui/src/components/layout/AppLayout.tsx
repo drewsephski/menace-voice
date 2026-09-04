@@ -10,7 +10,6 @@ import { Button } from "@/components/ui/button";
 import { SidebarInset, SidebarProvider, useSidebar } from "@/components/ui/sidebar";
 import { useAppConfig } from "@/context/AppConfigContext";
 import { LeadFormsProvider } from "@/context/LeadFormsContext";
-
 import { isAccountSettingsPath } from "@/lib/accountSettingsRoutes";
 
 import { AppSidebar } from "./AppSidebar";

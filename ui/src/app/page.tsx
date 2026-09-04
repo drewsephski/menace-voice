@@ -3,12 +3,12 @@ import { redirect } from "next/navigation";
 
 import { getWorkflowCountApiV1WorkflowCountGet } from "@/client/sdk.gen";
 import { LandingPage } from "@/components/landing/LandingPage";
+import { getSignupEnabled } from "@/lib/auth/config";
 import {
   getServerAccessToken,
   getServerAuthProvider,
   getServerUser,
 } from "@/lib/auth/server";
-import { getSignupEnabled } from "@/lib/auth/config";
 import logger from "@/lib/logger";
 import { getRedirectUrl } from "@/lib/utils";
 

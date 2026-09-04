@@ -2,18 +2,18 @@ import {
   BookOpen,
   Building2,
   Calendar,
+  CloudSun,
   CreditCard,
   FileText,
   GitBranch,
   Github,
   type LucideIcon,
   Search,
-  CloudSun,
   Zap,
 } from "lucide-react";
 
-import type { HttpApiToolDefinition, ToolResponse } from "@/client/types.gen";
 import { MCP_URL_PATTERN } from "@/app/tools/config";
+import type { HttpApiToolDefinition, ToolResponse } from "@/client/types.gen";
 
 export type McpPresetId =
   | "context7"
