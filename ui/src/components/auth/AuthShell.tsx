@@ -4,13 +4,15 @@
 // RIGHT (lg+ only): a brand/value panel with the Menace logo, proof points, and
 // a Bland-style enterprise CTA block at the bottom (passed in as `enterpriseSlot`).
 // Mobile collapses to the single card column. The form column scrolls and stays
-// centered so tall (sign-up) forms never clip on short viewports. Palette is the
+// top-anchored so changing auth methods only expands the card downward. Palette is the
 // app's blacks/greys with one warm CTA accent.
 
 import Link from "next/link";
 import type { ReactNode } from "react";
 
 import { BrandLogo } from "@/components/BrandLogo";
+
+import styles from "./auth-shell.module.css";
 
 const HIGHLIGHTS = [
   "Speech-to-speech",
@@ -26,11 +28,10 @@ export function AuthShell({
   enterpriseSlot?: ReactNode;
 }) {
   return (
-    <div className="grid min-h-screen w-full bg-background lg:grid-cols-[55%_45%]">
-      {/* Form column (LEFT) — scrolls and stays centered so tall forms never
-          clip. Carries the giant faded brand imprint along its bottom. */}
+    <div className={`${styles.shell} grid min-h-screen w-full bg-background lg:grid-cols-[55%_45%]`}>
+      {/* The fixed top inset keeps fields in place as the form grows. */}
       <main className="auth-imprint flex min-h-screen flex-col overflow-y-auto">
-        <div className="flex min-h-full items-center justify-center p-6 sm:p-10">
+        <div className="flex min-h-full items-start justify-center px-6 pb-6 pt-[clamp(1.5rem,18svh,10rem)] sm:px-10 sm:pb-10">
           <div className="w-full max-w-md space-y-6 rounded-2xl border border-border/60 bg-card p-6 shadow-lg sm:p-8">
             {/* Mobile-only wordmark (brand panel is hidden) */}
             <div className="lg:hidden">

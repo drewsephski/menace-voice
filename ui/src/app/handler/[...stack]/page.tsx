@@ -2,6 +2,7 @@ import { StackHandler, StackTheme } from "@stackframe/stack";
 
 import { AccountSettingsShell } from "@/components/auth/AccountSettingsShell";
 import { AuthEnterpriseCTA } from "@/components/auth/AuthEnterpriseCTA";
+import { AuthMethodTabs } from "@/components/auth/AuthMethodTabs";
 import { AuthShell } from "@/components/auth/AuthShell";
 import { getAuthProvider } from "@/lib/auth/config";
 
@@ -74,7 +75,7 @@ export default async function Handler(props: unknown) {
     return (
       <AuthShell enterpriseSlot={<AuthEnterpriseCTA />}>
         {showBackButton && <BackButton />}
-        {handler}
+        <AuthMethodTabs>{handler}</AuthMethodTabs>
       </AuthShell>
     );
   }

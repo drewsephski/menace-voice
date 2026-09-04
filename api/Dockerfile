@@ -168,6 +168,7 @@ COPY --from=ts-deps --chown=dograh:dograh /ts_validator/node_modules ./api/mcp_s
 # Product documentation — read at runtime by the MCP docs tools
 # (search_dograh_docs / fetch_dograh_doc) so agents can learn Dograh.
 COPY --chown=dograh:dograh ./docs ./docs
+COPY --chown=dograh:dograh ./ui/src/lib/docs/articles.json ./ui/src/lib/docs/articles.json
 
 ENV PYTHONPATH=/app
 

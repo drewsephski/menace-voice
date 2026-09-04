@@ -1,0 +1,33 @@
+.host {
+  min-width: 0;
+}
+
+.expanding {
+  overflow: clip;
+}
+
+.host .list {
+  position: relative;
+  isolation: isolate;
+}
+
+.host .list [role="tab"] {
+  position: relative;
+  z-index: 1;
+}
+
+.host .list [role="tab"][data-state="active"] {
+  background: transparent;
+  box-shadow: none;
+}
+
+.highlight {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 0;
+  pointer-events: none;
+  border-radius: calc(0.625rem - 2px);
+  background: #27272a;
+  box-shadow: 0 1px 3px rgb(0 0 0 / 12%);
+}

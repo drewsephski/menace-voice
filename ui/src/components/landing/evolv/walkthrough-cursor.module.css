@@ -1,0 +1,45 @@
+.overlay {
+  position: absolute;
+  z-index: 40;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 120ms ease;
+}
+
+.overlay[data-active="true"] {
+  opacity: 1;
+}
+
+.cursor,
+.follow {
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+.cursor {
+  width: 26px;
+  height: 26px;
+  color: var(--evolv-accent);
+
+}
+
+.follow {
+  padding: 5px 9px;
+  border: 1px solid rgb(255 255 255 / 18%);
+  border-radius: 6px;
+  background: var(--evolv-accent);
+
+  color: #fff;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 18px;
+  white-space: nowrap;
+}
+
+@media (hover: none), (pointer: coarse), (prefers-reduced-motion: reduce) {
+  .overlay {
+    display: none;
+  }
+}

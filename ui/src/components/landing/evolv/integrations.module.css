@@ -13,7 +13,7 @@
 
 .heading h2 {
   max-width: 720px;
-  margin: 26px 0 74px;
+  margin: 26px 0 24px;
   font-size: 48px;
   font-weight: 450;
   letter-spacing: -0.04em;
@@ -43,8 +43,8 @@
 .cell {
   opacity: 0.65;
   transition:
-    opacity 300ms ease,
-    background-color 300ms ease;
+  opacity 300ms ease,
+  background-color 300ms ease;
 }
 
 .cell img {
@@ -109,19 +109,22 @@
 
   .heading h2 {
     max-width: 320px;
-    margin: 22px 0 46px;
+    margin: 22px 0 24px;
     font-size: 30px;
     line-height: 1.15;
   }
 
   .grid {
-    grid-template-columns: repeat(5, 65px);
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    width: 100%;
+    max-width: 325px;
   }
 
   .cell,
   .stripe {
-    width: 65px;
-    height: 65px;
+    width: 100%;
+    height: auto;
+    aspect-ratio: 1;
   }
 
   .cell img {
@@ -139,4 +142,16 @@
   .action {
     transition: none;
   }
+}
+
+.description {
+  max-width: 600px;
+  margin: 0 0 48px;
+  color: #a3a3a3;
+  font-size: 15px;
+  line-height: 1.65;
+}
+.action:focus-visible {
+  outline: 2px solid var(--evolv-accent);
+  outline-offset: 4px;
 }

@@ -9,6 +9,7 @@ from api.routes.agent_stream import router as agent_stream_router
 from api.routes.auth import router as auth_router
 from api.routes.campaign import router as campaign_router
 from api.routes.credentials import router as credentials_router
+from api.routes.docs_chat import router as docs_chat_router
 from api.routes.folder import router as folder_router
 from api.routes.knowledge_base import router as knowledge_base_router
 from api.routes.node_types import router as node_types_router
@@ -42,6 +43,7 @@ router = APIRouter(
 
 router.include_router(telephony_router)
 router.include_router(superuser_router)
+router.include_router(docs_chat_router)
 router.include_router(workflow_router)
 router.include_router(workflow_text_chat_router)
 router.include_router(user_router)

@@ -9,7 +9,7 @@
   --docs-dim: #666;
   --docs-accent: #f04438;
   min-height: 100vh;
-  overflow: hidden;
+  overflow: clip;
   background: var(--docs-bg);
   color: var(--docs-text);
   font-family: var(--font-geist-sans), sans-serif;
@@ -62,7 +62,7 @@
 
 .docsLayout { display: grid; max-width: 1352px; min-height: 740px; margin: 0 auto; grid-template-columns: 245px minmax(0, 1fr) 244px; }
 .desktopSidebar { border-right: 1px solid var(--docs-border); }
-.sideNav { display: flex; min-height: 100%; flex-direction: column; padding: 42px 18px 24px; }
+.sideNav { display: flex; flex-direction: column; padding: 42px 18px 24px; }
 .navGroup { margin-bottom: 34px; }
 .navGroupTitle { margin: 0 12px 12px; font-size: 9px; }
 .navItem { display: flex; width: 100%; min-height: 34px; align-items: center; justify-content: space-between; padding: 0 12px; border: 0; border-left: 2px solid transparent; background: transparent; color: var(--docs-muted); cursor: pointer; font-size: 13px; text-align: left; }
@@ -106,7 +106,7 @@
 .articleFooter button, .nextCard button { display: inline-flex; align-items: center; gap: 7px; padding: 0; border: 0; background: transparent; color: var(--docs-accent); cursor: pointer; font-size: 12px; }
 .articleFooter button:hover, .nextCard button:hover { color: #ff766c; }
 
-.rightRail { padding: 43px 22px 24px; border-left: 1px solid var(--docs-border); }
+.rightRail { border-left: 1px solid var(--docs-border); }
 .onPage { display: grid; gap: 16px; }
 .railLabel { margin-bottom: 4px; font-size: 9px; }
 .onPage a { color: var(--docs-muted); font-size: 12px; text-decoration: none; }
@@ -160,3 +160,17 @@
 @media (prefers-reduced-motion: reduce) {
   .root *, .root *::before, .root *::after { scroll-behavior: auto !important; transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; }
 }
+
+.desktopSidebar .sideNav, .railContent { position: sticky; top: 16px; max-height: calc(100dvh - 32px); overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; }
+.desktopSidebar .sideNav { min-height: min(740px, calc(100dvh - 32px)); }
+.railContent { padding: 43px 22px 24px; }
+
+.helpButton { display: inline-flex; align-items: center; gap: 5px; border: 0; padding: 0; background: none; color: var(--docs-muted); cursor: pointer; font-size: 11px !important; }
+.helpButton:hover { color: var(--docs-accent); }
+
+.copyMarkdown { display: flex; align-items: center; gap: 12px; margin-top: 24px; }
+.copyMarkdown button { display: inline-flex; align-items: center; gap: 7px; padding: 9px 12px; border: 1px solid var(--docs-border-strong); background: var(--docs-surface); color: var(--docs-text); font-size: 12px; cursor: pointer; }
+.copyMarkdown button:hover { border-color: var(--docs-accent); }
+.copyMarkdown span { color: var(--docs-muted); font-size: 11px; }
+.copyMarkdown button:focus-visible, .helpButton:focus-visible { outline: 2px solid var(--docs-accent); outline-offset: 3px; }
+@media (max-width: 700px) { .copyMarkdown { flex-wrap: wrap; } }

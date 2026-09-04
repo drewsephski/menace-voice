@@ -1,3 +1,4 @@
+import { BackToTop } from "./back-to-top";
 import { Faq } from "./faq";
 import { Footer } from "./footer";
 import { Header } from "./header";
@@ -21,22 +22,16 @@ export default function EvolvAiTemplate({
       <Header navigation={navigation} />
       <main className={styles.rail}>
         <Hero navigation={navigation} />
+        <Walkthrough />
         <Statement />
         <Platform />
         <UseCases navigation={navigation} />
-        <Walkthrough />
         <Integrations navigation={navigation} />
         <Pricing navigation={navigation} />
         <Faq />
         <Footer navigation={navigation} />
       </main>
-      <a
-        aria-label="Back to top"
-        className={styles.backToTop}
-        href="#evolv-ai-top"
-      >
-        ↑
-      </a>
+      <BackToTop />
     </div>
   );
 }

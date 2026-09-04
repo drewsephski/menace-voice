@@ -143,6 +143,8 @@ services:
   api:
     image: ${REGISTRY:-dograhai}/dograh-api:latest
     environment:
+      # Optional operator-selected workspace funding public documentation chat.
+      DOCS_CHAT_ORGANIZATION_ID: "${DOCS_CHAT_ORGANIZATION_ID:-}"
       # Core application config
       ENVIRONMENT: "${ENVIRONMENT:-local}"
       LOG_LEVEL: "INFO"

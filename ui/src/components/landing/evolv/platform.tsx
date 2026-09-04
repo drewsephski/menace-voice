@@ -33,15 +33,6 @@ const FEATURES = [
   },
 ] as const;
 
-const METRICS = [
-  "PHONE + WEBRTC",
-  "INBOUND + OUTBOUND",
-  "VISUAL WORKFLOWS",
-  "HUMAN HANDOFF",
-  "MCP-NATIVE",
-  "SELF-HOSTABLE",
-] as const;
-
 export function Platform() {
   const [openIndex, setOpenIndex] = useState(0);
   const baseId = useId();
@@ -50,10 +41,10 @@ export function Platform() {
     <section className={styles.section} id="platform" tabIndex={-1}>
       <div className={styles.intro}>
         <SectionLabel>Platform</SectionLabel>
-        <h2>The complete production stack for voice agents</h2>
+        <h2>From call script to phone line</h2>
         <p>
-          Build, test, deploy, and improve every layer of the conversation from
-          one workspace.
+          Write the conversation, choose your voice providers, and review what
+          happens on each call.
         </p>
       </div>
 
@@ -96,20 +87,28 @@ export function Platform() {
           })}
         </div>
 
-        <aside className={styles.proof} aria-label="Customer outcome">
-          <blockquote>
-            “Own the conversation from the first word to the final action,
-            without giving up control of your models, providers, or data.”
-          </blockquote>
-          <div className={styles.attribution}>
-            <strong>Menace Voice</strong>
-            <span>Open-source voice agent infrastructure</span>
-          </div>
-          <ul className={styles.metrics}>
-            {METRICS.map((metric) => (
-              <li key={metric}>{metric}</li>
-            ))}
-          </ul>
+        <aside className={styles.proof} aria-label="Example appointment workflow">
+          <p className={styles.exampleLabel}>
+            Example workflow / Appointment booking
+          </p>
+          <h3>A booking starts with a few good questions.</h3>
+          <ol className={styles.steps}>
+            <li>
+              <strong>Understand the request</strong>
+              <span>Ask what the caller needs and when.</span>
+            </li>
+            <li>
+              <strong>Check availability</strong>
+              <span>Call your connected scheduling tool.</span>
+            </li>
+            <li>
+              <strong>Confirm or transfer</strong>
+              <span>Read back the booking, or route the call to your team.</span>
+            </li>
+          </ol>
+          <p className={styles.exampleNote}>
+            You configure the tools and transfer rules.
+          </p>
         </aside>
       </div>
     </section>

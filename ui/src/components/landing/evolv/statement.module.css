@@ -1,122 +1,32 @@
 .section {
-  position: relative;
-  min-height: 656px;
-  overflow: hidden;
-  border-bottom: 1px solid var(--evolv-border);
-  background: rgb(24 24 24 / 82%);
+  display: grid;
+  grid-template-columns: 1.3fr 1fr;
+  align-items: center;
+  gap: 56px;
+  padding: 64px;
+  border-block: 1px solid var(--evolv-border);
 }
-
-.content {
-  width: min(calc(100% - 160px), 1040px);
-  padding-top: 111px;
-}
-
-.heading {
+.section h2 {
   margin: 0;
-  color: #f6f6f6;
-  font-size: 54px;
-  font-weight: 600;
-  letter-spacing: -0.045em;
-  line-height: 1.1;
-  transform: rotate(2.5deg);
-  transform-origin: left center;
-  will-change: transform;
+  font-size: 32px;
+  font-weight: 450;
+  letter-spacing: -0.035em;
+  line-height: 1.25;
+  text-wrap: balance;
 }
-
-.word {
-  display: inline;
-  opacity: 0.15;
-  filter: blur(5px);
-  will-change: opacity, filter;
+.section p {
+  margin: 0;
+  color: #a3a3a3;
+  font-size: 15px;
+  line-height: 1.7;
 }
-
-.outcome {
-  max-width: 460px;
-  margin: 49px 0 0;
-  color: #747474;
-  font-size: 14px;
-  line-height: 1.55;
-}
-
-.dividerBand {
-  position: absolute;
-  right: 0;
-  bottom: 0;
-  left: 0;
-  height: 96px;
-  border-top: 1px solid var(--evolv-border);
-  background-image: repeating-linear-gradient(
-    90deg,
-    transparent 0,
-    transparent 11px,
-    rgb(255 255 255 / 7%) 11px,
-    rgb(255 255 255 / 7%) 12px
-  );
-}
-
-@media (min-width: 1025px) {
-  .content {
-    margin-left: 80px;
-  }
-}
-
-@media (max-width: 1024px) {
-  .section {
-    min-height: 537px;
-  }
-
-  .content {
-    width: min(calc(100% - 96px), 880px);
-    margin-inline: 48px;
-    padding-top: 76px;
-  }
-
-  .heading {
-    font-size: 42px;
-  }
-
-  .outcome {
-    margin-top: 36px;
-  }
-
-  .dividerBand {
-    height: 72px;
-  }
-}
-
 @media (max-width: 640px) {
   .section {
-    min-height: 654px;
+    grid-template-columns: 1fr;
+    gap: 24px;
+    padding: 48px 20px;
   }
-
-  .content {
-    width: auto;
-    margin-inline: 20px;
-    padding-top: 79px;
-  }
-
-  .heading {
-    font-size: 30px;
-    letter-spacing: -0.035em;
-    line-height: 1.2;
-  }
-
-  .outcome {
-    max-width: 310px;
-    margin-top: 38px;
-    font-size: 13px;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .heading {
-    transform: rotate(0deg);
-    will-change: auto;
-  }
-
-  .word {
-    opacity: 1;
-    filter: none;
-    will-change: auto;
+  .section h2 {
+    font-size: 28px;
   }
 }

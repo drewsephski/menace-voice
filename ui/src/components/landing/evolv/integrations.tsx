@@ -30,8 +30,12 @@ export function Integrations({ navigation }: { navigation: LandingNavigation }) 
   return (
     <section className={styles.section} id="integrations" tabIndex={-1}>
       <div className={styles.heading}>
-        <SectionLabel>Integrations</SectionLabel>
-        <h2>Connect every conversation to the systems behind it.</h2>
+        <SectionLabel>Developer ecosystem</SectionLabel>
+        <h2>Bring your tools into the conversation.</h2>
+        <p className={styles.description}>
+          Connect APIs and MCP servers to your workflows. Explore the tools and
+          services in the wider ecosystem below; setup varies by service.
+        </p>
       </div>
       <div className={styles.grid}>
         <div aria-hidden="true" className={styles.stripe} />
@@ -47,8 +51,8 @@ export function Integrations({ navigation }: { navigation: LandingNavigation }) 
         ))}
         <div aria-hidden="true" className={styles.stripe} />
       </div>
-      <a className={styles.action} href={navigation.startBuilding}>
-        Explore voice integrations <ArrowIcon />
+      <a className={styles.action} href={navigation.docs}>
+        Read the integration docs <ArrowIcon />
       </a>
     </section>
   );

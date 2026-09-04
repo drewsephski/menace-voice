@@ -1,7 +1,5 @@
 export interface LandingNavigation {
   docs: string;
-  github: string;
-  productHunt: string;
   signIn: string;
   startBuilding: string;
 }
@@ -16,8 +14,6 @@ export function getLandingNavigation(
 
   return {
     docs: "/docs",
-    github: "https://github.com/drewsephski/menace-voice",
-    productHunt: "https://www.producthunt.com/products/dograh",
     signIn,
     startBuilding: signupEnabled ? signUp : signIn,
   };

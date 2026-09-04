@@ -1,0 +1,7 @@
+:global(html):has(.shell) {
+  scrollbar-gutter: stable;
+}
+
+.shell main {
+  scrollbar-gutter: stable;
+}

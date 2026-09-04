@@ -13,7 +13,7 @@ const CASES = [
     icon: "branch",
     title: "Appointment booking",
     description:
-      "Find availability, book or reschedule appointments, and write the result back to your operating system.",
+      "Find availability, book or reschedule appointments, and write the result back to your scheduling system.",
   },
   {
     icon: "shield",
@@ -25,7 +25,7 @@ const CASES = [
     icon: "square",
     title: "Inbound reception",
     description:
-      "Answer every call, understand why someone is calling, and send them to the right person or workflow.",
+      "Ask why someone is calling, and send them to the right person or workflow.",
   },
   {
     icon: "database",
@@ -118,10 +118,10 @@ export function UseCases({ navigation }: { navigation: LandingNavigation }) {
         <div className={styles.label}>
           <SectionLabel>Use cases</SectionLabel>
         </div>
-        <h2>Put voice agents on the calls that move work forward</h2>
+        <h2>Start with the calls your team handles every day</h2>
         <p>
-          Build for a single call flow or an entire operation. Every agent can
-          listen, reason, take action, and hand off.
+          Choose a job, then configure the questions, connected tools, and
+          handoff rules it needs.
         </p>
       </header>
 

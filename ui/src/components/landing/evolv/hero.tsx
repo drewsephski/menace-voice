@@ -1,110 +1,40 @@
-import Image from "next/image";
-import type { CSSProperties } from "react";
+import { AudioLines, GitBranch, Headphones, Library, Phone, Plug } from "lucide-react";
 
 import styles from "./hero.module.css";
 import type { LandingNavigation } from "./landing-links";
 import { ArrowIcon, SectionLabel } from "./primitives";
 
-const LOGOS = [
-  {
-    name: "Claude",
-    src: "/templates/evolv-ai/claude-wordmark.svg",
-    width: "150px",
-  },
-  {
-    name: "Turso",
-    src: "/templates/evolv-ai/turso-wordmark.svg",
-    width: "132px",
-  },
-  {
-    name: "OpenAI",
-    src: "/templates/evolv-ai/openai-wordmark.svg",
-    width: "124px",
-  },
-  {
-    name: "Clerk",
-    src: "/templates/evolv-ai/clerk-wordmark.svg",
-    width: "112px",
-  },
-  {
-    name: "GitHub",
-    src: "/templates/evolv-ai/github-wordmark.svg",
-    width: "122px",
-  },
-  {
-    name: "Supabase",
-    src: "/templates/evolv-ai/supabase-wordmark.svg",
-    width: "140px",
-  },
-  {
-    name: "NVIDIA",
-    src: "/templates/evolv-ai/nvidia-wordmark.svg",
-    width: "132px",
-  },
-] as const;
-
-function LogoGroup({ duplicate = false }: { duplicate?: boolean }) {
-  return (
-    <div aria-hidden={duplicate || undefined} className={styles.logoGroup}>
-      {LOGOS.map((logo) => (
-        <Image
-          alt={duplicate ? "" : logo.name}
-          className={styles.logoImage}
-          decoding="async"
-          height="40"
-          key={logo.name}
-          loading="lazy"
-          src={logo.src}
-          style={{ "--logo-width": logo.width } as CSSProperties}
-          unoptimized
-          width={150}
-        />
-      ))}
-    </div>
-  );
-}
-
 export function Hero({ navigation }: { navigation: LandingNavigation }) {
   return (
-    <>
-      <section className={styles.hero}>
-        <div className={styles.content}>
-          <div className={styles.eyebrow}>
-            <SectionLabel>VOICE AI | OPEN SOURCE PLATFORM</SectionLabel>
-          </div>
-          <h1>Build voice agents people want to talk to</h1>
-          <p className={styles.description}>
-            Design the conversation, connect your tools, and deploy over phone
-            or WebRTC from one visual workspace.
-          </p>
-          <div className={styles.actions}>
-            <a className={styles.primaryAction} href={navigation.startBuilding}>
-              Build your first agent
-              <ArrowIcon />
-            </a>
-            <a className={styles.secondaryAction} href="#platform">
-              Explore the platform
-            </a>
-          </div>
-          <p className={styles.note}>
-            Use managed models or bring your own voice AI stack.
-          </p>
+    <section className={styles.hero}>
+      <div className={styles.content}>
+        <SectionLabel>Menace Voice / Voice AI</SectionLabel>
+        <h1>
+          Turn your call flow<br />into a voice agent.
+        </h1>
+        <p className={styles.description}>
+          Build an agent to answer calls, qualify leads, or book appointments.
+          Connect your tools, test the conversation in your browser, then put it
+          on a phone line.
+        </p>
+        <div className={styles.actions}>
+          <a className={styles.primaryAction} href={navigation.startBuilding}>
+            Build your first agent <ArrowIcon />
+          </a>
+          <a className={styles.secondaryAction} href="#product-walkthrough">
+            See how it works
+          </a>
         </div>
-      </section>
-
-      <section
-        aria-label="Technology that works with Menace Voice"
-        className={styles.marquee}
-      >
-        <div aria-hidden="true" className={styles.separator} />
-        <div className={styles.marqueeViewport}>
-          <div className={styles.marqueeTrack}>
-            <LogoGroup />
-            <LogoGroup duplicate />
-          </div>
-        </div>
-        <div aria-hidden="true" className={styles.separator} />
-      </section>
-    </>
+        <p className={styles.note}>Start free with your own AI provider keys.</p>
+      </div>
+      <ul className={styles.capabilities} aria-label="Platform capabilities">
+        <li><span className={styles.capabilityIcon}><GitBranch aria-hidden="true" /></span><div><strong>Visual call flows</strong><span>Shape every conversation</span></div></li>
+        <li><span className={styles.capabilityIcon}><Phone aria-hidden="true" /></span><div><strong>Inbound &amp; outbound</strong><span>Connect your phone lines</span></div></li>
+        <li><span className={styles.capabilityIcon}><AudioLines aria-hidden="true" /></span><div><strong>Browser voice testing</strong><span>Hear it before you launch</span></div></li>
+        <li><span className={styles.capabilityIcon}><Plug aria-hidden="true" /></span><div><strong>API &amp; MCP tools</strong><span>Connect to your systems</span></div></li>
+        <li><span className={styles.capabilityIcon}><Library aria-hidden="true" /></span><div><strong>Knowledge sources</strong><span>Ground answers in your docs</span></div></li>
+        <li><span className={styles.capabilityIcon}><Headphones aria-hidden="true" /></span><div><strong>Human handoff</strong><span>Bring in your team</span></div></li>
+      </ul>
+    </section>
   );
 }

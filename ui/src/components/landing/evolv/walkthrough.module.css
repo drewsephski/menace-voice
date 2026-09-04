@@ -1,5 +1,5 @@
 .section {
-  padding: 132px 47px 140px;
+  padding: 88px 47px 96px;
   border-top: 1px solid var(--evolv-border);
   background: #181818;
 }
@@ -10,7 +10,7 @@
 
 .heading h2 {
   max-width: 720px;
-  margin: 24px 0 0;
+  margin: 18px 0 0;
   font-size: 44px;
   font-weight: 500;
   letter-spacing: -0.047em;
@@ -19,7 +19,7 @@
 
 .heading > p {
   max-width: 610px;
-  margin: 20px 0 0;
+  margin: 14px 0 0;
   color: #8d8d8d;
   font-size: 16px;
   line-height: 1.65;
@@ -27,13 +27,13 @@
 
 .tabFrame {
   position: relative;
-  margin-top: 54px;
+  margin-top: 40px;
 }
 
 .tabs {
+  position: relative;
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  overflow: hidden;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   border: 1px solid rgb(255 255 255 / 10%);
 }
 
@@ -44,10 +44,10 @@
   padding: 0;
   border: 0;
   background: transparent;
-  color: #777;
+  color: #a1a1aa;
   cursor: pointer;
   font-family: "Evolv Geist Mono", monospace;
-  font-size: 9px;
+  font-size: 11px;
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
@@ -61,7 +61,7 @@
 .tab {
   position: relative;
   display: flex;
-  min-height: 72px;
+  min-height: 64px;
   align-items: center;
   gap: 12px;
   padding: 14px 18px;
@@ -79,31 +79,17 @@
     color 180ms ease;
 }
 
-.tab:last-child {
+.tab:nth-child(5) {
   border-inline-end: 0;
 }
 
 .tab > span {
   color: #4f4f4f;
   font-family: "Evolv Geist Mono", monospace;
-  font-size: 9px;
+  font-size: 11px;
   letter-spacing: 0.08em;
 }
 
-.tab::after {
-  position: absolute;
-  right: 16px;
-  bottom: 0;
-  left: 16px;
-  height: 2px;
-  background: var(--evolv-accent);
-  content: "";
-  opacity: 0;
-  transform: scaleX(0.2);
-  transition:
-    opacity 180ms ease,
-    transform 180ms ease;
-}
 
 .tab:hover {
   background: #222;
@@ -111,7 +97,7 @@
 }
 
 .tab[aria-selected="true"] {
-  background: #202420;
+  background: #242424;
   color: #fff;
 }
 
@@ -119,10 +105,6 @@
   color: var(--evolv-accent);
 }
 
-.tab[aria-selected="true"]::after {
-  opacity: 1;
-  transform: scaleX(1);
-}
 
 .tab:focus-visible,
 .panel:focus-visible,
@@ -138,38 +120,28 @@
 
 .viewport {
   position: relative;
-  height: 630px;
+  height: 620px;
   margin-top: 14px;
   overflow: hidden;
-  border: 1px solid rgb(240 68 56 / 18%);
-  background-color: #100807;
-  background-image: radial-gradient(
-    circle,
-    rgb(240 68 56 / 17%) 1px,
-    transparent 1.25px
-  );
-  background-size: 17px 17px;
-  box-shadow: inset 0 0 110px rgb(0 0 0 / 55%);
+  border: 1px solid rgb(255 255 255 / 12%);
+  border-radius: 10px;
+  background: #141414;
 }
 
-.viewport::before {
-  position: absolute;
-  z-index: 0;
-  width: 620px;
-  height: 620px;
-  border-radius: 50%;
-  background: rgb(180 42 34 / 8%);
-  content: "";
-  filter: blur(80px);
-  inset: 4% auto auto 20%;
-}
 
 .demoCanvas {
   position: relative;
   z-index: 1;
   width: 100%;
   height: 100%;
-  padding: 58px 62px;
+  padding: 20px;
+}
+
+@media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+  .viewport[data-walkthrough-cursor="true"],
+  .viewport[data-walkthrough-cursor="true"] * {
+    cursor: none !important;
+  }
 }
 
 .window {
@@ -177,14 +149,21 @@
   overflow: hidden;
   border: 1px solid rgb(255 255 255 / 14%);
   border-radius: 10px;
-  background: rgb(14 17 16 / 94%);
-  box-shadow: 0 34px 80px rgb(0 0 0 / 46%);
+  background: #1c1c1c;
+
   color: #dedede;
+  transition: border-color 240ms ease;
+}
+
+.window:focus-within,
+.window:hover {
+  border-color: rgb(255 255 255 / 21%);
+
 }
 
 .windowHeader {
   display: flex;
-  min-height: 58px;
+  min-height: 50px;
   align-items: center;
   gap: 10px;
   padding: 0 20px;
@@ -204,7 +183,7 @@
   height: 10px;
   border: 2px solid var(--evolv-accent);
   border-radius: 50%;
-  box-shadow: 0 0 10px rgb(240 68 56 / 40%);
+
 }
 
 .windowStatus {
@@ -214,7 +193,7 @@
   margin-inline-start: auto;
   color: #929292;
   font-family: "Evolv Geist Mono", monospace;
-  font-size: 9px;
+  font-size: 11px;
   letter-spacing: 0.04em;
   text-transform: uppercase;
 }
@@ -225,17 +204,19 @@
   height: 6px;
   border-radius: 50%;
   background: var(--evolv-accent);
-  box-shadow: 0 0 9px rgb(240 68 56 / 70%);
+
 }
 
 .runningDot {
-  animation: pulse 1.8s ease-in-out infinite;
+  animation: none;
 }
 
 /* Governance */
 .governanceCanvas .window {
-  width: min(78%, 820px);
-  height: 500px;
+  width: 100%;
+  height: 100%;
+  grid-column: 1;
+  grid-row: 1 / 3;
 }
 
 .tableToolbar {
@@ -246,7 +227,7 @@
   padding: 0 20px;
   border-bottom: 1px solid rgb(255 255 255 / 7%);
   color: #787878;
-  font-size: 10px;
+  font-size: 12px;
   text-transform: uppercase;
 }
 
@@ -256,7 +237,7 @@
   border-radius: 5px;
   background: rgb(255 255 255 / 4%);
   color: #c7c7c7;
-  font-size: 10px;
+  font-size: 12px;
 }
 
 .tableToolbar .demoAction {
@@ -264,21 +245,21 @@
 }
 
 .tableWrap {
-  overflow: hidden;
+  overflow-x: auto;
 }
 
 .profileTable {
   width: 100%;
   border-collapse: collapse;
   table-layout: fixed;
-  font-size: 10px;
+  font-size: 12px;
 }
 
 .profileTable th {
   height: 38px;
-  color: #656565;
+  color: #a1a1aa;
   font-family: "Evolv Geist Mono", monospace;
-  font-size: 8px;
+  font-size: 10px;
   font-weight: 500;
   letter-spacing: 0.05em;
   text-align: left;
@@ -300,15 +281,15 @@
 }
 
 .profileTable th:nth-child(3) {
-  width: 40%;
+  width: 31%;
 }
 
 .profileTable th:nth-child(4) {
-  width: 16%;
+  width: 25%;
 }
 
 .profileTable td {
-  height: 50px;
+  height: 64px;
   color: #858585;
   white-space: nowrap;
 }
@@ -333,7 +314,7 @@
   border-radius: 50%;
   background: #251716;
   color: #f18b84;
-  font-size: 8px;
+  font-size: 10px;
   font-weight: 650;
 }
 
@@ -345,7 +326,7 @@
   align-items: center;
   border-radius: 999px;
   font-family: "Evolv Geist Mono", monospace;
-  font-size: 8px;
+  font-size: 10px;
   text-transform: uppercase;
 }
 
@@ -365,23 +346,29 @@
 }
 
 .requestCard {
-  position: absolute;
-  width: 270px;
-  padding: 18px;
-  border: 1px solid rgb(255 255 255 / 15%);
-  border-radius: 9px;
-  background: #151817;
-  box-shadow: 0 24px 50px rgb(0 0 0 / 48%);
+  position: relative;
+  width: auto;
+  padding: 22px;
+  border: 1px solid rgb(255 255 255 / 12%);
+  border-radius: 8px;
+  background: #202020;
+  transition: border-color 200ms ease;
+}
+
+.requestCard:has(button:hover),
+.requestCard:focus-within {
+  border-color: rgb(240 68 56 / 28%);
+
 }
 
 .requestOne {
-  top: 104px;
-  right: 38px;
+  grid-column: 2;
+  align-self: start;
 }
 
 .requestTwo {
-  right: 82px;
-  bottom: 58px;
+  grid-column: 2;
+  align-self: end;
 }
 
 .requestHeading {
@@ -389,7 +376,7 @@
   align-items: center;
   justify-content: space-between;
   color: #8e8e8e;
-  font-size: 10px;
+  font-size: 12px;
 }
 
 .pendingPill,
@@ -411,15 +398,15 @@
   display: block;
   margin-top: 17px;
   color: #f2f2f2;
-  font-size: 25px;
+  font-size: 28px;
   font-weight: 520;
   letter-spacing: -0.04em;
 }
 
 .requestCard > p {
   margin: 5px 0 0;
-  color: #777;
-  font-size: 10px;
+  color: #a1a1aa;
+  font-size: 12px;
   line-height: 1.5;
 }
 
@@ -427,8 +414,8 @@
   display: flex;
   align-items: center;
   margin-top: 18px;
-  color: #737373;
-  font-size: 8px;
+  color: #a1a1aa;
+  font-size: 10px;
 }
 
 .approvalRoute i {
@@ -444,21 +431,21 @@
 
 /* Automation */
 .automationCanvas .window {
-  width: min(88%, 920px);
+  width: 100%;
+  max-width: 1080px;
   margin-inline: auto;
 }
 
 .workflowBody {
-  display: grid;
-  grid-template-columns: minmax(0, 1.45fr) minmax(240px, 0.7fr);
-  min-height: 405px;
+  display: flex;
+  flex-direction: column;
 }
 
 .flowCanvas {
   position: relative;
   min-width: 0;
-  border-inline-end: 1px solid rgb(255 255 255 / 7%);
-  background: rgb(5 8 8 / 54%);
+  height: 380px;
+  background: #141414;
 }
 
 .flowCanvas :global(.react-flow) {
@@ -526,6 +513,14 @@
   stroke-width: 1.5;
 }
 
+.flowCanvas :global(.react-flow__edge-interaction) { pointer-events: stroke; cursor: pointer; }
+.flowCanvas :global(.react-flow__edge:hover .react-flow__edge-path) { stroke: #f58b82; }
+.flowCanvas :global(.react-flow__edge.animated .react-flow__edge-path) { stroke-dasharray: 5; animation: edgeTravel 900ms linear infinite; }
+@keyframes edgeTravel { to { stroke-dashoffset: -10; } }
+
+.flowCanvas :global(.react-flow__handle-top) { top: -4px; left: 50%; transform: translateX(-50%); }
+.flowCanvas :global(.react-flow__handle-bottom) { bottom: -4px; left: 50%; transform: translateX(-50%); }
+
 .flowCanvas :global(.react-flow__edge.selected .react-flow__edge-path) {
   stroke: var(--evolv-accent);
   stroke-width: 2;
@@ -559,34 +554,29 @@
 }
 
 .flowNode {
-  display: grid;
-  width: 204px;
-  min-height: 72px;
-  grid-template-columns: 31px minmax(0, 1fr) auto;
-  align-items: center;
-  gap: 9px;
-  padding: 10px 12px;
-  border: 1px solid rgb(255 255 255 / 16%);
-  border-radius: 8px;
-  background: #121615;
-  box-shadow: 0 12px 24px rgb(0 0 0 / 28%);
-  color: #dedede;
+  width: 280px;
+  min-height: 154px;
+  border: 1px solid #3b3b40;
+  border-radius: 10px;
+  background: #242426;
+  color: #f4f4f5;
+
   cursor: grab;
-  transition:
-    border-color 180ms ease,
-    box-shadow 180ms ease,
-    transform 180ms ease;
+  transition: border-color 180ms;
 }
 
 .flowNode:active {
   cursor: grabbing;
 }
 
-.flowNode:hover,
+.flowNode:hover {
+  border-color: #68686f;
+
+}
+
 .flowNodeSelected {
-  border-color: var(--evolv-accent);
-  box-shadow: 0 0 0 1px rgb(240 68 56 / 18%), 0 14px 26px rgb(0 0 0 / 34%);
-  transform: translateY(-2px);
+  border-color: #80a8da;
+
 }
 
 .flowNodeNumber {
@@ -597,30 +587,11 @@
   border: 1px solid currentColor;
   border-radius: 7px;
   font-family: "Evolv Geist Mono", monospace;
-  font-size: 8px;
-}
-
-.flowNode > div {
-  display: grid;
-  min-width: 0;
-  gap: 3px;
-}
-
-.flowNode > div span {
-  color: #777;
-  font-size: 8px;
-  text-transform: uppercase;
-}
-
-.flowNode > div strong {
-  overflow: hidden;
-  color: #d9d9d9;
   font-size: 10px;
-  font-weight: 520;
-  line-height: 1.25;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
+
+
+
 
 .flowNodeCheck {
   color: var(--evolv-accent);
@@ -628,41 +599,39 @@
 }
 
 .violet {
-  background: rgb(139 111 234 / 9%);
-  color: #a792ee;
+  --node-tone: #6ee7b7;
 }
 
 .accent {
-  background: rgb(240 68 56 / 10%);
-  color: #f18b84;
+  --node-tone: #93c5fd;
 }
 
 .blue {
-  background: rgb(77 148 242 / 10%);
-  color: #76aaf0;
+  --node-tone: #93c5fd;
 }
 
 .amber {
-  background: rgb(242 177 74 / 10%);
-  color: #e7b65f;
+  --node-tone: #fda4af;
 }
 
 .flowHint {
   position: absolute;
-  right: 14px;
-  bottom: 12px;
+  right: 16px;
+  bottom: 16px;
   z-index: 5;
-  color: #666;
-  font-family: "Evolv Geist Mono", monospace;
-  font-size: 8px;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
+  color: #a1a1aa;
+  font-size: 11px;
   pointer-events: none;
 }
 
 .runSummary {
-  padding: 38px 28px;
-  background: rgb(255 255 255 / 1.5%);
+  display: grid;
+  grid-template-columns: 140px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 16px;
+  padding: 13px 18px;
+  border-top: 1px solid rgb(255 255 255 / 10%);
+  background: #202020;
 }
 
 .autoPill {
@@ -673,7 +642,7 @@
   border: 1px solid rgb(240 68 56 / 18%);
   border-radius: 999px;
   color: #f18b84;
-  font-size: 9px;
+  font-size: 11px;
 }
 
 .autoPill > span {
@@ -685,8 +654,8 @@
 
 .runSummary > p {
   margin: 34px 0 7px;
-  color: #696969;
-  font-size: 9px;
+  color: #999;
+  font-size: 11px;
   text-transform: uppercase;
 }
 
@@ -710,12 +679,12 @@
   padding: 13px 0;
   border-bottom: 1px solid rgb(255 255 255 / 7%);
   color: #858585;
-  font-size: 9px;
+  font-size: 11px;
 }
 
 .summaryLog b {
   color: var(--evolv-accent);
-  font-size: 10px;
+  font-size: 12px;
   font-weight: 500;
 }
 
@@ -728,7 +697,7 @@
 
 .workflowMetrics > div {
   display: flex;
-  height: 67px;
+  height: 54px;
   align-items: center;
   justify-content: space-between;
   padding: 0 20px;
@@ -746,7 +715,7 @@
 
 .workflowMetrics dt {
   color: #747474;
-  font-size: 9px;
+  font-size: 11px;
 }
 
 .workflowMetrics dd {
@@ -771,20 +740,23 @@
   border-bottom: 1px solid rgb(255 255 255 / 7%);
 }
 
-.supportTopline > div {
+.supportTopline > div,
+.supportTopline > button:first-child {
   display: grid;
   gap: 3px;
 }
 
 .supportTopline > div span,
+.supportTopline > button:first-child span,
 .monitorTopline {
-  color: #6f6f6f;
-  font-size: 9px;
+  color: #aaa;
+  font-size: 11px;
 }
 
-.supportTopline > div strong {
+.supportTopline > div strong,
+.supportTopline > button:first-child strong {
   color: #cfcfcf;
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 520;
 }
 
@@ -793,19 +765,19 @@
   border: 1px solid rgb(240 68 56 / 16%);
   border-radius: 999px;
   color: #f18b84;
-  font-size: 9px;
+  font-size: 11px;
 }
 
 .chatBody {
   display: grid;
-  gap: 13px;
-  padding: 25px 34px 21px;
+  gap: 14px;
+  padding: 20px;
 }
 
 .userMessage,
 .agentMessage {
   display: flex;
-  max-width: 78%;
+  max-width: 88%;
   align-items: flex-start;
   gap: 10px;
 }
@@ -823,10 +795,10 @@
   place-items: center;
   border: 1px solid rgb(255 255 255 / 11%);
   border-radius: 50%;
-  background: #202221;
+  background: #272727;
   color: #8a8a8a;
   font-family: "Evolv Geist Mono", monospace;
-  font-size: 8px;
+  font-size: 10px;
 }
 
 .agentMessage .chatAvatar {
@@ -841,14 +813,14 @@
   padding: 10px 13px;
   border: 1px solid rgb(255 255 255 / 8%);
   border-radius: 8px;
-  background: #1c1e1d;
+  background: #262626;
   color: #a9a9a9;
-  font-size: 10px;
+  font-size: 12px;
   line-height: 1.5;
 }
 
 .agentMessage p {
-  background: rgb(240 68 56 / 5%);
+  background: #222;
   color: #c6c6c6;
 }
 
@@ -877,8 +849,8 @@
 }
 
 .chatMetrics dt {
-  color: #696969;
-  font-size: 8px;
+  color: #999;
+  font-size: 10px;
   text-transform: uppercase;
 }
 
@@ -911,7 +883,7 @@
   border-radius: 999px;
   color: #63d89f;
   font-family: "Evolv Geist Mono", monospace;
-  font-size: 8px;
+  font-size: 10px;
   font-weight: 500;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -924,7 +896,7 @@
   margin-inline-end: 5px;
   border-radius: 50%;
   background: #63d89f;
-  box-shadow: 0 0 8px rgb(99 216 159 / 55%);
+
 }
 
 .monitorMetrics {
@@ -936,7 +908,7 @@
 
 .monitorMetrics > div {
   position: relative;
-  min-height: 105px;
+  min-height: 140px;
   padding: 20px 22px;
   border-inline-end: 1px solid rgb(255 255 255 / 7%);
 }
@@ -945,8 +917,8 @@
   position: absolute;
   right: 20px;
   bottom: 10px;
-  left: 22px;
-  width: calc(100% - 42px);
+  left: auto;
+  width: 110px;
   height: 24px;
   overflow: visible;
   fill: none;
@@ -968,14 +940,14 @@
 }
 
 .monitorMetrics dt {
-  color: #737373;
-  font-size: 9px;
+  color: #a1a1aa;
+  font-size: 11px;
 }
 
 .monitorMetrics dd {
   margin: 9px 0 0;
   color: #ededed;
-  font-size: 25px;
+  font-size: 28px;
   font-weight: 520;
   letter-spacing: -0.04em;
 }
@@ -983,9 +955,11 @@
 .monitorMetrics span {
   position: absolute;
   right: 20px;
-  bottom: 22px;
+  bottom: 13px;
+  right: auto;
+  left: 22px;
   font-family: "Evolv Geist Mono", monospace;
-  font-size: 8px;
+  font-size: 10px;
 }
 
 .metricUp,
@@ -1022,13 +996,13 @@
 
 .alertHeading strong {
   color: #c6c6c6;
-  font-size: 10px;
+  font-size: 12px;
   font-weight: 520;
 }
 
 .alertHeading span {
-  color: #6f6f6f;
-  font-size: 9px;
+  color: #aaa;
+  font-size: 11px;
 }
 
 .alertRow {
@@ -1040,20 +1014,22 @@
 
 .alertRow > span {
   font-family: "Evolv Geist Mono", monospace;
-  font-size: 8px;
+  font-size: 10px;
 }
 
 .alertRow > strong {
   color: #a7a7a7;
-  font-size: 10px;
+  font-size: 12px;
   font-weight: 470;
 }
 
 .alertRow time {
-  color: #626262;
+  color: #999;
   font-family: "Evolv Geist Mono", monospace;
-  font-size: 8px;
+  font-size: 10px;
 }
+
+.alertRow[aria-pressed="true"] { background: rgb(255 255 255 / 4%);  }
 
 .levelHIGH {
   color: #ec776f;
@@ -1079,7 +1055,7 @@
 .latencyAlert > span {
   color: #d89d50;
   font-family: "Evolv Geist Mono", monospace;
-  font-size: 8px;
+  font-size: 10px;
   letter-spacing: 0.08em;
 }
 
@@ -1093,8 +1069,8 @@
 
 .latencyAlert > p {
   margin: 7px 0 0;
-  color: #777;
-  font-size: 9px;
+  color: #a1a1aa;
+  font-size: 11px;
   line-height: 1.5;
 }
 
@@ -1103,7 +1079,7 @@
   margin-top: 9px;
   color: #666;
   font-family: "Evolv Geist Mono", monospace;
-  font-size: 8px;
+  font-size: 10px;
 }
 
 .latencyAlert .demoAction {
@@ -1114,7 +1090,7 @@
 .copy {
   display: grid;
   grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
-  min-height: 126px;
+  min-height: 100px;
   border: 1px solid rgb(255 255 255 / 10%);
   border-top: 0;
 }
@@ -1122,7 +1098,7 @@
 .copy h3,
 .copy p {
   margin: 0;
-  padding: 30px 32px;
+  padding: 22px 26px;
 }
 
 .copy h3 {
@@ -1151,145 +1127,97 @@
   }
 }
 
+
+.tabIndicator { position: absolute; left: 0; bottom: -1px; width: 20%; height: 3px; background: rgb(240 68 56 / 28%); transform: translateX(calc(var(--tab-index) * 100%)); transition: transform 420ms cubic-bezier(.22,1,.36,1); pointer-events: none; z-index: 2; }
+.tabIndicator > span { display: block; height: 100%; background: var(--evolv-accent); transform: scaleX(0); transform-origin: left; will-change: transform; }
+.windowLogo { width: 23px; height: 23px; object-fit: contain; filter: brightness(0) invert(1); }
+.governanceCanvas { display: grid; grid-template-columns: minmax(0,1fr) 250px; grid-template-rows: 1fr auto; gap: 18px; }
+.flowNodeHeader { display: flex; align-items: center; gap: 8px; padding: 10px 12px; border-bottom: 1px solid rgb(255 255 255 / 7%); }
+.flowNodeHeader > strong { font-size: 13px; font-weight: 550; letter-spacing: -0.015em; }
+.nodeIcon { display: grid; place-items: center; color: var(--node-tone); }
+.nodeKind { margin-left: auto; padding: 3px 6px; border-radius: 4px; background: color-mix(in srgb, var(--node-tone) 10%, transparent); color: var(--node-tone); font-size: 10px; }
+.nodePrompt { margin: 0; padding: 11px 12px; color: #bcbcc5; font-size: 12px; line-height: 1.55; }
+.nodeTools { display: flex; align-items: center; gap: 7px; padding: 8px 12px; border-top: 1px solid rgb(255 255 255 / 6%); color: #a6a6b0; font-size: 11px; }
+.nodeTools > span:first-of-type { font-family: "Evolv Geist Mono", monospace; font-size: 11px; }
+.nodeNumber { margin-left: auto; color: #85858f; }
+.fitFlow { position: absolute; z-index: 5; left: 16px; bottom: 14px; display: grid; place-items: center; width: 32px; height: 32px; border: 1px solid #414141; border-radius: 5px; background: #242424; color: #ddd; cursor: pointer; }
+.runSummary > div { display: grid; gap: 7px; }
+.runSummary > div strong { font-size: 15px; color: #f4f4f5; }
+.inspectorLabel { font-family: "Evolv Geist Mono", monospace; font-size: 9px; letter-spacing: .08em; color: #999; }
+.runSummary > p { margin: 0; font-size: 12px; line-height: 1.5; text-transform: none; color: #b0b0b8; }
+.inspectorTool { display: flex; align-items: center; gap: 7px; color: #b0b0b8; font-size: 11px; }
+.toolEvent { display: flex; align-items: center; gap: 8px; margin-left: 37px; padding: 10px 12px; border: 1px solid #363636; border-radius: 6px; background: #202020; font-size: 11px; color: #a1a1aa; }
+.toolEvent code { color: #ddd; }
+.toolEvent span { margin-left: auto; }
+.toolEvent > svg:last-child { color: #6ee7b7; }
+.knowledgeSources { display: flex; align-items: center; gap: 9px; margin: 0 26px 20px; color: #aaa; font-size: 11px; }
+.knowledgeSources span { padding: 5px 8px; border: 1px solid #383838; border-radius: 4px; }
+
 @media (max-width: 980px) {
-  .section {
-    padding: 108px 32px 116px;
-  }
-
-  .heading h2 {
-    font-size: 36px;
-    letter-spacing: -0.045em;
-    line-height: 41.4px;
-  }
-
-  .tabs {
-    overflow-x: auto;
-    overscroll-behavior-inline: contain;
-    scrollbar-width: thin;
-  }
-
-  .tab {
-    min-width: 190px;
-  }
-
-  .viewport {
-    height: 520px;
-  }
-
-  .demoCanvas {
-    min-width: 860px;
-    padding: 45px;
-  }
-
-  .governanceCanvas .window {
-    height: 430px;
-  }
-
-  .profileTable td {
-    height: 40px;
-  }
+  .section { padding: 72px 24px; }
+  .heading h2 { font-size: 36px; line-height: 1.2; }
+  .tab { padding: 16px 12px; gap: 8px; font-size: 12px; }
+  .demoCanvas { padding: 18px; }
+  .governanceCanvas { grid-template-columns: minmax(0, 1fr) 220px; }
+  .profileTable { min-width: 530px; }
+  .runSummary { grid-template-columns: 120px minmax(0, 1fr); }
+  .inspectorTool { display: none; }
 }
-
 @media (max-width: 600px) {
-  .section {
-    padding: 88px 10px 96px;
-  }
-
-  .heading {
-    padding-inline: 12px;
-  }
-
-  .heading h2 {
-    margin-top: 20px;
-    font-size: 30px;
-    letter-spacing: -0.04em;
-    line-height: 34.5px;
-  }
-
-  .heading > p {
-    margin-top: 16px;
-    font-size: 14px;
-    line-height: 1.55;
-  }
-
-  .tabFrame {
-    margin-top: 38px;
-  }
-
-  .tab {
-    min-width: 160px;
-    min-height: 64px;
-    gap: 9px;
-    padding: 12px 14px;
-    font-size: 11px;
-  }
-
-  .viewport {
-    height: 300px;
-  }
-
-  .demoCanvas {
-    width: 760px;
-    min-width: 760px;
-    padding: 28px 30px;
-    transform: scale(0.68);
-    transform-origin: top left;
-  }
-
-  .automationCanvas,
-  .monitorCanvas {
-    transform: translateX(-68px) scale(0.68);
-  }
-
-  .supportCanvas {
-    transform: translateX(-32px) scale(0.68);
-  }
-
-  .governanceCanvas .window {
-    width: 650px;
-    height: 390px;
-  }
-
-  .requestCard {
-    display: none;
-  }
-
-  .automationCanvas .window,
-  .monitorCanvas .window {
-    width: 780px;
-  }
-
-  .supportCanvas .window {
-    width: 650px;
-  }
-
-  .copy {
-    display: block;
-  }
-
-  .copy h3,
-  .copy p {
-    padding: 24px 20px;
-  }
-
-  .copy h3 {
-    border-inline-end: 0;
-    border-bottom: 1px solid rgb(255 255 255 / 10%);
-    font-size: 17px;
-  }
-
-  .copy p {
-    font-size: 12px;
-  }
+  .section { padding: 60px 16px; }
+  .heading h2 { font-size: 30px; line-height: 1.15; }
+  .heading > p { font-size: 14px; }
+  .tabFrame { margin-top: 44px; }
+  .tabs { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .tab { min-height: 68px; padding: 14px 12px; font-size: 12px; }
+  .tab:nth-child(-n+4) { border-bottom: 1px solid var(--evolv-border); }
+  .tab:nth-child(2n) { border-inline-end: 0; }
+  .tabIndicator { width: 50% !important; bottom: auto !important; top: 65px; transform: translate(calc(var(--tab-column) * 100%), calc(var(--tab-row) * 68px)) !important; }
+  .viewport { height: 660px; }
+  .templateViewport { height: auto; min-height: 660px; }
+  .demoCanvas { padding: 10px; }
+  .governanceCanvas { display: flex; flex-direction: column; gap: 12px; }
+  .governanceCanvas .window { height: auto; flex: 1; }
+  .profileTable { min-width: 530px; }
+  .profileTable td { height: 56px; }
+  .requestOne { padding: 16px; }
+  .requestOne > strong { margin-top: 10px; font-size: 20px; }
+  .requestTwo { display: none; }
+  .windowHeader { padding: 0 14px; gap: 8px; }
+  .windowHeader strong { font-size: 12px; }
+  .windowStatus { font-size: 9px; }
+  .flowCanvas { height: 365px; }
+  .flowHint { right: 12px; font-size: 10px; }
+  .runSummary { display: block; padding: 14px; }
+  .runSummary > div { display: flex; justify-content: space-between; align-items: center; }
+  .runSummary > p { margin: 10px 0 0; font-size: 12px; }
+  .workflowMetrics > div { display: grid; justify-content: start; gap: 6px; height: auto; padding: 14px 10px; }
+  .workflowMetrics dt { font-size: 10px; }
+  .workflowMetrics dd { font-size: 14px; }
+  .supportCanvas .window, .monitorCanvas .window { width: 100%; }
+  .supportTopline, .monitorTopline { padding: 14px; }
+  .chatBody { padding: 16px; gap: 14px; }
+  .chatAvatar { width: 25px; height: 25px; }
+  .userMessage p, .agentMessage p { font-size: 12px; padding: 10px; }
+  .chatMetrics > div { padding: 14px 10px; }
+  .chatMetrics dt { font-size: 9px; }
+  .monitorTopline > span:last-child { display: none; }
+  .monitorMetrics > div { padding: 18px 12px; min-height: 125px; }
+  .monitorMetrics dd { font-size: 24px; }
+  .metricSpark { width: 45px; right: 10px; bottom: 10px; }
+  .monitorMetrics span { left: 12px; font-size: 9px; bottom: 34px; }
+  .monitorGrid { display: block; }
+  .alertRow { grid-template-columns: 54px minmax(0, 1fr); gap: 8px; padding: 12px; }
+  .alertRow time { display: none; }
+  .alertHeading { padding: 0 12px; }
+  .latencyAlert { margin: 16px; padding: 14px; }
+  .copy { display: block; }
+  .copy h3, .copy p { padding: 18px; }
+  .copy h3 { border-inline-end: 0; border-bottom: 1px solid var(--evolv-border); font-size: 18px; }
 }
-
 @media (prefers-reduced-motion: reduce) {
-  .tab,
-  .tab::after {
-    transition: none;
-  }
-
-  .runningDot {
-    animation: none;
-  }
+  .tab, .tabIndicator { transition: none !important; }
+  .runningDot { animation: none; }
+  .window, .requestCard, .flowNode { transition: none; }
+  .flowCanvas :global(.react-flow__edge.animated .react-flow__edge-path) { animation: none; }
 }
