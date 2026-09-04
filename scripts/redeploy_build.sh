@@ -92,8 +92,17 @@ restore_previous_deployment() {
 
 trap restore_previous_deployment EXIT
 
+STARTING_COMMIT="$(git rev-parse HEAD 2>/dev/null || true)"
+
 echo "==> Pulling latest code..."
 git pull --ff-only
+
+CURRENT_COMMIT="$(git rev-parse HEAD 2>/dev/null || true)"
+if [[ "${DOGRAH_REDEPLOY_REEXEC:-0}" != "1" && "$CURRENT_COMMIT" != "$STARTING_COMMIT" ]]; then
+  echo "==> New deployment code pulled; restarting with the updated script..."
+  exec env DOGRAH_REDEPLOY_REEXEC=1 "$REPO_ROOT/scripts/redeploy_build.sh" "$@"
+fi
+
 git submodule update --init --recursive
 
 read -r PREVIOUS_API_IMAGE_ID PREVIOUS_API_IMAGE_NAME < <(capture_service_image api) || true

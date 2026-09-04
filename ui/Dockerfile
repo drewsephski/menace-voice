@@ -1,6 +1,7 @@
 # Multi-stage build
 # Stage 1: Dependencies
-FROM node:22-alpine AS deps
+ARG DOCKER_HUB_MIRROR=mirror.gcr.io
+FROM ${DOCKER_HUB_MIRROR}/library/node:22-alpine AS deps
 WORKDIR /app
 
 # Install Python and build dependencies for native modules
@@ -16,7 +17,7 @@ RUN --mount=type=cache,target=/root/.local/share/pnpm \
     pnpm install --frozen-lockfile
 
 # Stage 2: Builder
-FROM node:22-alpine AS builder
+FROM ${DOCKER_HUB_MIRROR}/library/node:22-alpine AS builder
 WORKDIR /app
 
 # Install libc6-compat for native modules in builder stage too
@@ -48,7 +49,7 @@ RUN npm run build && \
     rm -rf /tmp/* /root/.npm /root/.next/cache
 
 # Stage 3: Runner (production image)
-FROM node:22-alpine AS runner
+FROM ${DOCKER_HUB_MIRROR}/library/node:22-alpine AS runner
 WORKDIR /app
 
 # Environment variables will be provided by docker-compose

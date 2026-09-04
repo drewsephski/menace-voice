@@ -1,7 +1,8 @@
 # Multi-stage Dockerfile
 # Stage 1: Builder - Install Python dependencies into a venv via uv
 # (mirrors .devcontainer/Dockerfile's venv-builder stage).
-FROM python:3.13-slim AS builder
+ARG DOCKER_HUB_MIRROR=mirror.gcr.io
+FROM ${DOCKER_HUB_MIRROR}/library/python:3.13-slim AS builder
 
 WORKDIR /app
 
@@ -50,7 +51,7 @@ RUN find /opt/venv -type f -name '*.pyc' -delete && \
 
 # Stage 2: Node deps for ts_validator (built with full node:22-slim, only
 # node_modules is copied into the runner).
-FROM node:22-slim AS ts-deps
+FROM ${DOCKER_HUB_MIRROR}/library/node:22-slim AS ts-deps
 WORKDIR /ts_validator
 COPY api/mcp_server/ts_validator/package*.json ./
 RUN npm ci --omit=dev && npm cache clean --force
@@ -76,7 +77,7 @@ RUN npm ci --omit=dev && npm cache clean --force
 # (the cause of "stuck" builds) without killing a slow-but-progressing
 # download; `--max-time` is a hard backstop; `--retry` rides out transient CDN
 # hiccups. The archive nests binaries under bin/, so locate them with `find`.
-FROM debian:trixie-slim AS ffmpeg-static
+FROM ${DOCKER_HUB_MIRROR}/library/debian:trixie-slim AS ffmpeg-static
 ARG TARGETARCH
 ARG BTBN_TAG=autobuild-2026-05-31-13-22
 ARG BTBN_REV=N-124714-g49a77d37be
@@ -107,7 +108,7 @@ RUN set -eu ; \
     rm -rf /tmp/ffmpeg
 
 # Stage 4: Runtime - Minimal image with only runtime dependencies
-FROM python:3.13-slim AS runner
+FROM ${DOCKER_HUB_MIRROR}/library/python:3.13-slim AS runner
 
 WORKDIR /app
 
@@ -122,7 +123,7 @@ COPY --from=ffmpeg-static /usr/local/bin/ffprobe /usr/local/bin/ffprobe
 # Node.js 22 binary only (ts_validator subprocess needs node >=22.6 for
 # native TypeScript stripping; see api/mcp_server/ts_bridge.py). python:3.13-slim
 # already provides libstdc++6, libgcc-s1, and ca-certificates that node needs.
-COPY --from=node:22-slim /usr/local/bin/node /usr/local/bin/node
+COPY --from=ts-deps /usr/local/bin/node /usr/local/bin/node
 
 # Copy the populated venv from the builder stage. NLTK data lives at
 # /opt/venv/nltk_data and is auto-discovered via sys.prefix.
