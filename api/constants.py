@@ -69,12 +69,27 @@ CORS_ALLOWED_ORIGINS = [
 ]
 AUTH_PROVIDER = os.getenv("AUTH_PROVIDER", "local")
 ENABLE_SIGNUP = os.getenv("ENABLE_SIGNUP", "true").lower() == "true"
-# Stack Auth public client config. These are safe to expose to the browser (the
-# publishable client key is public by design, and the project id is non-sensitive),
-# and are served to the UI at runtime via /api/v1/health so the frontend no longer
-# needs them baked into the bundle at build time.
-STACK_AUTH_PROJECT_ID = os.getenv("STACK_AUTH_PROJECT_ID")
-STACK_PUBLISHABLE_CLIENT_KEY = os.getenv("STACK_PUBLISHABLE_CLIENT_KEY")
+# Stack Auth / Hexclave. Public client config is served to the UI at runtime via
+# /api/v1/health. Accept legacy STACK_* and newer HEXCLAVE_* env var names.
+# Publishable client key is optional — newer Hexclave projects often omit it.
+STACK_AUTH_PROJECT_ID = (
+    os.getenv("STACK_AUTH_PROJECT_ID")
+    or os.getenv("HEXCLAVE_PROJECT_ID")
+    or os.getenv("STACK_PROJECT_ID")
+    or os.getenv("NEXT_PUBLIC_HEXCLAVE_PROJECT_ID")
+    or os.getenv("NEXT_PUBLIC_STACK_PROJECT_ID")
+)
+STACK_PUBLISHABLE_CLIENT_KEY = os.getenv("STACK_PUBLISHABLE_CLIENT_KEY") or os.getenv(
+    "HEXCLAVE_PUBLISHABLE_CLIENT_KEY"
+)
+STACK_SECRET_SERVER_KEY = os.getenv("STACK_SECRET_SERVER_KEY") or os.getenv(
+    "HEXCLAVE_SECRET_SERVER_KEY"
+)
+STACK_AUTH_API_URL = (
+    os.getenv("STACK_AUTH_API_URL")
+    or os.getenv("HEXCLAVE_API_URL")
+    or "https://api.hexclave.com"
+)
 DOGRAH_MPS_SECRET_KEY = os.getenv("DOGRAH_MPS_SECRET_KEY", None)
 MPS_API_URL = os.getenv("MPS_API_URL", "https://services.dograh.com")
 DOGRAH_DEVOPS_SECRET = os.getenv("DOGRAH_DEVOPS_SECRET") or None

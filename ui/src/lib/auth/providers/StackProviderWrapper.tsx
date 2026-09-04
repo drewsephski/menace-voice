@@ -10,7 +10,7 @@ let stackClientAppInstance: StackClientApp<true, string> | null = null;
 
 function getStackClientApp(
   projectId: string,
-  publishableClientKey: string,
+  publishableClientKey?: string,
 ): StackClientApp<true, string> {
   if (!stackClientAppInstance) {
     // projectId / publishableClientKey are passed explicitly (fetched from the
@@ -19,7 +19,7 @@ function getStackClientApp(
     stackClientAppInstance = new StackClientApp({
       tokenStore: "nextjs-cookie",
       projectId,
-      publishableClientKey,
+      ...(publishableClientKey ? { publishableClientKey } : {}),
       urls: {
         afterSignIn: "/after-sign-in"
       }
@@ -31,7 +31,7 @@ function getStackClientApp(
 interface StackProviderWrapperProps {
   children: React.ReactNode;
   projectId: string;
-  publishableClientKey: string;
+  publishableClientKey?: string;
 }
 
 function StackAuthContextProvider({

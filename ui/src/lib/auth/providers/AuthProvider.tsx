@@ -46,7 +46,7 @@ interface ResolvedAuthConfig {
   provider: string;
   // Public Stack client config, fetched from the backend at runtime. Null unless
   // the provider is 'stack' and the backend supplied both values.
-  stack: { projectId: string; publishableClientKey: string } | null;
+  stack: { projectId: string; publishableClientKey?: string } | null;
 }
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
@@ -59,13 +59,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         logger.debug(`Setting auth provider as ${data.provider}`)
         setConfig({
           provider: data.provider || 'local',
-          stack:
-            data.stackProjectId && data.stackPublishableClientKey
-              ? {
-                  projectId: data.stackProjectId,
-                  publishableClientKey: data.stackPublishableClientKey,
-                }
-              : null,
+          stack: data.stackProjectId
+            ? {
+                projectId: data.stackProjectId,
+                ...(data.stackPublishableClientKey
+                  ? { publishableClientKey: data.stackPublishableClientKey }
+                  : {}),
+              }
+            : null,
         })
       })
       .catch((e) => {
@@ -83,7 +84,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (!config.stack) {
       logger.error(
         'Auth provider is "stack" but the backend returned no Stack client config. ' +
-        'Ensure STACK_AUTH_PROJECT_ID and STACK_PUBLISHABLE_CLIENT_KEY are set on the API service.'
+        'Ensure STACK_AUTH_PROJECT_ID or HEXCLAVE_PROJECT_ID is set on the API service.'
       );
       return LoadingFallback;
     }

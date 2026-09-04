@@ -117,7 +117,7 @@ async def health() -> HealthResponse:
         and not is_local_or_private_url(backend_endpoint)
         else None
     )
-    is_stack = AUTH_PROVIDER == "stack"
+    is_stack = AUTH_PROVIDER == "stack" and bool(STACK_AUTH_PROJECT_ID)
     return HealthResponse(
         status="ok",
         version=APP_VERSION,
@@ -130,7 +130,7 @@ async def health() -> HealthResponse:
         signup_enabled=ENABLE_SIGNUP,
         stack_project_id=STACK_AUTH_PROJECT_ID if is_stack else None,
         stack_publishable_client_key=(
-            STACK_PUBLISHABLE_CLIENT_KEY if is_stack else None
+            STACK_PUBLISHABLE_CLIENT_KEY if is_stack and STACK_PUBLISHABLE_CLIENT_KEY else None
         ),
     )
 

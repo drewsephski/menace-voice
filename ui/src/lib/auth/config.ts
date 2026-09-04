@@ -4,7 +4,7 @@ import { getServerBackendUrl } from "@/lib/apiClient";
 
 export interface StackConfig {
   projectId: string;
-  publishableClientKey: string;
+  publishableClientKey?: string;
 }
 
 interface ResolvedAuthConfig {
@@ -37,13 +37,15 @@ async function resolveAuthConfig(): Promise<ResolvedAuthConfig> {
       const data = await res.json();
       const authProvider = (data.auth_provider as string) || "local";
       const stackConfig =
-        authProvider === "stack" &&
-        data.stack_project_id &&
-        data.stack_publishable_client_key
+        authProvider === "stack" && data.stack_project_id
           ? {
               projectId: data.stack_project_id as string,
-              publishableClientKey:
-                data.stack_publishable_client_key as string,
+              ...(data.stack_publishable_client_key
+                ? {
+                    publishableClientKey:
+                      data.stack_publishable_client_key as string,
+                  }
+                : {}),
             }
           : null;
       // Default to signup-enabled when the backend omits the field (older api

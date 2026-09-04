@@ -25,7 +25,7 @@ export async function getStackServerApp(): Promise<StackServerApp<boolean, strin
       if (!stackConfig) {
         logger.error(
           'Auth provider is "stack" but Stack client config is unavailable from the backend ' +
-          '(STACK_AUTH_PROJECT_ID / STACK_PUBLISHABLE_CLIENT_KEY).'
+          '(STACK_AUTH_PROJECT_ID / HEXCLAVE_PROJECT_ID).'
         );
         return null;
       }
@@ -37,7 +37,9 @@ export async function getStackServerApp(): Promise<StackServerApp<boolean, strin
       stackServerApp = new StackServerApp({
         tokenStore: "nextjs-cookie",
         projectId: stackConfig.projectId,
-        publishableClientKey: stackConfig.publishableClientKey,
+        ...(stackConfig.publishableClientKey
+          ? { publishableClientKey: stackConfig.publishableClientKey }
+          : {}),
         urls: {
           afterSignIn: "/after-sign-in"
         }

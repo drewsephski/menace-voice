@@ -1,7 +1,12 @@
-import os
 from typing import Any
 
 import aiohttp
+
+from api.constants import (
+    STACK_AUTH_API_URL,
+    STACK_AUTH_PROJECT_ID,
+    STACK_SECRET_SERVER_KEY,
+)
 
 
 class StackAuthUserSearchError(Exception):
@@ -14,8 +19,8 @@ class StackAuthSessionError(Exception):
 
 class StackAuth:
     def __init__(self):
-        self.project_id = os.environ.get("STACK_AUTH_PROJECT_ID")
-        self.secret_server_key = os.environ.get("STACK_SECRET_SERVER_KEY")
+        self.project_id = STACK_AUTH_PROJECT_ID
+        self.secret_server_key = STACK_SECRET_SERVER_KEY
 
     # ------------------------------------------------------------------
     # Internal helpers
@@ -35,7 +40,7 @@ class StackAuth:
 
         access_token = self._strip_bearer(access_token)
 
-        url = os.environ.get("STACK_AUTH_API_URL") + "/api/v1/users/me"
+        url = STACK_AUTH_API_URL + "/api/v1/users/me"
         headers = {
             "x-stack-access-type": "server",
             "x-stack-project-id": self.project_id,
@@ -52,7 +57,7 @@ class StackAuth:
                     return None
 
     async def impersonate(self, stack_user_id: str):
-        url = os.environ.get("STACK_AUTH_API_URL") + "/api/v1/auth/sessions"
+        url = STACK_AUTH_API_URL + "/api/v1/auth/sessions"
         headers = {
             "x-stack-access-type": "server",
             "x-stack-project-id": self.project_id,
@@ -80,7 +85,7 @@ class StackAuth:
     async def find_users_by_email(self, email: str) -> list[dict[str, Any]]:
         """Return Stack Auth users whose primary email exactly matches."""
         normalized_email = email.strip().lower()
-        url = os.environ.get("STACK_AUTH_API_URL") + "/api/v1/users"
+        url = STACK_AUTH_API_URL + "/api/v1/users"
         headers = {
             "x-stack-access-type": "server",
             "x-stack-project-id": self.project_id,
