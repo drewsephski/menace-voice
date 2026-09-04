@@ -202,6 +202,14 @@ services:
       ENABLE_TELEMETRY: "${ENABLE_TELEMETRY:-true}"
       POSTHOG_API_KEY: "phc_ItizB1dP6yv7ZYobbcqrpxTdbomDA8hJFSEmAMdYvIr"
       POSTHOG_HOST: "https://us.i.posthog.com"
+
+      # Stripe SaaS billing (see docs/developer/environment-variables.mdx)
+      STRIPE_SECRET_KEY: "${STRIPE_SECRET_KEY:-}"
+      STRIPE_WEBHOOK_SECRET: "${STRIPE_WEBHOOK_SECRET:-}"
+      STRIPE_STARTER_PRICE_ID: "${STRIPE_STARTER_PRICE_ID:-}"
+      STRIPE_PRO_PRICE_ID: "${STRIPE_PRO_PRICE_ID:-}"
+      STRIPE_PUBLISHABLE_KEY: "${STRIPE_PUBLISHABLE_KEY:-${NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY:-}}"
+      UI_APP_URL: "${UI_APP_URL:-https://${PUBLIC_HOST}}"
     depends_on:
       postgres:
         condition: service_healthy

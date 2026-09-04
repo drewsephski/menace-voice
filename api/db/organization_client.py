@@ -109,6 +109,68 @@ class OrganizationClient(BaseDBClient):
                 return organization, was_created
             return organization, False
 
+    async def update_organization_subscription_fields(
+        self,
+        organization_id: int,
+        *,
+        stripe_customer_id: str | None = None,
+        stripe_subscription_id: str | None = None,
+        subscription_plan: str | None = None,
+        subscription_status: str | None = None,
+        subscription_current_period_end: datetime | None = None,
+        trial_ends_at: datetime | None = None,
+        clear_subscription: bool = False,
+    ) -> None:
+        async with self.async_session() as session:
+            organization = await session.get(OrganizationModel, organization_id)
+            if organization is None:
+                return
+
+            if stripe_customer_id is not None:
+                organization.stripe_customer_id = stripe_customer_id
+            if stripe_subscription_id is not None or clear_subscription:
+                organization.stripe_subscription_id = stripe_subscription_id
+            if subscription_plan is not None:
+                organization.subscription_plan = subscription_plan
+            if subscription_status is not None or clear_subscription:
+                organization.subscription_status = subscription_status
+            if subscription_current_period_end is not None or clear_subscription:
+                organization.subscription_current_period_end = (
+                    subscription_current_period_end
+                )
+            if trial_ends_at is not None or clear_subscription:
+                organization.trial_ends_at = trial_ends_at
+
+            await session.commit()
+
+    async def get_organization_id_by_stripe_customer_id(
+        self,
+        stripe_customer_id: str | None,
+    ) -> int | None:
+        if not stripe_customer_id:
+            return None
+        async with self.async_session() as session:
+            result = await session.execute(
+                select(OrganizationModel.id).where(
+                    OrganizationModel.stripe_customer_id == stripe_customer_id
+                )
+            )
+            return result.scalar_one_or_none()
+
+    async def get_organization_id_by_stripe_subscription_id(
+        self,
+        stripe_subscription_id: str | None,
+    ) -> int | None:
+        if not stripe_subscription_id:
+            return None
+        async with self.async_session() as session:
+            result = await session.execute(
+                select(OrganizationModel.id).where(
+                    OrganizationModel.stripe_subscription_id == stripe_subscription_id
+                )
+            )
+            return result.scalar_one_or_none()
+
     async def is_user_member_of_organization(
         self, user_id: int, organization_id: int
     ) -> bool:

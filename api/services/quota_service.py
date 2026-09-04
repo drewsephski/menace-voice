@@ -29,7 +29,8 @@ from api.services.managed_model_services import (
     get_dograh_service_api_key,
     uses_managed_model_services_v2,
 )
-from api.services.mps_service_key_client import mps_service_key_client
+from api.services.billing.stripe_service import stripe_billing_enabled
+from api.services.billing.subscription_access import get_subscription_access
 
 MINIMUM_DOGRAH_CREDITS_FOR_CALL = 0.10
 
@@ -641,6 +642,25 @@ async def authorize_workflow_run_start(
             error_code="workflow_not_found",
             error_message="Workflow not found",
         )
+
+    if stripe_billing_enabled():
+        organization = await db_client.get_organization_by_id(organization_id)
+        if organization is None:
+            return QuotaCheckResult(
+                has_quota=False,
+                error_code="workflow_not_found",
+                error_message="Workflow not found",
+            )
+        access = get_subscription_access(organization)
+        if access.plan == "free":
+            return QuotaCheckResult(
+                has_quota=False,
+                error_code="subscription_required",
+                error_message=(
+                    "Your trial has ended or you do not have an active subscription. "
+                    "Choose a plan on the Billing page to continue."
+                ),
+            )
 
     try:
         workflow = await db_client.get_workflow(

@@ -55,6 +55,7 @@ from api.services.auth.depends import (
     get_user,
     get_user_with_selected_organization,
 )
+from api.services.billing.subscription_access import assert_subscription_feature
 from api.services.configuration.ai_model_configuration import (
     check_for_masked_keys_in_ai_model_configuration_v2,
     compile_ai_model_configuration_v2,
@@ -878,6 +879,11 @@ async def create_telephony_configuration(
     """Create a new telephony configuration for the org."""
     if not user.selected_organization_id:
         raise HTTPException(status_code=400, detail="No organization selected")
+
+    await assert_subscription_feature(
+        user.selected_organization_id,
+        requires_telephony=True,
+    )
 
     credentials = _credentials_from_payload(request.config)
     credentials = await _run_preprocess_hook(request.config.provider, credentials)

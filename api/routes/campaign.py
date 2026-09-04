@@ -15,6 +15,7 @@ from api.db import db_client
 from api.db.models import UserModel
 from api.enums import OrganizationConfigurationKey
 from api.services.auth.depends import get_user
+from api.services.billing.subscription_access import assert_subscription_feature
 from api.services.campaign.runner import campaign_runner_service
 from api.services.campaign.source_sync import CampaignSourceSyncService
 from api.services.campaign.source_sync_factory import get_sync_service
@@ -364,6 +365,14 @@ async def create_campaign(
     user: UserModel = Depends(get_user),
 ) -> CampaignResponse:
     """Create a new campaign"""
+    if not user.selected_organization_id:
+        raise HTTPException(status_code=400, detail="No organization selected")
+
+    await assert_subscription_feature(
+        user.selected_organization_id,
+        requires_campaigns=True,
+    )
+
     # Verify workflow exists and belongs to organization
     workflow = await db_client.get_workflow(
         request.workflow_id, organization_id=user.selected_organization_id

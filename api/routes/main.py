@@ -21,6 +21,8 @@ from api.routes.public_embed_chat import router as public_embed_chat_router
 from api.routes.reports import router as reports_router
 from api.routes.s3_signed_url import router as s3_router
 from api.routes.service_keys import router as service_keys_router
+from api.routes.stripe_billing import router as stripe_billing_router
+from api.routes.stripe_webhook import router as stripe_webhook_router
 from api.routes.superuser import router as superuser_router
 from api.routes.telephony import router as telephony_router
 from api.routes.tool import router as tool_router
@@ -48,6 +50,8 @@ router.include_router(credentials_router)
 router.include_router(tool_router)
 router.include_router(organization_router)
 router.include_router(s3_router)
+router.include_router(stripe_billing_router)
+router.include_router(stripe_webhook_router)
 router.include_router(service_keys_router)
 router.include_router(organization_usage_router)
 router.include_router(reports_router)
@@ -87,6 +91,8 @@ class HealthResponse(BaseModel):
     # be baked into the browser bundle at build time. Both are public values.
     stack_project_id: str | None = None
     stack_publishable_client_key: str | None = None
+    stripe_billing_enabled: bool = False
+    stripe_publishable_key: str | None = None
 
 
 @router.get("/health", response_model=HealthResponse)
@@ -101,7 +107,9 @@ async def health() -> HealthResponse:
         FORCE_TURN_RELAY,
         STACK_AUTH_PROJECT_ID,
         STACK_PUBLISHABLE_CLIENT_KEY,
+        STRIPE_PUBLISHABLE_KEY,
     )
+    from api.services.billing.stripe_service import stripe_billing_enabled
     from api.utils.common import get_backend_endpoints, is_local_or_private_url
 
     logger.debug("Health endpoint called")
@@ -132,6 +140,8 @@ async def health() -> HealthResponse:
         stack_publishable_client_key=(
             STACK_PUBLISHABLE_CLIENT_KEY if is_stack and STACK_PUBLISHABLE_CLIENT_KEY else None
         ),
+        stripe_billing_enabled=stripe_billing_enabled(),
+        stripe_publishable_key=STRIPE_PUBLISHABLE_KEY,
     )
 
 

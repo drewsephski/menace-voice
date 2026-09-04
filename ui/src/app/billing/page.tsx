@@ -16,6 +16,7 @@ import { toast } from "sonner";
 
 import { createMpsCreditPurchaseUrlApiV1OrganizationsUsageMpsCreditsPurchaseUrlPost, getBillingCreditsApiV1OrganizationsBillingCreditsGet } from "@/client/sdk.gen";
 import type { MpsBillingCreditsResponse, MpsCreditLedgerEntryResponse } from "@/client/types.gen";
+import { SubscriptionBillingPanel } from "@/components/billing/SubscriptionBillingPanel";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -120,8 +121,9 @@ export default function BillingPage() {
     );
 
     const hasAppConfig = !configLoading && config !== null;
+    const isStripeBilling = hasAppConfig && config.stripeBillingEnabled;
     const isOssMode = hasAppConfig && config.deploymentMode === "oss";
-    const canPurchaseCredits = hasAppConfig && config.deploymentMode !== "oss";
+    const canPurchaseCredits = hasAppConfig && config.deploymentMode !== "oss" && !isStripeBilling;
     const totalQuota = credits?.total_quota ?? 0;
     const remainingCredits = credits?.remaining_credits ?? 0;
     const usedCredits = credits?.total_credits_used ?? 0;
@@ -178,8 +180,21 @@ export default function BillingPage() {
     }, [searchParams]);
 
     useEffect(() => {
+        const checkout = searchParams.get("checkout");
+        if (checkout === "success") {
+            toast.success("Subscription updated. It may take a moment to reflect.");
+        } else if (checkout === "canceled") {
+            toast.message("Checkout canceled");
+        }
+    }, [searchParams]);
+
+    useEffect(() => {
+        if (isStripeBilling) {
+            setLoading(false);
+            return;
+        }
         fetchCredits(currentPage);
-    }, [currentPage, fetchCredits]);
+    }, [currentPage, fetchCredits, isStripeBilling]);
 
     const handleRefresh = () => {
         fetchCredits(currentPage, { silent: true });
@@ -226,7 +241,7 @@ export default function BillingPage() {
         }
     };
 
-    if (loading || configLoading) {
+    if (configLoading || (!isStripeBilling && loading)) {
         return (
             <div className="container mx-auto p-6 space-y-6">
                 <div className="space-y-2">
@@ -238,6 +253,20 @@ export default function BillingPage() {
                     <Skeleton className="h-36 rounded-lg" />
                 </div>
                 <Skeleton className="h-80 rounded-lg" />
+            </div>
+        );
+    }
+
+    if (isStripeBilling) {
+        return (
+            <div className="container mx-auto p-6 space-y-6">
+                <div>
+                    <h1 className="text-3xl font-bold mb-2">Billing</h1>
+                    <p className="text-muted-foreground">
+                        Manage your subscription and plan limits.
+                    </p>
+                </div>
+                <SubscriptionBillingPanel />
             </div>
         );
     }

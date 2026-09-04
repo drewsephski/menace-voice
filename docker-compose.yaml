@@ -277,6 +277,18 @@ services:
       POSTHOG_API_KEY: "phc_ItizB1dP6yv7ZYobbcqrpxTdbomDA8hJFSEmAMdYvIr"
       POSTHOG_HOST: "https://us.i.posthog.com"
 
+      # Stripe SaaS billing. Compose's .env is interpolation-only — list keys
+      # here or they never reach the container. Publishable key is served via
+      # /api/v1/health; secret key and webhook secret stay server-side.
+      STRIPE_SECRET_KEY: "${STRIPE_SECRET_KEY:-}"
+      STRIPE_WEBHOOK_SECRET: "${STRIPE_WEBHOOK_SECRET:-}"
+      STRIPE_STARTER_PRICE_ID: "${STRIPE_STARTER_PRICE_ID:-}"
+      STRIPE_PRO_PRICE_ID: "${STRIPE_PRO_PRICE_ID:-}"
+      STRIPE_PUBLISHABLE_KEY: "${STRIPE_PUBLISHABLE_KEY:-${NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY:-}}"
+      # Billing checkout return URLs. Defaults to PUBLIC_BASE_URL when unset
+      # (see api/constants.py). Override only for split UI/API origins.
+      UI_APP_URL: "${UI_APP_URL:-}"
+
     ports:
       - "8000:8000"
     depends_on:

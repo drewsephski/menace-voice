@@ -37,6 +37,7 @@ export async function GET() {
   let forceTurnRelay = false;
   let tunnelUrl: string | null = null;
   let backendApiEndpoint: string | null = null;
+  let stripeBillingEnabled = false;
   let backendStatus: "reachable" | "unreachable" = "unreachable";
   let backendMessage: string | null = `Backend is not reachable at ${backendUrl}.`;
 
@@ -61,6 +62,7 @@ export async function GET() {
         data.backend_api_endpoint.length > 0
           ? trimTrailingSlash(data.backend_api_endpoint)
           : null;
+      stripeBillingEnabled = Boolean(data.stripe_billing_enabled);
       backendStatus = "reachable";
       backendMessage = null;
     }
@@ -78,6 +80,7 @@ export async function GET() {
     forceTurnRelay,
     tunnelUrl,
     backendApiEndpoint,
+    stripeBillingEnabled,
     backend: {
       status: backendStatus,
       url: backendUrl,

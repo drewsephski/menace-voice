@@ -58,7 +58,9 @@ SERVER_IP = os.getenv("SERVER_IP", "")
 BACKEND_API_ENDPOINT = (
     os.getenv("BACKEND_API_ENDPOINT") or PUBLIC_BASE_URL or "http://localhost:8000"
 )
-UI_APP_URL = os.getenv("UI_APP_URL", "http://localhost:3010")
+# Checkout success/cancel and billing portal return URLs. On single-host Docker
+# installs PUBLIC_BASE_URL is enough — UI_APP_URL derives from it when unset.
+UI_APP_URL = os.getenv("UI_APP_URL") or PUBLIC_BASE_URL or "http://localhost:3010"
 
 DATABASE_URL = os.environ["DATABASE_URL"]
 REDIS_URL = os.environ["REDIS_URL"]
@@ -320,3 +322,13 @@ OSS_JWT_SECRET = os.getenv("OSS_JWT_SECRET", "change-me-in-production")
 OSS_JWT_EXPIRY_HOURS = int(os.getenv("OSS_JWT_EXPIRY_HOURS", "720"))  # 30 days
 
 TUNER_BASE_URL = os.getenv("TUNER_BASE_URL", "https://api.usetuner.ai")
+
+# Stripe SaaS billing (self-hosted deployments)
+STRIPE_SECRET_KEY = _first_env("STRIPE_SECRET_KEY")
+STRIPE_WEBHOOK_SECRET = _first_env("STRIPE_WEBHOOK_SECRET")
+STRIPE_STARTER_PRICE_ID = _first_env("STRIPE_STARTER_PRICE_ID")
+STRIPE_PRO_PRICE_ID = _first_env("STRIPE_PRO_PRICE_ID")
+STRIPE_PUBLISHABLE_KEY = _first_env(
+    "STRIPE_PUBLISHABLE_KEY",
+    "NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY",
+)

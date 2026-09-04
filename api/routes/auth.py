@@ -7,6 +7,7 @@ from api.enums import PostHogEvent
 from api.schemas.auth import AuthResponse, LoginRequest, SignupRequest, UserResponse
 from api.services.auth.depends import get_user, require_local_auth
 from api.services.organization_bootstrap import ensure_organization_bootstrapped
+from api.services.billing.stripe_service import initialize_organization_trial
 from api.services.posthog_client import capture_event
 from api.utils.auth import create_jwt_token, hash_password, verify_password
 
@@ -43,6 +44,7 @@ async def signup(request: SignupRequest):
     organization, _ = await db_client.get_or_create_organization_by_provider_id(
         org_provider_id=org_provider_id, user_id=user.id
     )
+    await initialize_organization_trial(organization.id)
 
     # Link user to organization
     await db_client.add_user_to_organization(user.id, organization.id)

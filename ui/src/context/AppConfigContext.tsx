@@ -25,6 +25,7 @@ interface AppConfig {
     backendStatus: BackendStatus;
     backendUrl: string;
     backendMessage: string | null;
+    stripeBillingEnabled: boolean;
 }
 
 interface AppConfigContextType {
@@ -47,6 +48,7 @@ const defaultConfig: AppConfig = {
     backendMessage: process.env.NEXT_PUBLIC_BACKEND_URL
         ? `Unable to verify backend health at ${process.env.NEXT_PUBLIC_BACKEND_URL}.`
         : 'Unable to verify backend health.',
+    stripeBillingEnabled: false,
 };
 
 const AppConfigContext = createContext<AppConfigContextType>({
@@ -101,6 +103,7 @@ export function AppConfigProvider({ children }: { children: ReactNode }) {
                     : backendStatus === 'reachable'
                         ? null
                         : `Backend is not reachable at ${backendUrl}.`,
+                stripeBillingEnabled: Boolean(data.stripeBillingEnabled),
             });
         } catch {
             setConfig(defaultConfig);

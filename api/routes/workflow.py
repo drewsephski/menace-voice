@@ -27,6 +27,7 @@ from api.schemas.workflow import WorkflowRunResponseSchema
 from api.schemas.workflow_configurations import WorkflowConfigurationDefaults
 from api.sdk_expose import sdk_expose
 from api.services.auth.depends import get_user
+from api.services.billing.subscription_access import assert_subscription_feature
 from api.services.configuration.ai_model_configuration import (
     WORKFLOW_MODEL_CONFIGURATION_V2_OVERRIDE_KEY,
     check_for_masked_keys_in_ai_model_configuration_v2,
@@ -742,6 +743,14 @@ async def create_workflow(
             )
         except TriggerPathConflictError as e:
             raise _trigger_conflict_http_exception(workflow_definition, e.trigger_paths)
+
+    if not user.selected_organization_id:
+        raise HTTPException(status_code=400, detail="No organization selected")
+
+    await assert_subscription_feature(
+        user.selected_organization_id,
+        requires_workflow_slot=True,
+    )
 
     workflow = await db_client.create_workflow(
         request.name,
