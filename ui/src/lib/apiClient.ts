@@ -51,12 +51,16 @@ export const createClientConfig: CreateClientConfig = (config) => {
 };
 
 let interceptorRegistered = false;
+let getAccessTokenFn: (() => Promise<string>) | null = null;
 
 /**
  * Register a request interceptor that attaches a fresh access token
- * to every outgoing SDK request. Idempotent — safe for React strict mode.
+ * to every outgoing SDK request. The interceptor is installed once; the
+ * token getter is refreshed on every call so Stack sessions that become
+ * ready after the first render still authenticate later requests.
  */
 export function setupAuthInterceptor(apiClient: Client, getAccessToken: () => Promise<string>) {
+    getAccessTokenFn = getAccessToken;
     if (interceptorRegistered) return;
     interceptorRegistered = true;
 
@@ -64,8 +68,12 @@ export function setupAuthInterceptor(apiClient: Client, getAccessToken: () => Pr
         if (request.headers.get('Authorization')) {
             return request;
         }
+        const resolveToken = getAccessTokenFn;
+        if (!resolveToken) {
+            return request;
+        }
         try {
-            const token = await getAccessToken();
+            const token = await resolveToken();
             request.headers.set('Authorization', `Bearer ${token}`);
         } catch {
             // If token retrieval fails, let the request proceed without auth

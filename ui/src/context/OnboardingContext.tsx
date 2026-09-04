@@ -71,27 +71,56 @@ export const OnboardingProvider = ({ children }: { children: React.ReactNode }) 
 
     useEffect(() => {
         if (auth.loading || hasFetched.current) return;
-        if (!auth.isAuthenticated) {
+        if (!auth.user) {
             // Unauthenticated pages (login/signup) have no onboarding state;
             // unblock consumers with defaults.
-            setLoaded(true);
+            if (!auth.isAuthenticated) {
+                setLoaded(true);
+            }
             return;
         }
         hasFetched.current = true;
 
+        const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
         (async () => {
-            const res = await getUserOnboardingStateApiV1UserOnboardingStateGet().catch(() => null);
-            if (res?.data) {
-                const data = res.data as Partial<OnboardingState>;
-                setState((prev) => absorb(prev, data));
-                setLoaded(true);
-            } else {
-                // Fetch failed: stay in loading so one-time UI stays suppressed
-                // (fail closed — never re-show onboarding to an onboarded user).
-                console.error('[onboarding] failed to fetch onboarding state', res?.error);
+            const maxAttempts = 4;
+            for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
+                if (attempt > 0) {
+                    await sleep(400 * attempt);
+                }
+
+                const res = await getUserOnboardingStateApiV1UserOnboardingStateGet().catch(
+                    () => null,
+                );
+                if (res?.data) {
+                    const data = res.data as Partial<OnboardingState>;
+                    setState((prev) => absorb(prev, data));
+                    setLoaded(true);
+                    return;
+                }
+
+                const status = res?.response?.status;
+                const detail =
+                    res?.error &&
+                    typeof res.error === 'object' &&
+                    'detail' in res.error &&
+                    typeof res.error.detail === 'string'
+                        ? res.error.detail
+                        : undefined;
+
+                if (attempt === maxAttempts - 1) {
+                    // Fetch failed: stay in loading so one-time UI stays suppressed
+                    // (fail closed — never re-show onboarding to an onboarded user).
+                    console.error('[onboarding] failed to fetch onboarding state', {
+                        status,
+                        detail,
+                        error: res?.error,
+                    });
+                }
             }
         })();
-    }, [auth.loading, auth.isAuthenticated]);
+    }, [auth.loading, auth.isAuthenticated, auth.user]);
 
     // Best-effort server write. Only the delta is sent; the server unions list
     // fields into the stored state, so concurrent tabs don't drop each other's
