@@ -37,7 +37,7 @@ export function LeadFormsProvider({ children }: { children: ReactNode }) {
   //       cross-device), AND
   //   (b) the user has zero workflows (grandfathers out all existing users —
   //       they already have workflows, so they never see this modal).
-  const { user, loading: authLoading } = useAuth();
+  const { user, loading: authLoading, provider, getSelectedTeam } = useAuth();
   const {
     loading: onboardingLoading,
     onboardingCompletedAt,
@@ -53,6 +53,9 @@ export function LeadFormsProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (authLoading || onboardingLoading || !user || onboardingCheckedRef.current) {
+      return;
+    }
+    if (provider === "stack" && !getSelectedTeam?.()) {
       return;
     }
 
@@ -81,7 +84,7 @@ export function LeadFormsProvider({ children }: { children: ReactNode }) {
         // existing users are never disrupted.
       }
     })();
-  }, [authLoading, onboardingLoading, user]);
+  }, [authLoading, onboardingLoading, user, provider, getSelectedTeam]);
 
   const completeOnboarding = useCallback((skipped: boolean) => {
     // Dismiss immediately, then persist the flag through OnboardingContext

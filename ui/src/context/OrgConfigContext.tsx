@@ -137,13 +137,22 @@ export function OrgConfigProvider({ children }: { children: ReactNode }) {
         }
     }, []);
 
+    const missingStackTeam = auth.provider === 'stack' && !auth.getSelectedTeam?.();
+
     useEffect(() => {
-        if (auth.loading || !auth.isAuthenticated || hasFetchedConfig.current) {
+        if (auth.loading || !auth.isAuthenticated) {
+            return;
+        }
+        if (missingStackTeam) {
+            setLoading(false);
+            return;
+        }
+        if (hasFetchedConfig.current) {
             return;
         }
         hasFetchedConfig.current = true;
         fetchConfig();
-    }, [auth.loading, auth.isAuthenticated, fetchConfig]);
+    }, [auth.loading, auth.isAuthenticated, fetchConfig, missingStackTeam]);
 
     const refreshConfig = useCallback(async () => {
         await fetchConfig();

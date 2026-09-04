@@ -5,6 +5,7 @@ from loguru import logger
 from pydantic import ValidationError
 from sqlalchemy import func
 from sqlalchemy.dialects.postgresql import insert
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.future import select
 
 from api.db.base_client import BaseDBClient
@@ -12,50 +13,173 @@ from api.db.models import UserConfigurationModel, UserModel
 from api.enums import UserConfigurationKey
 from api.schemas.ai_model_configuration import EffectiveAIModelConfiguration
 
+_LOCAL_PROVIDER_ID_PREFIX = "oss_"
+
+
+def _is_local_provider_id(provider_id: str | None) -> bool:
+    return bool(provider_id) and provider_id.startswith(_LOCAL_PROVIDER_ID_PREFIX)
+
 
 class UserClient(BaseDBClient):
     async def get_or_create_user_by_provider_id(
-        self, provider_id: str
+        self, provider_id: str, email: str | None = None
     ) -> tuple[UserModel, bool]:
-        """Return (user, was_created) tuple."""
+        """Return (user, was_created) tuple.
+
+        When ``email`` is provided, a local (``oss_*``) row that already owns
+        that address is rebound to ``provider_id`` instead of inserting a
+        second user. That is the local-auth → Stack Auth switch: the unique
+        ``lower(email)`` index would otherwise 500 on the email sync.
+        """
+        normalized_email = email.strip().lower() if email else None
+
         async with self.async_session() as session:
-            # First try to get existing user
-            result = await session.execute(
-                select(UserModel).where(UserModel.provider_id == provider_id)
+            user = await self._user_by_provider_id(session, provider_id)
+            owner = (
+                await self._user_by_email(session, normalized_email)
+                if normalized_email
+                else None
             )
-            user = result.scalars().first()
+
+            if (
+                user is not None
+                and owner is not None
+                and user.id != owner.id
+                and _is_local_provider_id(owner.provider_id)
+            ):
+                await self._rebind_local_user_to_provider(
+                    session, local_user=owner, stub_user=user, provider_id=provider_id
+                )
+                await session.commit()
+                await session.refresh(owner)
+                return owner, False
 
             if user is not None:
+                if (
+                    normalized_email
+                    and (user.email or "").lower() != normalized_email
+                    and owner is None
+                ):
+                    user.email = normalized_email
+                    try:
+                        await session.commit()
+                    except IntegrityError:
+                        await session.rollback()
+                        logger.warning(
+                            "Skipped email sync for user {} because {} is already taken",
+                            user.id,
+                            normalized_email,
+                        )
                 return user, False
 
-            # Use PostgreSQL's INSERT ... ON CONFLICT DO NOTHING
-            # This is atomic and handles race conditions at the database level
-            stmt = insert(UserModel.__table__).values(
-                provider_id=provider_id,
-                created_at=datetime.now(timezone.utc),
-                selected_organization_id=None,  # Will be set later
-                is_superuser=False,  # Default value
-            )
-            # ON CONFLICT DO NOTHING - if another request already inserted, this becomes a no-op
+            if owner is not None:
+                if _is_local_provider_id(owner.provider_id):
+                    owner.provider_id = provider_id
+                    await session.commit()
+                    await session.refresh(owner)
+                    logger.info(
+                        "Linked local user {} to provider_id {}",
+                        owner.id,
+                        provider_id,
+                    )
+                    return owner, False
+                # Another identity already owns this address. Create the
+                # Stack user without copying the email so we do not 500.
+                logger.warning(
+                    "Provider {} email {} is already held by user {}; skipping email copy",
+                    provider_id,
+                    normalized_email,
+                    owner.id,
+                )
+                normalized_email = None
+
+            values = {
+                "provider_id": provider_id,
+                "created_at": datetime.now(timezone.utc),
+                "selected_organization_id": None,
+                "is_superuser": False,
+            }
+            if normalized_email:
+                values["email"] = normalized_email
+
+            stmt = insert(UserModel.__table__).values(**values)
             stmt = stmt.on_conflict_do_nothing(index_elements=["provider_id"])
 
-            result = await session.execute(stmt)
-            await session.commit()
-            was_created = result.rowcount > 0
+            try:
+                result = await session.execute(stmt)
+                await session.commit()
+                was_created = result.rowcount > 0
+            except IntegrityError:
+                await session.rollback()
+                owner = await self._user_by_email(session, normalized_email)
+                if owner is not None and _is_local_provider_id(owner.provider_id):
+                    owner.provider_id = provider_id
+                    await session.commit()
+                    await session.refresh(owner)
+                    logger.info(
+                        "Linked local user {} to provider_id {} after email conflict",
+                        owner.id,
+                        provider_id,
+                    )
+                    return owner, False
+                stmt = insert(UserModel.__table__).values(
+                    provider_id=provider_id,
+                    created_at=datetime.now(timezone.utc),
+                    selected_organization_id=None,
+                    is_superuser=False,
+                )
+                stmt = stmt.on_conflict_do_nothing(index_elements=["provider_id"])
+                result = await session.execute(stmt)
+                await session.commit()
+                was_created = result.rowcount > 0
 
-            # Now fetch the user (either the one we just created or the one that existed)
             result = await session.execute(
                 select(UserModel).where(UserModel.provider_id == provider_id)
             )
             user = result.scalars().first()
 
             if user is None:
-                # This should never happen, but handle it just in case
-                error_msg = (
+                raise ValueError(
                     f"Failed to create or fetch user with provider_id {provider_id}"
                 )
-                raise ValueError(error_msg)
         return user, was_created
+
+    async def _user_by_provider_id(self, session, provider_id: str) -> UserModel | None:
+        result = await session.execute(
+            select(UserModel).where(UserModel.provider_id == provider_id)
+        )
+        return result.scalars().first()
+
+    async def _user_by_email(self, session, email: str | None) -> UserModel | None:
+        if not email:
+            return None
+        result = await session.execute(
+            select(UserModel).where(func.lower(UserModel.email) == email)
+        )
+        return result.scalars().first()
+
+    async def _rebind_local_user_to_provider(
+        self,
+        session,
+        *,
+        local_user: UserModel,
+        stub_user: UserModel,
+        provider_id: str,
+    ) -> None:
+        """Move Stack's provider_id onto the existing local user.
+
+        The stub row was created by an earlier get-or-create on provider_id
+        before email was synced. Free that unique key first, then claim it.
+        """
+        stub_user.provider_id = f"merged_{stub_user.id}_{uuid.uuid4()}"
+        await session.flush()
+        local_user.provider_id = provider_id
+        logger.info(
+            "Rebound local user {} onto provider_id {}; retired stub user {}",
+            local_user.id,
+            provider_id,
+            stub_user.id,
+        )
 
     async def get_user_by_id(self, user_id: int) -> UserModel | None:
         """Fetch a user by their internal ID."""
@@ -178,7 +302,11 @@ class UserClient(BaseDBClient):
             await session.commit()
 
     async def update_user_email(self, user_id: int, email: str) -> None:
-        """Update the user's email address."""
+        """Update the user's email address.
+
+        A unique-constraint collision (another user already owns the address)
+        is ignored so Stack email sync cannot 500 an otherwise valid session.
+        """
         async with self.async_session() as session:
             from sqlalchemy import update
 
@@ -187,8 +315,16 @@ class UserClient(BaseDBClient):
                 .where(UserModel.id == user_id)
                 .values(email=email.lower())
             )
-            await session.execute(stmt)
-            await session.commit()
+            try:
+                await session.execute(stmt)
+                await session.commit()
+            except IntegrityError:
+                await session.rollback()
+                logger.warning(
+                    "Skipped email update for user {} because {} is already taken",
+                    user_id,
+                    email.lower(),
+                )
 
     async def get_user_by_email(self, email: str) -> UserModel | None:
         """Fetch a user by their email address (case-insensitive).

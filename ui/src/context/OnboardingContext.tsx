@@ -71,6 +71,9 @@ export const OnboardingProvider = ({ children }: { children: React.ReactNode }) 
 
     useEffect(() => {
         if (auth.loading || hasFetched.current) return;
+        if (auth.provider === 'stack' && !auth.getSelectedTeam?.()) {
+            return;
+        }
         if (!auth.user) {
             // Unauthenticated pages (login/signup) have no onboarding state;
             // unblock consumers with defaults.
@@ -120,7 +123,7 @@ export const OnboardingProvider = ({ children }: { children: React.ReactNode }) 
                 }
             }
         })();
-    }, [auth.loading, auth.isAuthenticated, auth.user]);
+    }, [auth.loading, auth.isAuthenticated, auth.user, auth.provider, auth.getSelectedTeam, auth]);
 
     // Best-effort server write. Only the delta is sent; the server unions list
     // fields into the stored state, so concurrent tabs don't drop each other's

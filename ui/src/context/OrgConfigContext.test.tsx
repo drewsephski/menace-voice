@@ -89,4 +89,35 @@ describe('OrgConfigProvider', () => {
         });
         expect(screen.getByTestId('error').textContent).toBe('Preferences unavailable');
     });
+
+    it('does not fetch organization config when a Stack user has no selected team', async () => {
+        useAuthMock.mockReturnValue({
+            user: { id: 'user-1' },
+            isAuthenticated: true,
+            loading: false,
+            getAccessToken: vi.fn(async () => 'token'),
+            redirectToLogin: vi.fn(),
+            logout: vi.fn(async () => undefined),
+            provider: 'stack',
+            getSelectedTeam: vi.fn(() => null),
+        });
+        getPreferencesMock.mockResolvedValue({
+            data: { timezone: 'UTC' },
+            error: undefined,
+        });
+
+        render(
+            <OrgConfigProvider>
+                <ContextState />
+            </OrgConfigProvider>,
+        );
+
+        await waitFor(() => {
+            expect(screen.getByTestId('loading').textContent).toBe('false');
+        });
+        expect(getCurrentOrganizationContextMock).not.toHaveBeenCalled();
+        expect(getPreferencesMock).not.toHaveBeenCalled();
+        expect(getUserConfigurationsMock).not.toHaveBeenCalled();
+        expect(screen.getByTestId('error').textContent).toBe('');
+    });
 });

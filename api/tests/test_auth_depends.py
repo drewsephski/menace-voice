@@ -236,6 +236,43 @@ async def test_get_user_succeeds_when_bootstrap_cannot_complete(monkeypatch):
     assert result.selected_organization_id == 42
 
 
+@pytest.mark.asyncio
+async def test_get_user_passes_verified_stack_email_when_resolving_user(monkeypatch):
+    stack_user = {
+        "id": "stack-user-1",
+        "selected_team_id": "team-1",
+        "primary_email_verified": True,
+        "primary_email": "drewsepeczi@gmail.com",
+    }
+    user = SimpleNamespace(
+        id=7,
+        email="drewsepeczi@gmail.com",
+        provider_id="stack-user-1",
+        selected_organization_id=42,
+    )
+    organization = SimpleNamespace(id=42, provider_id="team-1")
+    bootstrap = AsyncMock(return_value=True)
+
+    _patch_get_user_dependencies(
+        monkeypatch,
+        stack_user=stack_user,
+        user=user,
+        organization=organization,
+        org_was_created=False,
+        bootstrap=bootstrap,
+        group_calls=[],
+        capture_calls=[],
+        person_calls=[],
+    )
+
+    result = await auth_depends.get_user(authorization="Bearer token")
+
+    assert result is user
+    auth_depends.db_client.get_or_create_user_by_provider_id.assert_awaited_once_with(
+        "stack-user-1", email="drewsepeczi@gmail.com"
+    )
+
+
 def _patch_oss_auth_dependencies(monkeypatch, *, user, bootstrap):
     monkeypatch.setattr(auth_depends, "AUTH_PROVIDER", "local")
     monkeypatch.setattr(auth_depends, "decode_jwt_token", lambda token: {"sub": "7"})

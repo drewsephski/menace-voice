@@ -8,7 +8,7 @@ import { AgentFolderView } from '@/components/workflow/folders/AgentFolderView';
 import { CreateFolderButton } from '@/components/workflow/folders/CreateFolderButton';
 import { FolderSection } from '@/components/workflow/folders/FolderSection';
 import { UploadWorkflowButton } from '@/components/workflow/UploadWorkflowButton';
-import { getServerAccessToken, getServerAuthProvider } from '@/lib/auth/server';
+import { getServerAccessToken, getServerAuthProvider, getServerUser } from '@/lib/auth/server';
 import logger from '@/lib/logger';
 
 import WorkflowLayout from "./WorkflowLayout";
@@ -31,6 +31,19 @@ async function WorkflowList() {
                 <div className="text-red-500">
                     Authentication required. Please refresh the page.
                 </div>
+            );
+        }
+    }
+
+    if (authProvider === 'stack') {
+        const user = await getServerUser();
+        if (user && 'selectedTeam' in user && !user.selectedTeam) {
+            return (
+                <Card>
+                    <CardContent className="p-8 text-center text-muted-foreground">
+                        Choose a team to see your agents.
+                    </CardContent>
+                </Card>
             );
         }
     }

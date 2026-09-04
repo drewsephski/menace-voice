@@ -17,11 +17,16 @@ export default async function AfterSignInPage() {
     logger.debug('[AfterSignInPage] Got user:', { hasUser: !!user, userId: user?.id });
 
     if (authProvider === 'stack' && user && 'getAuthJson' in user) {
+        if (!('selectedTeam' in user) || !user.selectedTeam) {
+            logger.debug('[AfterSignInPage] No Stack team selected, redirecting to /workflow');
+            redirect('/workflow');
+        }
+
         logger.debug('[AfterSignInPage] Stack user detected, getting auth token...');
         const token = await user.getAuthJson();
         logger.debug('[AfterSignInPage] Got token:', { hasToken: !!token?.accessToken });
-        const permissions = 'listPermissions' in user && 'selectedTeam' in user
-            ? await user.listPermissions(user.selectedTeam!) ?? []
+        const permissions = 'listPermissions' in user
+            ? await user.listPermissions(user.selectedTeam) ?? []
             : [];
         logger.debug('[AfterSignInPage] Got permissions:', { count: permissions.length });
         const redirectUrl = await getRedirectUrl(token?.accessToken ?? "", permissions);

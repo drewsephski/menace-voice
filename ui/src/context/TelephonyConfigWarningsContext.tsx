@@ -46,9 +46,10 @@ export function TelephonyConfigWarningsProvider({ children }: { children: ReactN
 
     useEffect(() => {
         if (auth.loading || !auth.isAuthenticated || hasFetched.current) return;
+        if (auth.provider === 'stack' && !auth.getSelectedTeam?.()) return;
         hasFetched.current = true;
         doFetch();
-    }, [auth.loading, auth.isAuthenticated, doFetch]);
+    }, [auth.loading, auth.isAuthenticated, auth.provider, auth.getSelectedTeam, doFetch]);
 
     const refresh = useCallback(async () => {
         if (!auth.isAuthenticated) return;

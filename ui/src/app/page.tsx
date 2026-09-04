@@ -75,12 +75,17 @@ export default async function Home() {
   if (user) {
     try {
       if (authProvider === "stack" && "getAuthJson" in user) {
+        if (!("selectedTeam" in user) || !user.selectedTeam) {
+          logger.debug("[HomePage] No Stack team selected, redirecting to /workflow");
+          redirect("/workflow");
+        }
+
         logger.debug("[HomePage] Getting auth token from Stack user...");
         const token = await user.getAuthJson();
         logger.debug("[HomePage] Got auth token:", { hasToken: !!token?.accessToken });
         const permissions =
-          "listPermissions" in user && "selectedTeam" in user
-            ? (await user.listPermissions(user.selectedTeam!)) ?? []
+          "listPermissions" in user
+            ? (await user.listPermissions(user.selectedTeam)) ?? []
             : [];
         logger.debug("[HomePage] Got permissions:", { count: permissions.length });
         const redirectUrl = await getRedirectUrl(token?.accessToken ?? "", permissions);

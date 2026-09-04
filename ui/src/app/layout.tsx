@@ -5,6 +5,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { Suspense } from "react";
 
+import { NoTeamDialog } from "@/components/auth/NoTeamDialog";
 import AppLayout from "@/components/layout/AppLayout";
 import MetaPixel from "@/components/MetaPixel";
 import PostHogIdentify from "@/components/PostHogIdentify";
@@ -83,6 +84,7 @@ export default function RootLayout({
                         <AppLayout>
                           {children}
                         </AppLayout>
+                        <NoTeamDialog />
                         <Toaster />
                       </OnboardingProvider>
                     </TelephonyConfigWarningsProvider>
