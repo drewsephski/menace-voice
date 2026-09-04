@@ -8,7 +8,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import StreamingResponse
 from httpx import HTTPStatusError
 from loguru import logger
-from pydantic import BaseModel, Field, ValidationError
+from pydantic import BaseModel, Field, ValidationError, field_validator
 
 from api.constants import DEPLOYMENT_MODE
 from api.db import db_client
@@ -62,6 +62,10 @@ from api.services.workflow.errors import ItemKind, WorkflowError
 from api.services.workflow.mcp_prompt import (
     append_mcp_usage_instructions,
     build_mcp_usage_instructions,
+)
+from api.services.workflow.onboarding_prompt import (
+    InvalidOnboardingWorkflowLayout,
+    enhance_onboarding_workflow_prompts,
 )
 from api.services.workflow.run_creation import prepare_workflow_run_inputs
 from api.services.workflow.run_usage_response import (
@@ -380,6 +384,46 @@ class CreateWorkflowRunResponse(BaseModel):
     initial_context: dict | None = None
 
 
+class AgentOnboardingContext(BaseModel):
+    agent_brief: str = Field(min_length=1, max_length=8_000)
+    tone: str = Field(min_length=1, max_length=100)
+    language: str = Field(min_length=1, max_length=100)
+    voice_provider: str = Field(min_length=1, max_length=100)
+    voice_name: str = Field(min_length=1, max_length=255)
+    behavior_notes: str | None = Field(default=None, max_length=4_000)
+    workflow_stages: list[str] = Field(min_length=3, max_length=3)
+
+    @field_validator(
+        "agent_brief",
+        "tone",
+        "language",
+        "voice_provider",
+        "voice_name",
+    )
+    @classmethod
+    def _strip_required_text(cls, value: str) -> str:
+        value = value.strip()
+        if not value:
+            raise ValueError("must not be blank")
+        return value
+
+    @field_validator("behavior_notes")
+    @classmethod
+    def _strip_optional_text(cls, value: str | None) -> str | None:
+        value = value.strip() if value else ""
+        return value or None
+
+    @field_validator("workflow_stages")
+    @classmethod
+    def _validate_workflow_stages(cls, stages: list[str]) -> list[str]:
+        cleaned = [stage.strip() for stage in stages]
+        if any(not stage for stage in cleaned):
+            raise ValueError("workflow stages must not be blank")
+        if any(len(stage) > 2_000 for stage in cleaned):
+            raise ValueError("workflow stages must be 2,000 characters or fewer")
+        return cleaned
+
+
 class CreateWorkflowTemplateRequest(BaseModel):
     call_type: Literal[CallType.INBOUND.value, CallType.OUTBOUND.value]
     use_case: str
@@ -416,6 +460,13 @@ class CreateWorkflowTemplateRequest(BaseModel):
     post_call_webhook_credential_uuid: str | None = Field(
         default=None,
         description="Optional credential applied to the post-call webhook.",
+    )
+    onboarding_context: AgentOnboardingContext | None = Field(
+        default=None,
+        description=(
+            "Structured answers from agent onboarding. When present, the backend "
+            "enforces the fixed three-stage layout and hardens every generated prompt."
+        ),
     )
 
 
@@ -962,6 +1013,35 @@ async def create_workflow_from_template(
             workflow_def,
             build_mcp_usage_instructions(selected_tools),
         )
+        if request.onboarding_context:
+            context = request.onboarding_context
+            try:
+                workflow_def = enhance_onboarding_workflow_prompts(
+                    workflow_def,
+                    agent_name=(
+                        request.name
+                        or workflow_data.get("name")
+                        or "the configured agent"
+                    ),
+                    use_case=request.use_case,
+                    call_type=request.call_type,
+                    agent_brief=context.agent_brief,
+                    tone=context.tone,
+                    language=context.language,
+                    voice_provider=context.voice_provider,
+                    voice_name=context.voice_name,
+                    behavior_notes=context.behavior_notes,
+                    workflow_stages=context.workflow_stages,
+                )
+            except InvalidOnboardingWorkflowLayout as exc:
+                logger.warning("Rejected invalid onboarding workflow layout: {}", exc)
+                raise HTTPException(
+                    status_code=502,
+                    detail=(
+                        "The agent draft did not match the required three-stage "
+                        "layout. Please create it again."
+                    ),
+                ) from exc
         workflow_def = _attach_launch_integrations(
             workflow_def,
             call_type=request.call_type,

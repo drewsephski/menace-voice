@@ -322,6 +322,103 @@ def test_create_workflow_from_template_attaches_selected_resources_atomically():
     assert create_kwargs["workflow_definition"]["nodes"][2]["data"] == {}
 
 
+def test_create_workflow_from_template_hardens_onboarding_prompts_and_layout():
+    app = _make_test_app()
+    client = TestClient(app)
+    created_at = datetime.now(UTC)
+    generated_definition = {
+        "nodes": [
+            {
+                "id": "start",
+                "type": "startCall",
+                "position": {"x": 0, "y": 0},
+                "data": {"prompt": "Describe an attention-getting opening."},
+            },
+            *[
+                {
+                    "id": f"agent-{index}",
+                    "type": "agentNode",
+                    "position": {"x": (index + 1) * 400, "y": 0},
+                    "data": {"name": f"Stage {index}", "prompt": "Continue."},
+                }
+                for index in range(3)
+            ],
+            {
+                "id": "end",
+                "type": "endCall",
+                "position": {"x": 1600, "y": 0},
+                "data": {"prompt": "End."},
+            },
+        ],
+        "edges": [
+            {"id": "e-0", "source": "start", "target": "agent-0"},
+            {"id": "e-1", "source": "agent-0", "target": "agent-1"},
+            {"id": "e-2", "source": "agent-1", "target": "agent-2"},
+            {"id": "e-3", "source": "agent-2", "target": "end"},
+        ],
+    }
+    workflow = SimpleNamespace(
+        id=42,
+        name="Maya",
+        status="draft",
+        created_at=created_at,
+        current_definition_id=7,
+        template_context_variables=None,
+        call_disposition_codes=None,
+        workflow_configurations=None,
+    )
+
+    with (
+        patch("api.routes.workflow.db_client") as mock_db,
+        patch(
+            "api.routes.workflow.ensure_template_tools",
+            AsyncMock(return_value=[]),
+        ),
+        patch(
+            "api.routes.workflow.mps_service_key_client.call_workflow_api",
+            AsyncMock(return_value={"workflow_definition": generated_definition}),
+        ),
+    ):
+        mock_db.get_tools_by_uuids = AsyncMock(return_value=[])
+        mock_db.get_documents_by_uuids = AsyncMock(return_value=[])
+        mock_db.create_workflow = AsyncMock(return_value=workflow)
+
+        response = client.post(
+            "/workflow/create/template",
+            json={
+                "call_type": "outbound",
+                "use_case": "Self-test prank call",
+                "activity_description": "Structured generator brief",
+                "name": "Maya",
+                "onboarding_context": {
+                    "agent_brief": "Call me about my organized sock drawer.",
+                    "tone": "playful",
+                    "language": "English (US)",
+                    "voice_provider": "Menace Voice",
+                    "voice_name": "ember",
+                    "behavior_notes": "Stop when I say the test is over.",
+                    "workflow_stages": [
+                        "Introduce the sock mystery.",
+                        "Ask two playful questions.",
+                        "Reveal the joke and close.",
+                    ],
+                },
+            },
+        )
+
+    assert response.status_code == 200
+    definition = mock_db.create_workflow.await_args.kwargs["workflow_definition"]
+    assert len([node for node in definition["nodes"] if node["type"] == "agentNode"]) == 3
+    assert len([node for node in definition["nodes"] if node["type"] == "globalNode"]) == 1
+    start = next(node for node in definition["nodes"] if node["type"] == "startCall")
+    assert "opening itself" in start["data"]["prompt"]
+    assert all(
+        node["data"].get("add_global_prompt") is True
+        for node in definition["nodes"]
+        if node["type"] in {"startCall", "agentNode", "endCall"}
+    )
+
+
 def test_create_workflow_from_template_attaches_launch_integrations():
     app = _make_test_app()
     client = TestClient(app)

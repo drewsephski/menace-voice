@@ -25,6 +25,10 @@ import { type KeyboardEvent, type MouseEvent, type ReactNode, useCallback, useEf
 import { toast } from "sonner";
 
 import {
+  buildAgentOnboardingContext,
+  buildAgentOnboardingPrompt,
+} from "@/app/agent-onboarding/agent-prompt";
+import {
   createHttpTemplateDefinition,
   getDiscoveredToolCount,
   getHttpUsageInstructions,
@@ -296,6 +300,11 @@ const TEMPLATE_OPTIONS: TemplateOption[] = [
     description: "Start with a blank canvas and describe the job yourself.",
     useCase: "Custom voice agent",
     activityDescription: "",
+    workflowStages: [
+      "Open naturally and establish the specific context needed to begin the user's requested interaction.",
+      "Carry out the core interaction from the user's brief, adapting to the other person's responses and using configured capabilities when relevant.",
+      "Reach the intended outcome, confirm any commitments or next steps, and close the interaction naturally.",
+    ],
     avatarUrl: "/avatars/custom.png",
     recommendedBuiltinToolCategories: ["end_call"],
   },
@@ -1382,47 +1391,48 @@ export default function AgentOnboardingPage() {
       setError("You must be signed in to create an agent.");
       return;
     }
+    if (!voiceSelection) {
+      setError("Choose and confirm a voice before creating the agent.");
+      return;
+    }
     try {
       setIsCreating(true);
       setError(null);
       const accessToken = await getAccessToken();
-      const configurationSummary = [
-        `Tone: ${tone}.`,
-        `Language: ${getLanguageLabel(language)}.`,
-        voiceSelection
-          ? `Voice: ${getVoiceProviderLabel(voiceSelection.provider)} / ${voiceSelection.voice}.`
-          : "",
-        `Call direction: ${callType}.`,
-        behaviorNotes.trim()
-          ? `Additional behavior: ${behaviorNotes.trim()}`
-          : "",
-        getMcpUsageInstructions(mcpServers),
-        getHttpUsageInstructions(httpTools),
-      ]
-        .filter(Boolean)
-        .join(" ");
-      const workflowStructure = selectedTemplateOption?.workflowStages
-        ? [
-            "Build the workflow with exactly three role-specific agent nodes in this order:",
-            ...selectedTemplateOption.workflowStages.map(
-              (stage, index) => `${index + 1}. ${stage}`,
-            ),
-            "Give each node a prompt scoped to its stage and a clear transition to the next stage. Preserve explicit escalation, opt-out, and tool-confirmation boundaries from the job description.",
-          ].join("\n")
-        : "";
+      const workflowStages: readonly [string, string, string] =
+        selectedTemplateOption?.workflowStages ?? [
+          "Open naturally and establish the context needed for the requested interaction.",
+          "Carry out the core interaction and adapt to the other person's responses.",
+          "Confirm the outcome and any next step, then close naturally.",
+        ];
+      const onboardingPromptInput = {
+        agentName: agentName.trim(),
+        useCase: useCase.trim() || "Custom voice agent",
+        activityDescription: activityDescription.trim(),
+        callType,
+        tone,
+        language: getLanguageLabel(language),
+        voiceProvider: getVoiceProviderLabel(voiceSelection.provider),
+        voiceName: voiceSelection.voice,
+        behaviorNotes,
+        workflowStages,
+        connectionInstructions: [
+          getMcpUsageInstructions(mcpServers),
+          getHttpUsageInstructions(httpTools),
+        ],
+      } as const;
       const response =
         await createWorkflowFromTemplateApiV1WorkflowCreateTemplatePost({
           body: {
             call_type: callType,
             name: agentName.trim(),
             use_case: useCase.trim() || "Custom voice agent",
-            activity_description: [
-              activityDescription.trim(),
-              workflowStructure,
-              configurationSummary,
-            ]
-              .filter(Boolean)
-              .join("\n\n"),
+            activity_description: buildAgentOnboardingPrompt(
+              onboardingPromptInput,
+            ),
+            onboarding_context: buildAgentOnboardingContext(
+              onboardingPromptInput,
+            ),
             template_id:
               selectedTemplate === "custom" ? null : selectedTemplate,
             tool_uuids: [

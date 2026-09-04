@@ -104,11 +104,13 @@ describe("SubscriptionBillingPanel", () => {
   it("marks the paid plan as current after a subscription is active", async () => {
     mocks.fetchSubscriptionStatus.mockResolvedValue({
       ...trialStatus,
+      plan: "pro",
       status: "active",
       has_active_subscription: true,
       has_billing_account: true,
       trial_ends_at: null,
       current_period_end: "2026-10-04T00:00:00Z",
+      limits: plans[2].limits,
     });
 
     render(<SubscriptionBillingPanel />);
@@ -116,7 +118,8 @@ describe("SubscriptionBillingPanel", () => {
     const currentPlanButton = await screen.findByRole("button", {
       name: "Current plan",
     });
-    expect(currentPlanButton.closest(".card-weave")?.textContent).toContain("Starter");
+    expect(currentPlanButton.closest(".card-weave")?.textContent).toContain("Pro");
+    expect(currentPlanButton.className).toContain("dark:text-foreground");
     expect(screen.getByRole("button", { name: "Free plan" })).toBeTruthy();
   });
 });

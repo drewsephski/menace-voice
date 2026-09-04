@@ -39,6 +39,7 @@ export function SubscriptionPlanCards({
         const actionClassName = cn(
           "w-full",
           plan.id === "pro" && "bg-cta text-cta-foreground hover:bg-cta/90",
+          plan.id === "pro" && isCurrent && "dark:text-foreground",
         );
         const actionVariant = plan.id === "pro" && !isCurrent ? "default" : "outline";
 

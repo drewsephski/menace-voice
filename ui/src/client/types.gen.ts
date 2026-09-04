@@ -161,6 +161,44 @@ export type ActiveCallsResponse = {
 };
 
 /**
+ * AgentOnboardingContext
+ */
+export type AgentOnboardingContext = {
+    /**
+     * Agent Brief
+     */
+    agent_brief: string;
+    /**
+     * Tone
+     */
+    tone: string;
+    /**
+     * Language
+     */
+    language: string;
+    /**
+     * Voice Provider
+     */
+    voice_provider: string;
+    /**
+     * Voice Name
+     */
+    voice_name: string;
+    /**
+     * Behavior Notes
+     */
+    behavior_notes?: string | null;
+    /**
+     * Workflow Stages
+     */
+    workflow_stages: [
+        string,
+        string,
+        string
+    ];
+};
+
+/**
  * AmbientNoiseConfigurationDefaults
  */
 export type AmbientNoiseConfigurationDefaults = {
@@ -1772,6 +1810,10 @@ export type CreateWorkflowTemplateRequest = {
      * Optional credential applied to the post-call webhook.
      */
     post_call_webhook_credential_uuid?: string | null;
+    /**
+     * Structured answers from agent onboarding. When present, the backend enforces the fixed three-stage layout and hardens every generated prompt.
+     */
+    onboarding_context?: AgentOnboardingContext | null;
 };
 
 /**
