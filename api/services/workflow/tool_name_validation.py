@@ -11,6 +11,7 @@ from api.services.workflow.workflow_graph import transition_tool_name
 
 _DYNAMIC_SCHEMA_CATEGORIES = {
     ToolCategory.CALCULATOR.value,
+    ToolCategory.CURRENT_TIME.value,
     ToolCategory.MCP.value,
 }
 
@@ -21,8 +22,8 @@ async def validate_workflow_tool_name_collisions(
 ) -> list[WorkflowError]:
     """Find custom-tool names that collide within a node's LLM namespace.
 
-    Calculator and MCP tool schemas have their own runtime-provided function
-    names, so a saved tool's display name cannot be used to validate them here.
+    Calculator, current-time, and MCP tool schemas have their own runtime-provided
+    function names, so a saved tool's display name cannot be used to validate them here.
     """
     if not workflow_definition:
         return []

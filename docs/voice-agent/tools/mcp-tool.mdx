@@ -88,3 +88,26 @@ The tighter the node-level selection and prompt guidance, the more reliable MCP 
 <Note>
 If the remote MCP server is temporarily unavailable, Menace Voice degrades gracefully and the call can continue without those MCP tools rather than crashing the entire conversation.
 </Note>
+
+## Hosted presets
+
+Agent onboarding can attach these MCP servers from the Connections step.
+
+**No API key required:**
+
+- Context7 — current library documentation
+- DeepWiki — public GitHub repository documentation
+- Exa — live web search
+- Open-Meteo — weather (unofficial hosted MCP)
+
+**Bearer token required** (save a credential first; these are not auto-provisioned):
+
+- Cal.com — availability and bookings
+- Linear — search and create issues
+- GitHub — repositories and issues
+- Notion — internal docs that are not uploaded as files
+- Stripe — read-only billing lookups
+- HubSpot — contacts and notes
+- Zapier — a small filtered set of Zapier actions
+
+OAuth 2.1 for MCP is not supported yet. Use a Bearer token or API key credential.

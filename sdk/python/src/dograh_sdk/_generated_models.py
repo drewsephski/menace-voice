@@ -33,6 +33,21 @@ class CalculatorToolDefinition(BaseModel):
     """
 
 
+class CurrentTimeToolDefinition(BaseModel):
+    """
+    Tool definition for current time and timezone conversion tools.
+    """
+
+    schema_version: Annotated[int | None, Field(title='Schema Version')] = 1
+    """
+    Schema version.
+    """
+    type: Annotated[Literal['current_time'], Field(title='Type')]
+    """
+    Tool type.
+    """
+
+
 class CallDispositionCodes(BaseModel):
     disposition_codes: Annotated[list[str] | None, Field(title='Disposition Codes')] = (
         []
@@ -116,6 +131,7 @@ class Category(Enum):
     end_call = 'end_call'
     transfer_call = 'transfer_call'
     calculator = 'calculator'
+    current_time = 'current_time'
     native = 'native'
     integration = 'integration'
     mcp = 'mcp'
@@ -1077,6 +1093,7 @@ class CreateToolRequest(BaseModel):
         | EndCallToolDefinition
         | TransferCallToolDefinition
         | CalculatorToolDefinition
+        | CurrentTimeToolDefinition
         | McpToolDefinition,
         Field(discriminator='type', title='Definition'),
     ]

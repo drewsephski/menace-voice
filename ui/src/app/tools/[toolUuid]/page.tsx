@@ -406,7 +406,7 @@ export default function ToolDetailPage() {
         const normalizedTransferDestination = transferDestination.trim();
 
         // Validation based on tool type
-        if (tool.category === "calculator") {
+        if (tool.category === "calculator" || tool.category === "current_time") {
             // No validation needed for built-in tools
         } else if (tool.category === "transfer_call") {
             if (transferDestinationSource === "static" && !normalizedTransferDestination) {
@@ -535,14 +535,13 @@ export default function ToolDetailPage() {
 
             let requestBody: UpdateToolRequest;
 
-            if (tool.category === "calculator") {
-                // Built-in tool - only name/description, no config
+            if (tool.category === "calculator" || tool.category === "current_time") {
                 requestBody = {
                     name,
                     description: description || undefined,
                     definition: {
                         schema_version: 1,
-                        type: "calculator",
+                        type: tool.category,
                     },
                 };
             } else if (tool.category === "end_call") {
@@ -823,7 +822,7 @@ const data = await response.json();`;
 
     const isEndCallTool = tool.category === "end_call";
     const isTransferCallTool = tool.category === "transfer_call";
-    const isBuiltinTool = tool.category === "calculator";
+    const isBuiltinTool = tool.category === "calculator" || tool.category === "current_time";
     const isMcpTool = tool.category === "mcp";
     const isHttpApiTool = tool.category === "http_api";
     const hasUnsavedHttpChanges =
@@ -909,8 +908,16 @@ const data = await response.json();`;
                             onNameChange={setName}
                             description={description}
                             onDescriptionChange={setDescription}
-                            title="Calculator Configuration"
-                            subtitle="Built-in calculator for arithmetic operations. No additional configuration needed."
+                            title={
+                                tool.category === "current_time"
+                                    ? "Current Time Configuration"
+                                    : "Calculator Configuration"
+                            }
+                            subtitle={
+                                tool.category === "current_time"
+                                    ? "Built-in time and timezone conversion. No additional configuration needed."
+                                    : "Built-in calculator for arithmetic operations. No additional configuration needed."
+                            }
                         />
                     ) : isEndCallTool ? (
                         <EndCallToolConfig

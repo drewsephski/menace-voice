@@ -6,7 +6,7 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
 from api.enums import CallType
-from api.routes.workflow import router
+from api.routes.workflow import _attach_launch_integrations, router
 from api.services.auth.depends import get_user
 
 
@@ -19,6 +19,34 @@ def _make_test_app() -> FastAPI:
         selected_organization_id=11,
     )
     return app
+
+
+def test_attach_launch_integrations_fills_empty_webhook_and_start_call():
+    definition = {
+        "nodes": [
+            {"id": "start", "type": "startCall", "data": {"prompt": "Hi"}},
+            {"id": "hook", "type": "webhook", "data": {"endpoint_url": ""}},
+        ]
+    }
+
+    updated = _attach_launch_integrations(
+        definition,
+        call_type="outbound",
+        pre_call_fetch_url="https://crm.example.com/lookup",
+        pre_call_fetch_credential_uuid="cred-1",
+        post_call_webhook_url="https://hooks.example.com/calls",
+        post_call_webhook_credential_uuid="cred-2",
+    )
+
+    assert len(updated["nodes"]) == 2
+    start_data = updated["nodes"][0]["data"]
+    webhook_data = updated["nodes"][1]["data"]
+    assert start_data["pre_call_fetch_url"] == "https://crm.example.com/lookup"
+    assert start_data["pre_call_fetch_mode"] == "outbound"
+    assert start_data["pre_call_fetch_credential_uuid"] == "cred-1"
+    assert webhook_data["endpoint_url"] == "https://hooks.example.com/calls"
+    assert webhook_data["credential_uuid"] == "cred-2"
+    assert webhook_data["payload_template"]["call_id"] == "{{workflow_run_id}}"
 
 
 def test_create_workflow_rejects_invalid_trigger_path_before_db_write():
@@ -231,6 +259,10 @@ def test_create_workflow_from_template_attaches_selected_resources_atomically():
     with (
         patch("api.routes.workflow.db_client") as mock_db,
         patch(
+            "api.routes.workflow.ensure_template_tools",
+            AsyncMock(return_value=["builtin-1"]),
+        ),
+        patch(
             "api.routes.workflow.mps_service_key_client.call_workflow_api",
             AsyncMock(return_value={"workflow_definition": generated_definition}),
         ) as generate_workflow,
@@ -245,7 +277,13 @@ def test_create_workflow_from_template_attaches_selected_resources_atomically():
                         "type": "mcp",
                         "config": {"url": "https://mcp.exa.ai/mcp"},
                     },
-                )
+                ),
+                SimpleNamespace(
+                    tool_uuid="builtin-1",
+                    category="transfer_call",
+                    name="Transfer Call",
+                    definition={"type": "transfer_call", "config": {}},
+                ),
             ]
         )
         mock_db.get_documents_by_uuids = AsyncMock(
@@ -260,6 +298,7 @@ def test_create_workflow_from_template_attaches_selected_resources_atomically():
                 "use_case": "Receptionist",
                 "activity_description": "Answer calls",
                 "name": "Maya",
+                "template_id": "receptionist",
                 "tool_uuids": ["mcp-1", "mcp-1"],
                 "document_uuids": ["doc-1"],
             },
@@ -270,7 +309,7 @@ def test_create_workflow_from_template_attaches_selected_resources_atomically():
     create_kwargs = mock_db.create_workflow.await_args.kwargs
     assert create_kwargs["name"] == "Maya"
     assert all(
-        node["data"].get("tool_uuids") == ["mcp-1"]
+        node["data"].get("tool_uuids") == ["mcp-1", "builtin-1"]
         and node["data"].get("document_uuids") == ["doc-1"]
         for node in create_kwargs["workflow_definition"]["nodes"]
         if node["type"] in {"startCall", "agentNode"}
@@ -281,6 +320,130 @@ def test_create_workflow_from_template_attaches_selected_resources_atomically():
         if node["type"] in {"startCall", "agentNode"}
     )
     assert create_kwargs["workflow_definition"]["nodes"][2]["data"] == {}
+
+
+def test_create_workflow_from_template_attaches_launch_integrations():
+    app = _make_test_app()
+    client = TestClient(app)
+    created_at = datetime.now(UTC)
+    generated_definition = {
+        "nodes": [
+            {
+                "id": "start",
+                "type": "startCall",
+                "position": {"x": 0, "y": 0},
+                "data": {"prompt": "Greet the caller."},
+            },
+            {
+                "id": "agent",
+                "type": "agentNode",
+                "data": {"name": "Agent", "prompt": "Help the caller."},
+            },
+            {"id": "end", "type": "endCall", "data": {}},
+        ],
+        "edges": [],
+    }
+    workflow = SimpleNamespace(
+        id=42,
+        name="Maya",
+        status="draft",
+        created_at=created_at,
+        current_definition_id=7,
+        template_context_variables=None,
+        call_disposition_codes=None,
+        workflow_configurations=None,
+    )
+
+    with (
+        patch("api.routes.workflow.db_client") as mock_db,
+        patch(
+            "api.routes.workflow.ensure_template_tools",
+            AsyncMock(return_value=[]),
+        ),
+        patch(
+            "api.routes.workflow.mps_service_key_client.call_workflow_api",
+            AsyncMock(return_value={"workflow_definition": generated_definition}),
+        ),
+    ):
+        mock_db.get_tools_by_uuids = AsyncMock(return_value=[])
+        mock_db.get_documents_by_uuids = AsyncMock(return_value=[])
+        mock_db.create_workflow = AsyncMock(return_value=workflow)
+
+        response = client.post(
+            "/workflow/create/template",
+            json={
+                "call_type": "inbound",
+                "use_case": "Receptionist",
+                "activity_description": "Answer calls",
+                "name": "Maya",
+                "pre_call_fetch_url": "https://crm.example.com/lookup",
+                "post_call_webhook_url": "https://hooks.example.com/calls",
+            },
+        )
+
+    assert response.status_code == 200
+    nodes = mock_db.create_workflow.await_args.kwargs["workflow_definition"]["nodes"]
+    start_node = next(node for node in nodes if node["type"] == "startCall")
+    webhook_node = next(node for node in nodes if node["type"] == "webhook")
+    assert start_node["data"]["pre_call_fetch_url"] == "https://crm.example.com/lookup"
+    assert start_node["data"]["pre_call_fetch_mode"] == "inbound"
+    assert start_node["data"]["pre_call_fetch_credential_uuid"] is None
+    assert webhook_node["data"]["endpoint_url"] == "https://hooks.example.com/calls"
+    assert webhook_node["data"]["http_method"] == "POST"
+    assert webhook_node["data"]["enabled"] is True
+    assert "call_disposition" in webhook_node["data"]["payload_template"]
+
+
+def test_create_workflow_from_template_rejects_invalid_launch_url():
+    app = _make_test_app()
+    client = TestClient(app)
+
+    with patch(
+        "api.routes.workflow.mps_service_key_client.call_workflow_api",
+        AsyncMock(),
+    ) as generate_workflow:
+        response = client.post(
+            "/workflow/create/template",
+            json={
+                "call_type": "inbound",
+                "use_case": "Receptionist",
+                "activity_description": "Answer calls",
+                "pre_call_fetch_url": "crm.example.com/lookup",
+            },
+        )
+
+    assert response.status_code == 422
+    assert "http://" in response.json()["detail"]
+    generate_workflow.assert_not_awaited()
+
+
+def test_create_workflow_from_template_rejects_unknown_launch_credential():
+    app = _make_test_app()
+    client = TestClient(app)
+
+    with (
+        patch("api.routes.workflow.db_client") as mock_db,
+        patch(
+            "api.routes.workflow.mps_service_key_client.call_workflow_api",
+            AsyncMock(),
+        ) as generate_workflow,
+    ):
+        mock_db.get_credential_by_uuid = AsyncMock(return_value=None)
+
+        response = client.post(
+            "/workflow/create/template",
+            json={
+                "call_type": "inbound",
+                "use_case": "Receptionist",
+                "activity_description": "Answer calls",
+                "post_call_webhook_url": "https://hooks.example.com/calls",
+                "post_call_webhook_credential_uuid": "missing-cred",
+            },
+        )
+
+    assert response.status_code == 404
+    assert "missing-cred" in response.json()["detail"]
+    generate_workflow.assert_not_awaited()
 
 
 def test_create_workflow_from_template_rejects_unavailable_selected_resource():

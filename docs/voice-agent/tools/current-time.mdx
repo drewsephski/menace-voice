@@ -1,0 +1,66 @@
+---
+title: "Current Time"
+description: "Let your AI agent look up the current time in a timezone or convert a time between timezones before confirming appointments or hours."
+---
+
+The Current Time tool gives the agent two functions: `get_current_time` and `convert_time`. Use it whenever the agent should not guess the date, local time, or a timezone conversion.
+
+This is separate from prompt variables such as `{{current_time}}`. Prompt variables stamp time into the prompt at the start of a turn. The Current Time tool lets the LLM fetch or convert time **during** the conversation after the caller names a timezone or a clock time.
+
+## How it works
+
+1. You attach a Current Time tool to a workflow node (or it is attached automatically from an onboarding template).
+2. The LLM sees `get_current_time` and `convert_time` as callable functions on that node.
+3. The agent asks for a missing IANA timezone when the caller has not given one.
+4. The tool returns an ISO timestamp, the timezone name, and whether daylight saving time is in effect.
+
+## Functions
+
+### `get_current_time`
+
+Returns the current date and time in an IANA timezone.
+
+```
+get_current_time(timezone="America/New_York")
+```
+
+Typical uses:
+- Confirm office hours before promising a callback
+- Answer "what time is it there?"
+- Decide whether a requested appointment is still in the future
+
+### `convert_time`
+
+Converts a clock time from one timezone to another. The `time` argument is a 24-hour `HH:MM` value.
+
+```
+convert_time(
+  source_timezone="America/Los_Angeles",
+  time="14:30",
+  target_timezone="America/New_York"
+)
+```
+
+Typical uses:
+- Read back a booking in both the caller's timezone and the business timezone
+- Avoid confirming a slot until the conversion is checked
+
+## Agent usage
+
+Tell the node prompt to use the tool instead of guessing:
+
+```
+Before confirming any appointment, hours, or deadline, call get_current_time
+with the caller's IANA timezone. If they give a time in another zone, call
+convert_time and read both times back before you confirm.
+```
+
+## Templates
+
+Onboarding templates that schedule, route, or qualify leads attach Current Time automatically:
+
+- Receptionist
+- Lead qualifier
+- Support desk
+- Appointment coordinator
+- Service dispatcher

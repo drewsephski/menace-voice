@@ -3,32 +3,46 @@
 import {
   ArrowLeft,
   ArrowRight,
-  BookOpen,
-  CalendarClock,
   Check,
   CheckCircle2,
-  CloudSun,
+  ChevronDown,
   FileText,
-  GitBranch,
-  Headphones,
+  Globe,
+  Link2,
   Loader2,
-  MessageCircle,
   Plus,
   Puzzle,
-  Search,
-  SlidersHorizontal,
-  Star,
-  Target,
   UploadCloud,
-  Wrench,
   X,
 } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { type KeyboardEvent, type MouseEvent, type ReactNode, useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
+import {
+  createHttpTemplateDefinition,
+  getDiscoveredToolCount,
+  getHttpUsageInstructions,
+  getMcpPresetShortName,
+  getMcpUrl,
+  getMcpUsageInstructions,
+  HTTP_TEMPLATE_BY_ID,
+  HTTP_TEMPLATES,
+  type HttpTemplateId,
+  MCP_PRESET_BY_ID,
+  MCP_PRESETS,
+  type McpPreset,
+  type McpPresetId,
+  normalizeMcpUrl,
+} from "@/app/agent-onboarding/connection-catalog";
 import DocumentUpload from "@/app/files/DocumentUpload";
-import { createMcpDefinition, MCP_URL_PATTERN } from "@/app/tools/config";
+import {
+  createMcpDefinition,
+  getCategoryConfig,
+  MCP_URL_PATTERN,
+  type ToolCategory,
+} from "@/app/tools/config";
 import {
   createToolApiV1ToolsPost,
   createWorkflowFromTemplateApiV1WorkflowCreateTemplatePost,
@@ -54,6 +68,11 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -61,11 +80,16 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { detailFromError } from "@/lib/apiError";
 import { useAuth } from "@/lib/auth";
+import { cn } from "@/lib/utils";
 
 type StepIndex = 0 | 1 | 2 | 3 | 4;
-type McpPresetId = "exa" | "open-meteo" | "context7" | "deepwiki";
 type TemplateId =
   | "receptionist"
   | "lead-qualifier"
@@ -76,6 +100,11 @@ type TemplateId =
   | "feedback-interviewer"
   | "custom";
 
+type BuiltinToolCategory = Extract<
+  ToolCategory,
+  "end_call" | "transfer_call" | "calculator" | "current_time"
+>;
+
 type TemplateOption = {
   id: TemplateId;
   label: string;
@@ -83,8 +112,10 @@ type TemplateOption = {
   useCase: string;
   activityDescription: string;
   workflowStages?: readonly [string, string, string];
-  icon: typeof Headphones;
+  avatarUrl: string;
+  recommendedBuiltinToolCategories?: BuiltinToolCategory[];
   recommendedMcpPresetIds?: McpPresetId[];
+  recommendedHttpTemplateIds?: HttpTemplateId[];
 };
 
 type McpServerSummary = {
@@ -96,14 +127,12 @@ type McpServerSummary = {
   discoveryStatus: "ready" | "unavailable";
 };
 
-type McpPreset = {
-  id: McpPresetId;
+type HttpToolSummary = {
+  toolUuid: string;
   name: string;
   description: string;
   url: string;
-  icon: typeof Search;
-  logoUrl?: string;
-  iconClassName?: string;
+  templateId?: HttpTemplateId;
 };
 
 const TEMPLATE_OPTIONS: TemplateOption[] = [
@@ -113,13 +142,16 @@ const TEMPLATE_OPTIONS: TemplateOption[] = [
     description: "Answer questions, route callers, and capture messages.",
     useCase: "Front desk receptionist",
     activityDescription:
-      "Greet callers, answer common questions, route them to the right person, and capture messages when nobody is available.",
+      "Greet callers warmly, answer common front-desk questions, and route people to the right teammate or department. When someone is unavailable, collect a complete message with name, callback number, and reason for the call. Close each conversation by confirming next steps and whether the caller needs anything else.",
     workflowStages: [
       "Welcome the caller, identify why they called, and answer front-desk questions from available knowledge.",
       "Resolve the request, route to the right person, or collect a complete message when a transfer is unavailable.",
       "Read back names, numbers, and next steps, then confirm the caller has nothing else they need before closing.",
     ],
-    icon: Headphones,
+    avatarUrl: "/avatars/receptionist.png",
+    recommendedBuiltinToolCategories: ["end_call", "transfer_call", "current_time"],
+    recommendedMcpPresetIds: ["calcom", "notion"],
+    recommendedHttpTemplateIds: ["lookup-record", "notify-webhook"],
   },
   {
     id: "lead-qualifier",
@@ -127,13 +159,16 @@ const TEMPLATE_OPTIONS: TemplateOption[] = [
     description: "Ask the right questions and pass along qualified leads.",
     useCase: "Lead qualification",
     activityDescription:
-      "Qualify new leads by learning about their needs, timeline, and budget, then summarize the conversation for the sales team.",
+      "Qualify inbound leads by understanding their goals, timeline, budget, and current situation without sounding like an interrogation. Ask follow-up questions that clarify fit, urgency, and decision process, then note any blockers or buying signals. Summarize the opportunity clearly for the sales team and explain the approved next step to the prospect.",
     workflowStages: [
       "Understand the prospect's goal, current situation, and reason for considering a change.",
       "Qualify fit by gathering the agreed criteria without sounding like an interrogation or inventing product claims.",
       "Summarize the opportunity and either arrange the approved next step or explain the human follow-up clearly.",
     ],
-    icon: Target,
+    avatarUrl: "/avatars/lead-qualifier.png",
+    recommendedBuiltinToolCategories: ["end_call", "transfer_call", "current_time"],
+    recommendedMcpPresetIds: ["hubspot", "exa"],
+    recommendedHttpTemplateIds: ["create-lead"],
   },
   {
     id: "support-desk",
@@ -141,13 +176,16 @@ const TEMPLATE_OPTIONS: TemplateOption[] = [
     description: "Resolve common issues with a calm, helpful voice.",
     useCase: "Customer support",
     activityDescription:
-      "Help customers troubleshoot common issues, find answers in the knowledge base, and escalate requests that need a human.",
+      "Help customers troubleshoot common product issues, search the knowledge base for accurate answers, and guide them through one safe step at a time. Confirm symptoms, attempted fixes, and impact before escalating anything that needs a human. End each call with a concise recap of what was tried, what was resolved, and what happens next.",
     workflowStages: [
       "Identify the customer, the affected product or service, the symptoms, and the outcome they need.",
       "Guide one safe troubleshooting step at a time using available knowledge, checking the result before continuing.",
       "Confirm the resolution or create a complete escalation summary with attempted steps, impact, and the promised next action.",
     ],
-    icon: MessageCircle,
+    avatarUrl: "/avatars/support-desk.png",
+    recommendedBuiltinToolCategories: ["end_call", "transfer_call", "current_time"],
+    recommendedMcpPresetIds: ["exa", "linear", "stripe"],
+    recommendedHttpTemplateIds: ["lookup-record"],
   },
   {
     id: "technical-docs",
@@ -156,14 +194,15 @@ const TEMPLATE_OPTIONS: TemplateOption[] = [
       "Explain modern libraries with current, version-aware references.",
     useCase: "Technical documentation assistant",
     activityDescription:
-      "Help developers understand modern libraries and frameworks, explain APIs with concise examples, clarify version differences, and use connected documentation sources before relying on memory.",
+      "Help developers understand modern libraries and frameworks, explain APIs with concise examples, and clarify version differences when they matter. Use connected documentation sources to stay current instead of relying on memory alone. Summarize the recommended implementation, call out any assumptions, and label uncertainty when docs are incomplete.",
     workflowStages: [
       "Clarify the library, version, environment, and specific implementation goal or error.",
       "Retrieve current documentation with connected sources and explain the relevant API with a focused example.",
       "Check the answer against the caller's constraints, summarize the implementation, and label any remaining uncertainty.",
     ],
-    icon: BookOpen,
-    recommendedMcpPresetIds: ["context7", "deepwiki"],
+    avatarUrl: "/avatars/technical-docs.png",
+    recommendedBuiltinToolCategories: ["end_call"],
+    recommendedMcpPresetIds: ["context7", "exa", "deepwiki", "github"],
   },
   {
     id: "appointment-coordinator",
@@ -172,13 +211,21 @@ const TEMPLATE_OPTIONS: TemplateOption[] = [
       "Schedule, change, and confirm appointments without overpromising.",
     useCase: "Appointment scheduling and coordination",
     activityDescription:
-      "Help callers schedule, reschedule, or cancel appointments. Learn the service they need, collect the required contact details, confirm their timezone and preferred times, and answer scheduling-policy questions from the available knowledge. Use connected scheduling tools to check availability and make changes only after the caller confirms the details. Never promise a time that a tool or staff member has not confirmed. If scheduling is unavailable or the request needs an exception, capture a precise callback request and explain the next step.",
+      "Help callers book, reschedule, or cancel appointments while following scheduling policies from your knowledge base. Collect the service, contact details, timezone, and preferred times, then check connected tools before confirming any change. Never promise a slot that has not been verified, and capture a precise callback request when scheduling cannot be completed live.",
     workflowStages: [
       "Identify whether the caller is booking, changing, or canceling, then collect the service, contact details, timezone, and constraints.",
       "Check policies and connected scheduling tools, offer only confirmed options, and obtain approval before making a change.",
       "Read back the appointment details and confirmation, or capture a precise staff callback request when the action cannot be completed.",
     ],
-    icon: CalendarClock,
+    avatarUrl: "/avatars/appointment-coordinator.png",
+    recommendedBuiltinToolCategories: [
+      "end_call",
+      "transfer_call",
+      "calculator",
+      "current_time",
+    ],
+    recommendedMcpPresetIds: ["calcom"],
+    recommendedHttpTemplateIds: ["notify-webhook"],
   },
   {
     id: "service-dispatcher",
@@ -187,13 +234,20 @@ const TEMPLATE_OPTIONS: TemplateOption[] = [
       "Triage service calls and hand technicians a complete job brief.",
     useCase: "Field service intake and dispatch",
     activityDescription:
-      "Handle incoming field-service requests from initial triage through dispatch or staff handoff. Collect the caller's name, callback number, service address, equipment or service involved, symptoms, timing, and access constraints. Distinguish routine requests from immediate safety hazards; when someone may be in danger, direct them to local emergency services or the appropriate utility instead of troubleshooting. Use connected tools to check coverage, availability, and create a job only after the caller confirms the details. End with a concise recap, reference number when available, expected next step, and any technician access notes.",
+      "Triage incoming field-service requests, gather address, equipment, symptoms, timing, and access constraints, and prepare a complete dispatch brief. Treat possible safety hazards as urgent and direct callers to emergency services when someone may be in danger. Close with a concise recap, reference number when available, and the expected technician response.",
     workflowStages: [
       "Screen for immediate danger and urgency before gathering routine service details or attempting troubleshooting.",
       "Build a complete job brief, check coverage and availability, and confirm the address, access, and service window with the caller.",
       "Dispatch or escalate through connected tools, then provide the reference, expected response, safety reminder, and concise recap.",
     ],
-    icon: Wrench,
+    avatarUrl: "/avatars/service-dispatcher.png",
+    recommendedBuiltinToolCategories: [
+      "end_call",
+      "transfer_call",
+      "current_time",
+    ],
+    recommendedMcpPresetIds: ["open-meteo", "calcom"],
+    recommendedHttpTemplateIds: ["lookup-record", "notify-webhook"],
   },
   {
     id: "feedback-interviewer",
@@ -202,13 +256,15 @@ const TEMPLATE_OPTIONS: TemplateOption[] = [
       "Run respectful interviews that turn conversations into clear insights.",
     useCase: "Customer feedback and experience interviews",
     activityDescription:
-      "Conduct permission-based customer feedback interviews after a service or purchase. Introduce the purpose, confirm the person has time to participate, and ask one clear question at a time. Capture an overall rating, the reason behind it, what worked, what could improve, and whether the customer wants follow-up. Use neutral follow-up questions without defending the company or steering the answer. Let people skip any question, end the interview, or request no further calls immediately. Summarize their feedback accurately, distinguish direct comments from your interpretation, and flag unresolved problems or recovery requests for a human.",
+      "Conduct brief, permission-based feedback interviews after a service or purchase, explaining the purpose and confirming the caller has time to participate. Ask one neutral question at a time, capture ratings, strengths, problems, and follow-up preferences without defending the company. Summarize feedback accurately, separate quotes from interpretation, and flag issues that need human follow-up.",
     workflowStages: [
       "State the purpose, identify the relevant experience, obtain permission to continue, and honor any opt-out immediately.",
       "Run the interview one neutral question at a time, adapting follow-ups to clarify ratings, strengths, and problems.",
       "Reflect back the key feedback, confirm whether follow-up is wanted, and flag unresolved issues without promising an outcome.",
     ],
-    icon: Star,
+    avatarUrl: "/avatars/feedback-interviewer.png",
+    recommendedBuiltinToolCategories: ["end_call"],
+    recommendedHttpTemplateIds: ["notify-webhook"],
   },
   {
     id: "custom",
@@ -216,7 +272,8 @@ const TEMPLATE_OPTIONS: TemplateOption[] = [
     description: "Start with a blank canvas and describe the job yourself.",
     useCase: "Custom voice agent",
     activityDescription: "",
-    icon: SlidersHorizontal,
+    avatarUrl: "/avatars/custom.png",
+    recommendedBuiltinToolCategories: ["end_call"],
   },
 ];
 
@@ -246,95 +303,402 @@ const TONES = [
 ] as const;
 const LANGUAGES = ["English (US)", "English (UK)", "Spanish"] as const;
 
-const MCP_PRESETS: McpPreset[] = [
-  {
-    id: "context7",
-    name: "Context7 library docs",
-    description:
-      "Look up current, version-specific documentation and examples for modern libraries.",
-    url: "https://mcp.context7.com/mcp",
-    icon: BookOpen,
-    logoUrl: "/integrations/context7.png",
-  },
-  {
-    id: "deepwiki",
-    name: "DeepWiki repositories",
-    description:
-      "Explain public GitHub repositories and their architecture from generated documentation.",
-    url: "https://mcp.deepwiki.com/mcp",
-    icon: GitBranch,
-    logoUrl: "/integrations/deepwiki.png",
-  },
-  {
-    id: "exa",
-    name: "Exa web search",
-    description: "Search the live web and fetch pages during a conversation.",
-    url: "https://mcp.exa.ai/mcp",
-    icon: Search,
-    logoUrl: "https://exa.ai/search/images/logo.png",
-  },
-  {
-    id: "open-meteo",
-    name: "Open-Meteo weather",
-    description: "Get current conditions and forecasts without an API key.",
-    url: "https://open-meteo.caseyjhand.com/mcp",
-    icon: CloudSun,
-    iconClassName: "h-5 w-5 text-amber-400",
-  },
-];
-
-function getMcpUrl(tool: ToolResponse): string | null {
-  const definition = tool.definition;
-  if (!definition || typeof definition !== "object") return null;
-  const config = definition.config;
-  if (!config || typeof config !== "object" || !("url" in config)) return null;
-  return typeof config.url === "string"
-    ? (normalizeMcpUrl(config.url) ?? config.url)
-    : null;
+function TemplateToolTooltip({
+  label,
+  description,
+  children,
+}: {
+  label: string;
+  description: string;
+  children: ReactNode;
+}) {
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <span
+          className="inline-flex"
+          tabIndex={0}
+          onClick={(event) => event.stopPropagation()}
+          onKeyDown={(event) => event.stopPropagation()}
+        >
+          {children}
+        </span>
+      </TooltipTrigger>
+      <TooltipContent side="top" sideOffset={6} className="max-w-56">
+        <p className="font-medium">{label}</p>
+        <p className="mt-0.5 text-primary-foreground/80">{description}</p>
+      </TooltipContent>
+    </Tooltip>
+  );
 }
 
-function getDiscoveredToolCount(tool: ToolResponse): number {
-  const definition = tool.definition;
-  if (!definition || typeof definition !== "object") return 0;
-  const config = definition.config;
-  if (!config || typeof config !== "object" || !("discovered_tools" in config))
-    return 0;
-  const discoveredTools = config.discovered_tools;
-  return Array.isArray(discoveredTools) ? discoveredTools.length : 0;
-}
+function McpPresetLogoImage({
+  preset,
+  className,
+  size = "md",
+}: {
+  preset: McpPreset;
+  className?: string;
+  size?: "sm" | "md";
+}) {
+  const Icon = preset.icon;
 
-function normalizeMcpUrl(value: string): string | null {
-  try {
-    const url = new URL(value.trim());
-    if (url.protocol !== "http:" && url.protocol !== "https:") return null;
-    url.hash = "";
-    url.pathname = url.pathname.replace(/\/+$/, "") || "/";
-    return url.toString();
-  } catch {
-    return null;
+  if (!preset.logoUrl) {
+    return (
+      <Icon
+        className={cn(
+          preset.iconClassName ??
+            (size === "sm"
+              ? "h-3.5 w-3.5 text-muted-foreground"
+              : "h-5 w-5"),
+          className,
+        )}
+        aria-hidden
+      />
+    );
   }
+
+  return (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src={preset.logoUrl}
+      alt=""
+      aria-hidden
+      className={cn(
+        "object-contain",
+        size === "sm" ? "h-4 w-4" : "h-8 w-8",
+        className,
+      )}
+    />
+  );
 }
 
-function getMcpUsageInstructions(servers: McpServerSummary[]): string {
-  if (servers.length === 0) return "No external MCP servers are connected.";
+function TemplateMcpLogo({ preset }: { preset: McpPreset }) {
+  const Icon = preset.icon;
+  const useWhiteTile = Boolean(preset.logoUrl && preset.logoOnWhite !== false);
 
-  const instructions = servers.map((server) => {
-    if (server.url === "https://mcp.context7.com/mcp") {
-      return `Use ${server.name} first for questions about libraries, frameworks, SDKs, or APIs. Ask for the package and version when it matters, prefer the returned documentation and examples over memory, and state the version context when answering.`;
-    }
-    if (server.url === "https://mcp.deepwiki.com/mcp") {
-      return `Use ${server.name} for questions about a public repository's architecture, setup, or implementation. Confirm the repository before searching, distinguish generated repository documentation from official maintainer documentation, and do not claim private-repository access.`;
-    }
-    if (server.url === "https://mcp.exa.ai/mcp") {
-      return `Use ${server.name} when the caller needs current information from the public web or asks you to look up a webpage. Prefer it over guessing, summarize the result clearly, and mention when information came from web search.`;
-    }
-    if (server.url === "https://open-meteo.caseyjhand.com/mcp") {
-      return `Use ${server.name} for current conditions, forecasts, or weather-related planning. Ask for the caller's location if it is missing, and distinguish a forecast from a current observation.`;
-    }
-    return `Use ${server.name} only when its connected tools are relevant to the caller's request. Ask for missing details before taking an action and never claim an action succeeded unless the tool confirms it.`;
-  });
+  return (
+    <TemplateToolTooltip label={preset.name} description={preset.description}>
+      <div
+        className={cn(
+          "flex h-7 w-7 shrink-0 items-center justify-center rounded-md border border-border/50 p-0.5 shadow-sm transition-transform duration-300 ease-out group-hover/card:scale-105",
+          useWhiteTile ? "bg-white/95" : "bg-background/80",
+        )}
+      >
+        {preset.logoUrl ? (
+          <McpPresetLogoImage preset={preset} size="sm" className="h-[1.125rem] w-[1.125rem]" />
+        ) : (
+          <Icon
+            className={preset.iconClassName ?? "h-4 w-4 text-muted-foreground"}
+            aria-hidden
+          />
+        )}
+      </div>
+    </TemplateToolTooltip>
+  );
+}
 
-  return `MCP tool guidance:\n${instructions.map((instruction) => `- ${instruction}`).join("\n")}`;
+function TemplateHttpLogo({ templateId }: { templateId: HttpTemplateId }) {
+  const template = HTTP_TEMPLATE_BY_ID[templateId];
+  if (!template) return null;
+
+  return (
+    <TemplateToolTooltip label={template.name} description={template.description}>
+      <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md border border-border/50 bg-background/80 shadow-sm text-sky-500 transition-transform duration-300 ease-out group-hover/card:scale-105">
+        <Globe className="h-4 w-4" aria-hidden />
+      </div>
+    </TemplateToolTooltip>
+  );
+}
+
+function TemplateBuiltinLogo({
+  category,
+}: {
+  category: BuiltinToolCategory;
+}) {
+  const config = getCategoryConfig(category);
+  if (!config) return null;
+  const Icon = config.icon;
+
+  return (
+    <TemplateToolTooltip label={config.label} description={config.description}>
+      <div
+        className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md border border-border/50 bg-background/80 shadow-sm transition-transform duration-300 ease-out group-hover/card:scale-105"
+        style={{ color: config.iconColor }}
+      >
+        <Icon className="h-4 w-4" aria-hidden />
+      </div>
+    </TemplateToolTooltip>
+  );
+}
+
+function getBuiltinToolShortName(category: BuiltinToolCategory): string {
+  return getCategoryConfig(category)?.label ?? category;
+}
+
+function getTemplateToolCount(template: TemplateOption): number {
+  return (
+    (template.recommendedBuiltinToolCategories?.length ?? 0) +
+    (template.recommendedMcpPresetIds?.length ?? 0) +
+    (template.recommendedHttpTemplateIds?.length ?? 0)
+  );
+}
+
+function TemplateOptionCard({
+  template,
+  isSelected,
+  onSelect,
+}: {
+  template: TemplateOption;
+  isSelected: boolean;
+  onSelect: () => void;
+}) {
+  const [showTools, setShowTools] = useState(false);
+  const toolCount = getTemplateToolCount(template);
+
+  const handleCardKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      onSelect();
+    }
+  };
+
+  const handleToggleTools = (event: MouseEvent<HTMLButtonElement>) => {
+    event.stopPropagation();
+  };
+
+  return (
+    <div
+      role="button"
+      tabIndex={0}
+      aria-pressed={isSelected}
+      title={template.label}
+      onClick={onSelect}
+      onKeyDown={handleCardKeyDown}
+      className={cn(
+        "group/card relative z-0 flex h-full min-h-[10.5rem] cursor-pointer flex-col overflow-visible rounded-xl border p-3.5 text-left transition-[border-color,background-color,box-shadow] duration-300 ease-out hover:z-10 focus-visible:z-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cta/70",
+        isSelected
+          ? "border-cta bg-cta/10 shadow-[0_0_0_1px_rgba(240,68,56,0.25)]"
+          : "border-border/70 bg-background/25 hover:border-foreground/30 hover:bg-background/45",
+        isSelected && !showTools && "z-10",
+        showTools && "z-20",
+      )}
+    >
+      <div className="flex items-start justify-between gap-2">
+        <p className="min-w-0 truncate text-sm font-medium leading-tight">
+          {template.label}
+        </p>
+        {isSelected && <Check className="h-3.5 w-3.5 shrink-0 text-cta" />}
+      </div>
+      <p className="mt-2 min-h-[3.75rem] flex-1 text-xs leading-5 text-muted-foreground line-clamp-3">
+        {template.description}
+      </p>
+
+      <div className="relative mt-3 flex h-20 shrink-0 items-end justify-between gap-2">
+        {toolCount > 0 ? (
+          <Popover open={showTools} onOpenChange={setShowTools}>
+            <PopoverTrigger asChild>
+              <button
+                type="button"
+                onClick={handleToggleTools}
+                aria-expanded={showTools}
+                aria-controls={`template-tools-${template.id}`}
+                className="relative z-20 inline-flex max-w-[calc(100%-5.5rem)] items-center gap-1 rounded-md px-0.5 py-1 text-[11px] font-medium text-muted-foreground transition-colors hover:bg-background/60 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cta/70"
+              >
+                Included tools
+                <span className="tabular-nums text-muted-foreground/70">
+                  ({toolCount})
+                </span>
+                <ChevronDown
+                  className={cn(
+                    "h-3 w-3 shrink-0 transition-transform duration-300 ease-out",
+                    showTools && "rotate-180",
+                  )}
+                  aria-hidden
+                />
+              </button>
+            </PopoverTrigger>
+            <PopoverContent
+              id={`template-tools-${template.id}`}
+              side="top"
+              align="start"
+              sideOffset={8}
+              collisionPadding={12}
+              className="w-[9.25rem] max-w-[9.25rem] p-2"
+              onClick={(event) => event.stopPropagation()}
+              onOpenAutoFocus={(event) => event.preventDefault()}
+            >
+              <div
+                className="flex flex-wrap gap-1.5"
+                aria-label="Included tools"
+              >
+                {template.recommendedBuiltinToolCategories?.map((category) => (
+                  <TemplateBuiltinLogo key={category} category={category} />
+                ))}
+                {template.recommendedMcpPresetIds?.map((presetId) => {
+                  const preset = MCP_PRESET_BY_ID[presetId];
+                  if (!preset) return null;
+                  return (
+                    <TemplateMcpLogo key={presetId} preset={preset} />
+                  );
+                })}
+                {template.recommendedHttpTemplateIds?.map((templateId) => (
+                  <TemplateHttpLogo
+                    key={templateId}
+                    templateId={templateId}
+                  />
+                ))}
+              </div>
+            </PopoverContent>
+          </Popover>
+        ) : (
+          <span aria-hidden />
+        )}
+
+        <div className="relative h-20 w-20 shrink-0 overflow-visible">
+          <Image
+            src={template.avatarUrl}
+            alt=""
+            aria-hidden
+            width={128}
+            height={128}
+            className={cn(
+              "pointer-events-none absolute bottom-0 right-0 h-20 w-20 origin-bottom-right object-contain will-change-[transform,opacity] motion-reduce:transition-none motion-reduce:will-change-auto",
+              "transition-[transform,opacity] duration-700 ease-[cubic-bezier(0.4,0,0.2,1)]",
+              isSelected
+                ? "scale-100 opacity-75"
+                : "scale-[0.88] opacity-[0.14] group-hover/card:scale-[1.28] group-hover/card:opacity-[0.82] group-focus-visible/card:scale-[1.28] group-focus-visible/card:opacity-[0.82]",
+            )}
+          />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function getTemplateToolSummary(template: TemplateOption): string {
+  const builtinNames =
+    template.recommendedBuiltinToolCategories?.map(getBuiltinToolShortName) ??
+    [];
+  const mcpNames =
+    template.recommendedMcpPresetIds?.map(
+      (presetId) =>
+        MCP_PRESET_BY_ID[presetId] &&
+        getMcpPresetShortName(MCP_PRESET_BY_ID[presetId]),
+    ) ?? [];
+  const httpNames =
+    template.recommendedHttpTemplateIds?.map(
+      (templateId) => HTTP_TEMPLATE_BY_ID[templateId]?.name,
+    ) ?? [];
+
+  return [...builtinNames, ...mcpNames.filter(Boolean), ...httpNames.filter(Boolean)].join(
+    ", ",
+  );
+}
+
+function getRecommendedMcpPresets(
+  template: TemplateOption | undefined,
+  requiresAuth: boolean,
+): McpPreset[] {
+  return (template?.recommendedMcpPresetIds ?? [])
+    .map((presetId) => MCP_PRESET_BY_ID[presetId])
+    .filter(
+      (preset): preset is McpPreset =>
+        Boolean(preset) && Boolean(preset.requiresAuth) === requiresAuth,
+    );
+}
+
+function joinNames(names: string[]): string {
+  if (names.length <= 1) return names[0] ?? "";
+  if (names.length === 2) return `${names[0]} and ${names[1]}`;
+  return `${names.slice(0, -1).join(", ")}, and ${names[names.length - 1]}`;
+}
+
+function McpPresetButton({
+  preset,
+  isConnected,
+  isRecommended,
+  isSelected,
+  disabled,
+  onSelect,
+}: {
+  preset: McpPreset;
+  isConnected: boolean;
+  isRecommended: boolean;
+  isSelected: boolean;
+  disabled: boolean;
+  onSelect: () => void;
+}) {
+  const Icon = preset.icon;
+
+  return (
+    <button
+      type="button"
+      onClick={onSelect}
+      disabled={disabled || isConnected}
+      aria-pressed={isConnected || isSelected}
+      className={`group rounded-xl border p-3 text-left transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cta/70 ${
+        isConnected
+          ? "cursor-default border-cta/40 bg-cta/5"
+          : "cursor-pointer border-border/70 bg-background/25 hover:-translate-y-0.25 hover:border-foreground/10 hover:bg-background/45"
+      } ${isSelected && !isConnected ? "border-cta/50 ring-1 ring-cta/40" : ""}`}
+    >
+      <div className="flex items-start gap-3">
+        <div
+          className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-lg ${
+            isConnected
+              ? "bg-cta/15 text-cta"
+              : "bg-muted/50 text-muted-foreground group-hover:text-foreground"
+          }`}
+        >
+          {preset.logoUrl ? (
+            preset.logoOnWhite === false ? (
+              <McpPresetLogoImage
+                preset={preset}
+                size="md"
+                className="h-10 w-10"
+              />
+            ) : (
+              <div
+                aria-label={`${preset.name} logo`}
+                role="img"
+                className="flex h-full w-full items-center justify-center rounded-md bg-white p-1"
+              >
+                <McpPresetLogoImage preset={preset} size="md" />
+              </div>
+            )
+          ) : (
+            <Icon className={preset.iconClassName ?? "h-5 w-5"} />
+          )}
+        </div>
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex flex-wrap items-center gap-2">
+              <p className="font-medium">{preset.name}</p>
+              {isRecommended && !isConnected && (
+                <span className="rounded-full bg-cta/10 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-cta">
+                  Recommended
+                </span>
+              )}
+              {preset.requiresAuth && !isConnected && (
+                <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+                  API key
+                </span>
+              )}
+            </div>
+            {isConnected ? (
+              <Check className="h-4 w-4 text-cta" />
+            ) : (
+              <Plus className="h-4 w-4 text-muted-foreground" />
+            )}
+          </div>
+          <p className="text-xs leading-5 text-muted-foreground">
+            {preset.description}
+          </p>
+        </div>
+      </div>
+    </button>
+  );
 }
 
 function formatFileSize(bytes: number): string {
@@ -379,11 +743,27 @@ export default function AgentOnboardingPage() {
   const [mcpToolsFilter, setMcpToolsFilter] = useState("");
   const [mcpCredentialUuid, setMcpCredentialUuid] = useState("");
   const [mcpError, setMcpError] = useState<string | null>(null);
+  const [authPresetId, setAuthPresetId] = useState<McpPresetId | null>(null);
+  const [presetCredentialUuid, setPresetCredentialUuid] = useState("");
+  const [httpTools, setHttpTools] = useState<HttpToolSummary[]>([]);
+  const [httpTemplateId, setHttpTemplateId] = useState<HttpTemplateId>(
+    "notify-webhook",
+  );
+  const [httpUrl, setHttpUrl] = useState("");
+  const [httpCredentialUuid, setHttpCredentialUuid] = useState("");
+  const [httpError, setHttpError] = useState<string | null>(null);
+  const [isAddingHttp, setIsAddingHttp] = useState(false);
   const [isAddingMcp, setIsAddingMcp] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
   const [createdWorkflow, setCreatedWorkflow] =
     useState<WorkflowResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [preCallFetchUrl, setPreCallFetchUrl] = useState("");
+  const [preCallFetchCredentialUuid, setPreCallFetchCredentialUuid] =
+    useState("");
+  const [postCallWebhookUrl, setPostCallWebhookUrl] = useState("");
+  const [postCallWebhookCredentialUuid, setPostCallWebhookCredentialUuid] =
+    useState("");
 
   const fetchDocuments = useCallback(async () => {
     if (!user) return;
@@ -497,6 +877,36 @@ export default function AgentOnboardingPage() {
       ),
     [documents, selectedDocumentUuids],
   );
+  const readyMcpPresets = useMemo(
+    () => MCP_PRESETS.filter((preset) => !preset.requiresAuth),
+    [],
+  );
+  const authMcpPresets = useMemo(
+    () => MCP_PRESETS.filter((preset) => preset.requiresAuth),
+    [],
+  );
+  const recommendedReadyMcpPresets = useMemo(
+    () => getRecommendedMcpPresets(selectedTemplateOption, false),
+    [selectedTemplateOption],
+  );
+  const recommendedAuthMcpPresets = useMemo(
+    () => getRecommendedMcpPresets(selectedTemplateOption, true),
+    [selectedTemplateOption],
+  );
+  const selectedAuthPreset = authPresetId
+    ? MCP_PRESET_BY_ID[authPresetId]
+    : null;
+  const selectedHttpTemplate = HTTP_TEMPLATE_BY_ID[httpTemplateId];
+  const unconnectedRecommendedReadyMcpPresets =
+    recommendedReadyMcpPresets.filter(
+      (preset) => !mcpServers.some((server) => server.url === preset.url),
+    );
+
+  useEffect(() => {
+    const recommendedId =
+      selectedTemplateOption?.recommendedHttpTemplateIds?.[0];
+    if (recommendedId) setHttpTemplateId(recommendedId);
+  }, [selectedTemplateOption]);
 
   const chooseTemplate = (template: TemplateOption) => {
     setSelectedTemplate(template.id);
@@ -523,6 +933,18 @@ export default function AgentOnboardingPage() {
     const name = preset?.name ?? mcpName.trim();
     const url = preset?.url ?? mcpUrl.trim();
     const description = preset?.description ?? mcpDescription.trim();
+    const credentialUuid = preset
+      ? preset.requiresAuth
+        ? presetCredentialUuid
+        : ""
+      : mcpCredentialUuid;
+    if (preset?.requiresAuth && !credentialUuid) {
+      setAuthPresetId(preset.id);
+      setMcpError(
+        `Select a credential for ${preset.name} (${preset.authHint ?? "Bearer token"}), then connect.`,
+      );
+      return;
+    }
     if (!name || !url) {
       setMcpError("Add a server name and URL to continue.");
       return;
@@ -573,7 +995,7 @@ export default function AgentOnboardingPage() {
           icon_color: "#f04438",
           definition: createMcpDefinition(
             normalizedUrl,
-            preset ? "" : mcpCredentialUuid,
+            credentialUuid,
             preset ? "" : mcpToolsFilter,
           ),
         },
@@ -603,6 +1025,8 @@ export default function AgentOnboardingPage() {
       setMcpUrl("");
       setMcpToolsFilter("");
       setMcpCredentialUuid("");
+      setPresetCredentialUuid("");
+      setAuthPresetId(null);
       if (getDiscoveredToolCount(tool) > 0) {
         toast.success("MCP server saved");
       } else {
@@ -632,9 +1056,95 @@ export default function AgentOnboardingPage() {
     for (const preset of MCP_PRESETS.filter((item) =>
       recommendedPresetIds.includes(item.id),
     )) {
+      if (preset.requiresAuth) continue;
       if (mcpServers.some((server) => server.url === preset.url)) continue;
       await addMcpServer(preset);
     }
+  };
+
+  const handleSelectMcpPreset = (preset: McpPreset) => {
+    if (preset.requiresAuth) {
+      if (authPresetId === preset.id && presetCredentialUuid) {
+        void addMcpServer(preset);
+        return;
+      }
+      setAuthPresetId(preset.id);
+      setMcpError(null);
+      return;
+    }
+    void addMcpServer(preset);
+  };
+
+  const addHttpTool = async () => {
+    if (!user) {
+      setHttpError("Sign in before adding an HTTP API.");
+      return;
+    }
+    const template = HTTP_TEMPLATE_BY_ID[httpTemplateId];
+    const url = httpUrl.trim();
+    if (!template || !url) {
+      setHttpError("Choose a template and enter the API URL.");
+      return;
+    }
+    if (!MCP_URL_PATTERN.test(url)) {
+      setHttpError("The API URL must start with http:// or https://.");
+      return;
+    }
+
+    try {
+      setIsAddingHttp(true);
+      setHttpError(null);
+      const accessToken = await getAccessToken();
+      const response = await createToolApiV1ToolsPost({
+        body: {
+          name: template.name,
+          description: template.description,
+          category: "http_api",
+          icon: "globe",
+          icon_color: "#3B82F6",
+          definition: createHttpTemplateDefinition(
+            template,
+            url,
+            httpCredentialUuid,
+          ),
+        },
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+      if (response.error || !response.data) {
+        throw new Error(
+          detailFromError(response.error, "The HTTP API could not be saved."),
+        );
+      }
+      const tool = response.data;
+      setHttpTools((current) => [
+        ...current,
+        {
+          toolUuid: tool.tool_uuid,
+          name: tool.name,
+          description: tool.description ?? template.description,
+          url,
+          templateId: template.id,
+        },
+      ]);
+      setHttpUrl("");
+      setHttpCredentialUuid("");
+      toast.success("HTTP API saved");
+    } catch (err) {
+      setHttpError(
+        err instanceof Error ? err.message : "The HTTP API could not be saved.",
+      );
+    } finally {
+      setIsAddingHttp(false);
+    }
+  };
+
+  const removeHttpTool = (toolUuid: string) => {
+    setHttpTools((current) => {
+      const tool = current.find((item) => item.toolUuid === toolUuid);
+      if (!tool) return current;
+      toast.success(`${tool.name} removed`);
+      return current.filter((item) => item.toolUuid !== toolUuid);
+    });
   };
 
   const canContinue =
@@ -661,6 +1171,7 @@ export default function AgentOnboardingPage() {
           ? `Additional behavior: ${behaviorNotes.trim()}`
           : "",
         getMcpUsageInstructions(mcpServers),
+        getHttpUsageInstructions(httpTools),
       ]
         .filter(Boolean)
         .join(" ");
@@ -686,8 +1197,23 @@ export default function AgentOnboardingPage() {
             ]
               .filter(Boolean)
               .join("\n\n"),
-            tool_uuids: mcpServers.map((server) => server.toolUuid),
+            template_id:
+              selectedTemplate === "custom" ? null : selectedTemplate,
+            tool_uuids: [
+              ...mcpServers.map((server) => server.toolUuid),
+              ...httpTools.map((tool) => tool.toolUuid),
+            ],
             document_uuids: selectedDocumentUuids,
+            pre_call_fetch_url: preCallFetchUrl.trim() || null,
+            pre_call_fetch_credential_uuid:
+              preCallFetchUrl.trim()
+                ? preCallFetchCredentialUuid || null
+                : null,
+            post_call_webhook_url: postCallWebhookUrl.trim() || null,
+            post_call_webhook_credential_uuid:
+              postCallWebhookUrl.trim()
+                ? postCallWebhookCredentialUuid || null
+                : null,
           },
           headers: { Authorization: `Bearer ${accessToken}` },
         });
@@ -812,9 +1338,9 @@ export default function AgentOnboardingPage() {
                 {step === 2 &&
                   "Give the agent a name, a voice, and a few guardrails for every conversation."}
                 {step === 3 &&
-                  "Connect reusable MCP tools now, or leave this step for later."}
+                  "Connect MCP servers and HTTP APIs now, or leave this step for later."}
                 {step === 4 &&
-                  "Review the setup. We’ll generate the first workflow and open it in the editor."}
+                  "Review the setup, optionally add a caller lookup and hangup webhook, then generate the first workflow."}
               </CardDescription>
             </CardHeader>
 
@@ -836,7 +1362,8 @@ export default function AgentOnboardingPage() {
                         setActivityDescription(event.target.value)
                       }
                       placeholder="For example: qualify inbound leads, answer questions about our services, and book a demo when there’s a good fit."
-                      className="min-h-36 resize-y bg-background/35 text-base leading-7"
+                      rows={5}
+                      className="h-36 resize-none overflow-y-auto bg-background/35 text-base leading-7 transition-colors duration-200"
                     />
                     <p className="text-xs text-muted-foreground">
                       A clear description gives your first draft a strong
@@ -852,33 +1379,15 @@ export default function AgentOnboardingPage() {
                         You can change everything in the editor later.
                       </p>
                     </div>
-                    <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-                      {TEMPLATE_OPTIONS.map((template) => {
-                        const Icon = template.icon;
-                        const isSelected = selectedTemplate === template.id;
-                        return (
-                          <button
-                            key={template.id}
-                            type="button"
-                            aria-pressed={isSelected}
-                            onClick={() => chooseTemplate(template)}
-                            className={`group relative min-h-36 rounded-xl border p-4 text-left transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cta/70 ${isSelected ? "border-cta bg-cta/10 shadow-[0_0_0_1px_rgba(240,68,56,0.25)]" : "border-border/70 bg-background/25 hover:-translate-y-0.5 hover:border-foreground/30 hover:bg-background/45"}`}
-                          >
-                            <div
-                              className={`mb-8 flex h-9 w-9 items-center justify-center rounded-lg border ${isSelected ? "border-cta/50 bg-cta/15 text-cta" : "border-border/70 bg-muted/30 text-muted-foreground group-hover:text-foreground"}`}
-                            >
-                              <Icon className="h-5 w-5" />
-                            </div>
-                            <p className="font-medium">{template.label}</p>
-                            <p className="mt-1 text-xs leading-5 text-muted-foreground">
-                              {template.description}
-                            </p>
-                            {isSelected && (
-                              <Check className="absolute right-3 top-3 h-4 w-4 text-cta" />
-                            )}
-                          </button>
-                        );
-                      })}
+                    <div className="grid auto-rows-fr gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                      {TEMPLATE_OPTIONS.map((template) => (
+                        <TemplateOptionCard
+                          key={template.id}
+                          template={template}
+                          isSelected={selectedTemplate === template.id}
+                          onSelect={() => chooseTemplate(template)}
+                        />
+                      ))}
                     </div>
                   </div>
                 </div>
@@ -1112,25 +1621,46 @@ export default function AgentOnboardingPage() {
 
               {step === 3 && (
                 <div className="space-y-7">
-                  <div className="space-y-4">
-                    <div>
-                      <p className="text-sm font-medium">Start with a preset</p>
-                      <p className="mt-1 text-sm text-muted-foreground">
-                        One click adds a ready-to-use server. No API key is
-                        needed for these defaults.
-                      </p>
-                    </div>
-                    {selectedTemplateOption?.recommendedMcpPresetIds && (
-                      <div className="flex flex-col gap-3 rounded-xl border border-cta/30 bg-cta/5 p-4 sm:flex-row sm:items-center sm:justify-between">
-                        <div>
-                          <p className="text-sm font-medium">
-                            Recommended for {selectedTemplateOption.label}
-                          </p>
-                          <p className="mt-1 text-xs leading-5 text-muted-foreground">
-                            Add Context7 and DeepWiki to ground answers in
-                            current library docs and public repository context.
-                          </p>
-                        </div>
+                  {selectedTemplateOption &&
+                    getTemplateToolSummary(selectedTemplateOption) && (
+                    <div className="flex flex-col gap-3 rounded-xl border border-cta/30 bg-cta/5 p-4 sm:flex-row sm:items-center sm:justify-between">
+                      <div>
+                        <p className="text-sm font-medium">
+                          Recommended for {selectedTemplateOption.label}
+                        </p>
+                        <p className="mt-1 text-xs leading-5 text-muted-foreground">
+                          Built-in tools such as{" "}
+                          {selectedTemplateOption.recommendedBuiltinToolCategories
+                            ?.map(getBuiltinToolShortName)
+                            .join(", ") || "End Call"}{" "}
+                          are attached automatically when you create the agent.
+                          {unconnectedRecommendedReadyMcpPresets.length
+                            ? ` Add ${joinNames(
+                                unconnectedRecommendedReadyMcpPresets.map(
+                                  getMcpPresetShortName,
+                                ),
+                              )} in one click.`
+                            : ""}
+                          {recommendedAuthMcpPresets.length
+                            ? ` Connect ${joinNames(
+                                recommendedAuthMcpPresets.map(
+                                  getMcpPresetShortName,
+                                ),
+                              )} with an API key.`
+                            : ""}
+                          {selectedTemplateOption.recommendedHttpTemplateIds
+                            ?.length
+                            ? ` Paste a URL to add ${joinNames(
+                                selectedTemplateOption.recommendedHttpTemplateIds.map(
+                                  (templateId) =>
+                                    HTTP_TEMPLATE_BY_ID[templateId]?.name ??
+                                    templateId,
+                                ),
+                              )}.`
+                            : ""}
+                        </p>
+                      </div>
+                      {unconnectedRecommendedReadyMcpPresets.length ? (
                         <Button
                           type="button"
                           variant="outline"
@@ -1139,78 +1669,37 @@ export default function AgentOnboardingPage() {
                           disabled={isAddingMcp || mcpToolsLoading}
                         >
                           <Plus className="h-4 w-4" />
-                          Add recommended tools
+                          Add recommended MCP servers
                         </Button>
-                      </div>
-                    )}
+                      ) : null}
+                    </div>
+                  )}
+
+                  <div className="space-y-4">
+                    <div>
+                      <p className="text-sm font-medium">Ready to use</p>
+                      <p className="mt-1 text-sm text-muted-foreground">
+                        These hosted MCP servers work without an API key.
+                      </p>
+                    </div>
                     <div className="grid gap-3 sm:grid-cols-2">
-                      {MCP_PRESETS.map((preset) => {
-                        const Icon = preset.icon;
-                        const isConnected = mcpServers.some(
-                          (server) => server.url === preset.url,
-                        );
-                        const isRecommended = selectedTemplateOption?.recommendedMcpPresetIds?.includes(
-                          preset.id,
-                        );
-                        return (
-                          <button
-                            key={preset.id}
-                            type="button"
-                            onClick={() => void addMcpServer(preset)}
-                            disabled={
-                              isAddingMcp || mcpToolsLoading || isConnected
-                            }
-                            className={`group rounded-xl border p-3 text-left transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cta/70 cursor-pointer ${isConnected ? "border-cta/40 bg-cta/5" : "border-border/70 bg-background/25 hover:-translate-y-0.25 hover:border-foreground/10 hover:bg-background/45"}`}
-                          >
-                            <div className="flex items-start gap-3">
-                              <div
-                                className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-lg ${isConnected ? "bg-cta/15 text-cta" : "bg-muted/50 text-muted-foreground group-hover:text-foreground"}`}
-                              >
-                                {preset.logoUrl ? (
-                                  <div
-                                    aria-label={`${preset.name} logo`}
-                                    role="img"
-                                    className="flex h-full w-full items-center justify-center rounded-md bg-white p-1"
-                                  >
-                                    <span
-                                      className="block h-5 w-full bg-contain bg-center bg-no-repeat"
-                                      style={{
-                                        backgroundImage: `url(${preset.logoUrl})`,
-                                      }}
-                                    />
-                                  </div>
-                                ) : (
-                                  <Icon
-                                    className={
-                                      preset.iconClassName ?? "h-5 w-5"
-                                    }
-                                  />
-                                )}
-                              </div>
-                              <div className="min-w-0 flex-1">
-                                <div className="flex items-center justify-between gap-2">
-                                  <div className="flex flex-wrap items-center gap-2">
-                                    <p className="font-medium">{preset.name}</p>
-                                    {isRecommended && !isConnected && (
-                                      <span className="rounded-full bg-cta/10 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-cta">
-                                        Recommended
-                                      </span>
-                                    )}
-                                  </div>
-                                  {isConnected ? (
-                                    <Check className="h-4 w-4 text-cta" />
-                                  ) : (
-                                    <Plus className="h-4 w-4 text-muted-foreground" />
-                                  )}
-                                </div>
-                                <p className="text-xs leading-5 text-muted-foreground">
-                                  {preset.description}
-                                </p>
-                              </div>
-                            </div>
-                          </button>
-                        );
-                      })}
+                      {readyMcpPresets.map((preset) => (
+                        <McpPresetButton
+                          key={preset.id}
+                          preset={preset}
+                          isConnected={mcpServers.some(
+                            (server) => server.url === preset.url,
+                          )}
+                          isRecommended={Boolean(
+                            selectedTemplateOption?.recommendedMcpPresetIds?.includes(
+                              preset.id,
+                            ),
+                          )}
+                          isSelected={false}
+                          disabled={isAddingMcp || mcpToolsLoading}
+                          onSelect={() => handleSelectMcpPreset(preset)}
+                        />
+                      ))}
                     </div>
                     {mcpToolsLoading && (
                       <p className="text-xs text-muted-foreground">
@@ -1223,6 +1712,195 @@ export default function AgentOnboardingPage() {
                       </p>
                     )}
                   </div>
+
+                  <div className="space-y-4">
+                    <div>
+                      <p className="text-sm font-medium">Needs an API key</p>
+                      <p className="mt-1 text-sm text-muted-foreground">
+                        Save a Bearer token credential, then connect. Discovery
+                        will fail until the key is present.
+                      </p>
+                    </div>
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      {authMcpPresets.map((preset) => (
+                        <McpPresetButton
+                          key={preset.id}
+                          preset={preset}
+                          isConnected={mcpServers.some(
+                            (server) => server.url === preset.url,
+                          )}
+                          isRecommended={Boolean(
+                            selectedTemplateOption?.recommendedMcpPresetIds?.includes(
+                              preset.id,
+                            ),
+                          )}
+                          isSelected={authPresetId === preset.id}
+                          disabled={isAddingMcp || mcpToolsLoading}
+                          onSelect={() => handleSelectMcpPreset(preset)}
+                        />
+                      ))}
+                    </div>
+                    {selectedAuthPreset && (
+                      <div className="rounded-xl border border-cta/30 bg-cta/5 p-4 sm:p-5">
+                        <p className="font-medium">
+                          Connect {selectedAuthPreset.name}
+                        </p>
+                        <p className="mt-1 text-sm text-muted-foreground">
+                          {selectedAuthPreset.authHint ??
+                            "Use a Bearer token credential for this server."}
+                        </p>
+                        <div className="mt-4 space-y-4">
+                          <CredentialSelector
+                            value={presetCredentialUuid}
+                            onChange={setPresetCredentialUuid}
+                            label="Credential"
+                            description="Required before this MCP server can be discovered."
+                          />
+                          {mcpError && (
+                            <p className="text-sm text-red-300">{mcpError}</p>
+                          )}
+                          <div className="flex flex-wrap gap-2">
+                            <Button
+                              type="button"
+                              onClick={() =>
+                                void addMcpServer(selectedAuthPreset)
+                              }
+                              disabled={
+                                isAddingMcp || !presetCredentialUuid
+                              }
+                            >
+                              <Plus className="h-4 w-4" />
+                              {isAddingMcp
+                                ? "Connecting..."
+                                : `Connect ${getMcpPresetShortName(selectedAuthPreset)}`}
+                            </Button>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              onClick={() => {
+                                setAuthPresetId(null);
+                                setPresetCredentialUuid("");
+                                setMcpError(null);
+                              }}
+                            >
+                              Cancel
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="rounded-xl border border-border/70 bg-background/25 p-4 sm:p-5">
+                    <div className="mb-5 flex items-start gap-3">
+                      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-sky-500/10 text-sky-400">
+                        <Globe className="h-5 w-5" />
+                      </div>
+                      <div>
+                        <p className="font-medium">Call your own APIs</p>
+                        <p className="mt-1 text-sm leading-6 text-muted-foreground">
+                          Add a webhook, record lookup, or lead capture endpoint
+                          the agent can call during the conversation.
+                        </p>
+                      </div>
+                    </div>
+                    {selectedTemplateOption?.recommendedHttpTemplateIds
+                      ?.length ? (
+                      <div className="mb-4 flex flex-wrap gap-2">
+                        {selectedTemplateOption.recommendedHttpTemplateIds.map(
+                          (templateId) => {
+                            const template = HTTP_TEMPLATE_BY_ID[templateId];
+                            if (!template) return null;
+                            const isActive = httpTemplateId === templateId;
+                            return (
+                              <button
+                                key={templateId}
+                                type="button"
+                                onClick={() => setHttpTemplateId(templateId)}
+                                className={`rounded-full border px-3 py-1 text-xs font-medium transition-colors ${
+                                  isActive
+                                    ? "border-cta/40 bg-cta/10 text-cta"
+                                    : "border-border/70 bg-background/40 text-muted-foreground hover:text-foreground"
+                                }`}
+                              >
+                                {template.name}
+                              </button>
+                            );
+                          },
+                        )}
+                      </div>
+                    ) : null}
+                    <div className="grid gap-4 sm:grid-cols-2">
+                      <div className="space-y-2">
+                        <Label htmlFor="http-template">Template</Label>
+                        <Select
+                          value={httpTemplateId}
+                          onValueChange={(value) =>
+                            setHttpTemplateId(value as HttpTemplateId)
+                          }
+                        >
+                          <SelectTrigger
+                            id="http-template"
+                            className="bg-background/35"
+                          >
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {HTTP_TEMPLATES.map((template) => (
+                              <SelectItem key={template.id} value={template.id}>
+                                {template.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="http-url">API URL</Label>
+                        <Input
+                          id="http-url"
+                          value={httpUrl}
+                          onChange={(event) => setHttpUrl(event.target.value)}
+                          placeholder={
+                            selectedHttpTemplate?.urlPlaceholder ??
+                            "https://api.example.com/endpoint"
+                          }
+                          className="bg-background/35"
+                        />
+                      </div>
+                      <div className="space-y-2 sm:col-span-2">
+                        <p className="text-sm text-muted-foreground">
+                          {selectedHttpTemplate?.description} Uses{" "}
+                          {selectedHttpTemplate?.method} with{" "}
+                          {selectedHttpTemplate?.parameters
+                            .map((parameter) => parameter.name)
+                            .join(", ")}
+                          .
+                        </p>
+                      </div>
+                      <div className="space-y-2 sm:col-span-2">
+                        <CredentialSelector
+                          value={httpCredentialUuid}
+                          onChange={setHttpCredentialUuid}
+                          label="Authentication"
+                          description="Optional credentials for this HTTP API."
+                        />
+                      </div>
+                    </div>
+                    {httpError && (
+                      <p className="mt-4 text-sm text-red-300">{httpError}</p>
+                    )}
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="mt-5"
+                      onClick={() => void addHttpTool()}
+                      disabled={isAddingHttp}
+                    >
+                      <Plus className="h-4 w-4" />
+                      {isAddingHttp ? "Saving API..." : "Add HTTP API"}
+                    </Button>
+                  </div>
+
                   <div className="rounded-xl border border-border/70 bg-background/25 p-4 sm:p-5">
                     <div className="mb-5 flex items-start gap-3">
                       <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-cta/10 text-cta">
@@ -1302,7 +1980,7 @@ export default function AgentOnboardingPage() {
                         />
                       </div>
                     </div>
-                    {mcpError && (
+                    {mcpError && !selectedAuthPreset && (
                       <p className="mt-4 text-sm text-red-300">{mcpError}</p>
                     )}
                     <Button
@@ -1316,10 +1994,13 @@ export default function AgentOnboardingPage() {
                       {isAddingMcp ? "Saving server..." : "Add custom server"}
                     </Button>
                   </div>
-                  {mcpServers.length > 0 && (
+
+                  {(mcpServers.length > 0 || httpTools.length > 0) && (
                     <div className="space-y-3">
                       <div>
-                        <p className="text-sm font-medium">Connected servers</p>
+                        <p className="text-sm font-medium">
+                          Connected for this agent
+                        </p>
                         <p className="mt-1 text-sm text-muted-foreground">
                           These reusable tools will be attached to every
                           conversational node in the new agent.
@@ -1366,6 +2047,35 @@ export default function AgentOnboardingPage() {
                             </Button>
                           </div>
                         ))}
+                        {httpTools.map((tool) => (
+                          <div
+                            key={tool.toolUuid}
+                            className="flex items-center gap-3 rounded-xl border border-cta/30 bg-cta/5 p-4"
+                          >
+                            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-sky-500/15 text-sky-400">
+                              <Globe className="h-4 w-4" />
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <p className="truncate text-sm font-medium">
+                                {tool.name}
+                              </p>
+                              <p className="truncate text-xs text-muted-foreground">
+                                {tool.url}
+                              </p>
+                            </div>
+                            <Check className="h-4 w-4 shrink-0 text-cta" />
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 shrink-0 text-muted-foreground hover:text-foreground"
+                              aria-label={`Remove ${tool.name}`}
+                              onClick={() => removeHttpTool(tool.toolUuid)}
+                            >
+                              <X className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        ))}
                       </div>
                     </div>
                   )}
@@ -1374,6 +2084,79 @@ export default function AgentOnboardingPage() {
 
               {step === 4 && (
                 <div className="space-y-5">
+                  <div className="grid gap-3 lg:grid-cols-2">
+                    <div className="rounded-xl border border-border/70 bg-background/25 p-4 sm:p-5">
+                      <div className="mb-4 flex items-start gap-3">
+                        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-sky-500/10 text-sky-400">
+                          <Globe className="h-5 w-5" />
+                        </div>
+                        <div>
+                          <p className="font-medium">Look up the caller first</p>
+                          <p className="mt-1 text-sm leading-6 text-muted-foreground">
+                            Optional. Before the greeting, we POST the caller and
+                            called numbers to your API and merge the JSON into
+                            the first turn.
+                          </p>
+                        </div>
+                      </div>
+                      <div className="space-y-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="pre-call-url">Lookup URL</Label>
+                          <Input
+                            id="pre-call-url"
+                            value={preCallFetchUrl}
+                            onChange={(event) =>
+                              setPreCallFetchUrl(event.target.value)
+                            }
+                            placeholder="https://api.example.com/customer-lookup"
+                            className="bg-background/35"
+                          />
+                        </div>
+                        <CredentialSelector
+                          value={preCallFetchCredentialUuid}
+                          onChange={setPreCallFetchCredentialUuid}
+                          label="Authentication"
+                          description="Optional credential for the lookup request."
+                        />
+                      </div>
+                    </div>
+                    <div className="rounded-xl border border-border/70 bg-background/25 p-4 sm:p-5">
+                      <div className="mb-4 flex items-start gap-3">
+                        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-cta/10 text-cta">
+                          <Link2 className="h-5 w-5" />
+                        </div>
+                        <div>
+                          <p className="font-medium">
+                            Send results when the call ends
+                          </p>
+                          <p className="mt-1 text-sm leading-6 text-muted-foreground">
+                            Optional. Adds a webhook node that POSTs the recap,
+                            disposition, and recording after hangup.
+                          </p>
+                        </div>
+                      </div>
+                      <div className="space-y-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="post-call-url">Webhook URL</Label>
+                          <Input
+                            id="post-call-url"
+                            value={postCallWebhookUrl}
+                            onChange={(event) =>
+                              setPostCallWebhookUrl(event.target.value)
+                            }
+                            placeholder="https://hooks.example.com/voice-summary"
+                            className="bg-background/35"
+                          />
+                        </div>
+                        <CredentialSelector
+                          value={postCallWebhookCredentialUuid}
+                          onChange={setPostCallWebhookCredentialUuid}
+                          label="Authentication"
+                          description="Optional credential for the hangup webhook."
+                        />
+                      </div>
+                    </div>
+                  </div>
                   <div className="grid gap-3 sm:grid-cols-2">
                     <div className="rounded-xl border border-border/70 bg-background/25 p-4">
                       <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">
@@ -1413,12 +2196,31 @@ export default function AgentOnboardingPage() {
                         Connections
                       </p>
                       <p className="mt-2 font-medium">
-                        {mcpServers.length
-                          ? `${mcpServers.length} MCP server${mcpServers.length === 1 ? "" : "s"}`
-                          : "No MCP servers"}
+                        {mcpServers.length || httpTools.length
+                          ? [
+                              mcpServers.length
+                                ? `${mcpServers.length} MCP server${mcpServers.length === 1 ? "" : "s"}`
+                                : null,
+                              httpTools.length
+                                ? `${httpTools.length} HTTP API${httpTools.length === 1 ? "" : "s"}`
+                                : null,
+                            ]
+                              .filter(Boolean)
+                              .join(" · ")
+                          : "No extra connections"}
                       </p>
                       <p className="mt-1 text-sm text-muted-foreground">
-                        Optional for your first draft.
+                        Built-in tools from the template are added automatically.
+                        {preCallFetchUrl.trim() || postCallWebhookUrl.trim()
+                          ? ` ${[
+                              preCallFetchUrl.trim() ? "caller lookup" : null,
+                              postCallWebhookUrl.trim()
+                                ? "hangup webhook"
+                                : null,
+                            ]
+                              .filter(Boolean)
+                              .join(" and ")} will be configured on create.`
+                          : ""}
                       </p>
                     </div>
                   </div>

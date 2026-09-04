@@ -304,6 +304,23 @@ export interface components {
              */
             type: "calculator";
         };
+        /**
+         * CurrentTimeToolDefinition
+         * @description Tool definition for current time and timezone conversion tools.
+         */
+        CurrentTimeToolDefinition: {
+            /**
+             * Schema Version
+             * @description Schema version.
+             * @default 1
+             */
+            schema_version: number;
+            /**
+             * @description Tool type. (enum property replaced by openapi-typescript)
+             * @enum {string}
+             */
+            type: "current_time";
+        };
         /** CallDispositionCodes */
         CallDispositionCodes: {
             /**
@@ -408,7 +425,7 @@ export interface components {
              * @default http_api
              * @enum {string}
              */
-            category: "http_api" | "end_call" | "transfer_call" | "calculator" | "native" | "integration" | "mcp";
+            category: "http_api" | "end_call" | "transfer_call" | "calculator" | "current_time" | "native" | "integration" | "mcp";
             /**
              * Icon
              * @description Lucide icon identifier.
@@ -425,7 +442,7 @@ export interface components {
              * Definition
              * @description Typed tool definition.
              */
-            definition: components["schemas"]["HttpApiToolDefinition"] | components["schemas"]["EndCallToolDefinition"] | components["schemas"]["TransferCallToolDefinition"] | components["schemas"]["CalculatorToolDefinition"] | components["schemas"]["McpToolDefinition"];
+            definition: components["schemas"]["HttpApiToolDefinition"] | components["schemas"]["EndCallToolDefinition"] | components["schemas"]["TransferCallToolDefinition"] | components["schemas"]["CalculatorToolDefinition"] | components["schemas"]["CurrentTimeToolDefinition"] | components["schemas"]["McpToolDefinition"];
         };
         /** CreateWorkflowRequest */
         CreateWorkflowRequest: {
@@ -1415,6 +1432,7 @@ export interface components {
 }
 export type AmbientNoiseConfigurationDefaults = components['schemas']['AmbientNoiseConfigurationDefaults'];
 export type CalculatorToolDefinition = components['schemas']['CalculatorToolDefinition'];
+export type CurrentTimeToolDefinition = components['schemas']['CurrentTimeToolDefinition'];
 export type CallDispositionCodes = components['schemas']['CallDispositionCodes'];
 export type CallDispositionOption = components['schemas']['CallDispositionOption'];
 export type ContextDestinationMappingConfig = components['schemas']['ContextDestinationMappingConfig'];

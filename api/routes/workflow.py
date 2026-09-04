@@ -70,6 +70,7 @@ from api.services.workflow.mcp_prompt import (
     append_mcp_usage_instructions,
     build_mcp_usage_instructions,
 )
+from api.services.workflow.template_tools import ensure_template_tools
 from api.services.workflow.trigger_paths import (
     TriggerPathIssue,
     ensure_trigger_paths,
@@ -383,8 +384,37 @@ class CreateWorkflowTemplateRequest(BaseModel):
     use_case: str
     activity_description: str
     name: str | None = Field(default=None, max_length=255)
+    template_id: str | None = Field(
+        default=None,
+        description=(
+            "Agent onboarding template id used to auto-provision recommended "
+            "built-in tools and MCP servers."
+        ),
+    )
     tool_uuids: list[str] = Field(default_factory=list, max_length=100)
     document_uuids: list[str] = Field(default_factory=list, max_length=100)
+    pre_call_fetch_url: str | None = Field(
+        default=None,
+        description=(
+            "Optional URL for Start Call pre-call data fetch. When set, the "
+            "Start Call node posts caller and called numbers here before the "
+            "first spoken turn."
+        ),
+    )
+    pre_call_fetch_credential_uuid: str | None = Field(
+        default=None,
+        description="Optional credential applied to the pre-call fetch request.",
+    )
+    post_call_webhook_url: str | None = Field(
+        default=None,
+        description=(
+            "Optional URL for a Webhook node that fires after the call ends."
+        ),
+    )
+    post_call_webhook_credential_uuid: str | None = Field(
+        default=None,
+        description="Optional credential applied to the post-call webhook.",
+    )
 
 
 def _normalized_resource_uuids(values: list[str]) -> list[str]:
@@ -484,6 +514,117 @@ def _attach_template_resources(
                 else document_uuids
             )
         updated_nodes.append({**node, "data": updated_data})
+
+    updated_definition["nodes"] = updated_nodes
+    return updated_definition
+
+
+_ONBOARDING_WEBHOOK_PAYLOAD = {
+    "call_id": "{{workflow_run_id}}",
+    "call_disposition": "{{gathered_context.call_disposition}}",
+    "duration": "{{cost_info.call_duration_seconds}}",
+    "recording_url": "{{recording_url}}",
+    "transcript_url": "{{transcript_url}}",
+    "caller_number": "{{initial_context.caller_number}}",
+}
+
+
+def _http_url_or_none(value: str | None, *, field_name: str) -> str | None:
+    if value is None:
+        return None
+    trimmed = value.strip()
+    if not trimmed:
+        return None
+    if not trimmed.lower().startswith(("http://", "https://")):
+        raise HTTPException(
+            status_code=422,
+            detail=f"{field_name} must start with http:// or https://.",
+        )
+    return trimmed
+
+
+def _optional_uuid(value: str | None) -> str | None:
+    if value is None:
+        return None
+    trimmed = value.strip()
+    return trimmed or None
+
+
+def _attach_launch_integrations(
+    workflow_definition: dict,
+    *,
+    call_type: str,
+    pre_call_fetch_url: str | None,
+    pre_call_fetch_credential_uuid: str | None,
+    post_call_webhook_url: str | None,
+    post_call_webhook_credential_uuid: str | None,
+) -> dict:
+    if not pre_call_fetch_url and not post_call_webhook_url:
+        return workflow_definition
+
+    nodes = workflow_definition.get("nodes")
+    if not isinstance(nodes, list):
+        return workflow_definition
+
+    updated_definition = {**workflow_definition}
+    updated_nodes: list[Any] = []
+    webhook_applied = False
+
+    for node in nodes:
+        if not isinstance(node, dict):
+            updated_nodes.append(node)
+            continue
+
+        data = node.get("data")
+        updated_data = dict(data) if isinstance(data, dict) else {}
+
+        if pre_call_fetch_url and node.get("type") == "startCall":
+            updated_data["pre_call_fetch_url"] = pre_call_fetch_url
+            updated_data["pre_call_fetch_mode"] = call_type
+            updated_data["pre_call_fetch_credential_uuid"] = (
+                pre_call_fetch_credential_uuid
+            )
+
+        if post_call_webhook_url and node.get("type") == "webhook":
+            existing_url = updated_data.get("endpoint_url")
+            existing_url = (
+                existing_url.strip() if isinstance(existing_url, str) else ""
+            )
+            if not existing_url or existing_url == post_call_webhook_url:
+                updated_data["name"] = updated_data.get("name") or "Post-call webhook"
+                updated_data["enabled"] = True
+                updated_data["http_method"] = updated_data.get("http_method") or "POST"
+                updated_data["endpoint_url"] = post_call_webhook_url
+                updated_data["credential_uuid"] = post_call_webhook_credential_uuid
+                if not updated_data.get("payload_template"):
+                    updated_data["payload_template"] = dict(_ONBOARDING_WEBHOOK_PAYLOAD)
+                webhook_applied = True
+
+        updated_nodes.append({**node, "data": updated_data})
+
+    if post_call_webhook_url and not webhook_applied:
+        max_x = 0
+        for node in updated_nodes:
+            if not isinstance(node, dict):
+                continue
+            position = node.get("position")
+            if isinstance(position, dict):
+                max_x = max(max_x, int(position.get("x") or 0))
+        updated_nodes.append(
+            {
+                "id": f"webhook-{uuid.uuid4().hex[:8]}",
+                "type": "webhook",
+                "position": {"x": max_x + 280, "y": 0},
+                "data": {
+                    "name": "Post-call webhook",
+                    "enabled": True,
+                    "http_method": "POST",
+                    "endpoint_url": post_call_webhook_url,
+                    "credential_uuid": post_call_webhook_credential_uuid,
+                    "payload_template": dict(_ONBOARDING_WEBHOOK_PAYLOAD),
+                },
+            }
+        )
 
     updated_definition["nodes"] = updated_nodes
     return updated_definition
@@ -666,11 +807,60 @@ async def create_workflow_from_template(
         HTTPException: If MPS API call fails
     """
     try:
+        template_tool_uuids: list[str] = []
+        if request.template_id and user.selected_organization_id:
+            template_tool_uuids = await ensure_template_tools(
+                template_id=request.template_id,
+                organization_id=user.selected_organization_id,
+                user_id=user.id,
+            )
+
         tool_uuids, document_uuids, selected_tools = await _validate_template_resources(
-            tool_uuids=request.tool_uuids,
+            tool_uuids=[*request.tool_uuids, *template_tool_uuids],
             document_uuids=request.document_uuids,
             organization_id=user.selected_organization_id,
         )
+
+        pre_call_fetch_url = _http_url_or_none(
+            request.pre_call_fetch_url, field_name="pre_call_fetch_url"
+        )
+        post_call_webhook_url = _http_url_or_none(
+            request.post_call_webhook_url, field_name="post_call_webhook_url"
+        )
+        pre_call_fetch_credential_uuid = _optional_uuid(
+            request.pre_call_fetch_credential_uuid
+        )
+        post_call_webhook_credential_uuid = _optional_uuid(
+            request.post_call_webhook_credential_uuid
+        )
+        if not pre_call_fetch_url:
+            pre_call_fetch_credential_uuid = None
+        if not post_call_webhook_url:
+            post_call_webhook_credential_uuid = None
+
+        credential_uuids = {
+            uuid
+            for uuid in (
+                pre_call_fetch_credential_uuid,
+                post_call_webhook_credential_uuid,
+            )
+            if uuid
+        }
+        if credential_uuids:
+            if user.selected_organization_id is None:
+                raise HTTPException(status_code=400, detail="No organization selected")
+            for credential_uuid in credential_uuids:
+                credential = await db_client.get_credential_by_uuid(
+                    credential_uuid, user.selected_organization_id
+                )
+                if not credential:
+                    raise HTTPException(
+                        status_code=404,
+                        detail=(
+                            f"Credential '{credential_uuid}' was not found in this "
+                            "organization."
+                        ),
+                    )
 
         # Call MPS API to generate workflow using the client
         if DEPLOYMENT_MODE == "oss":
@@ -704,6 +894,14 @@ async def create_workflow_from_template(
         workflow_def = append_mcp_usage_instructions(
             workflow_def,
             build_mcp_usage_instructions(selected_tools),
+        )
+        workflow_def = _attach_launch_integrations(
+            workflow_def,
+            call_type=request.call_type,
+            pre_call_fetch_url=pre_call_fetch_url,
+            pre_call_fetch_credential_uuid=pre_call_fetch_credential_uuid,
+            post_call_webhook_url=post_call_webhook_url,
+            post_call_webhook_credential_uuid=post_call_webhook_credential_uuid,
         )
 
         trigger_paths = extract_trigger_paths(workflow_def) if workflow_def else []

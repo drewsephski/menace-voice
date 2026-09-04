@@ -781,6 +781,26 @@ export type CalculatorToolDefinition = {
 };
 
 /**
+ * CurrentTimeToolDefinition
+ *
+ * Tool definition for current time and timezone conversion tools.
+ */
+export type CurrentTimeToolDefinition = {
+    /**
+     * Schema Version
+     *
+     * Schema version.
+     */
+    schema_version?: number;
+    /**
+     * Type
+     *
+     * Tool type.
+     */
+    type: 'current_time';
+};
+
+/**
  * CallDispositionCodes
  */
 export type CallDispositionCodes = {
@@ -1594,7 +1614,7 @@ export type CreateToolRequest = {
      *
      * Tool category. Must match definition.type.
      */
-    category?: 'http_api' | 'end_call' | 'transfer_call' | 'calculator' | 'native' | 'integration' | 'mcp';
+    category?: 'http_api' | 'end_call' | 'transfer_call' | 'calculator' | 'current_time' | 'native' | 'integration' | 'mcp';
     /**
      * Icon
      *
@@ -1621,6 +1641,8 @@ export type CreateToolRequest = {
     } & TransferCallToolDefinition) | ({
         type: 'calculator';
     } & CalculatorToolDefinition) | ({
+        type: 'current_time';
+    } & CurrentTimeToolDefinition) | ({
         type: 'mcp';
     } & McpToolDefinition);
 };
@@ -1708,8 +1730,25 @@ export type CreateWorkflowTemplateRequest = {
      */
     activity_description: string;
     name?: string | null;
+    template_id?: string | null;
     tool_uuids?: Array<string>;
     document_uuids?: Array<string>;
+    /**
+     * Optional URL for Start Call pre-call data fetch. When set, the Start Call node posts caller and called numbers here before the first spoken turn.
+     */
+    pre_call_fetch_url?: string | null;
+    /**
+     * Optional credential applied to the pre-call fetch request.
+     */
+    pre_call_fetch_credential_uuid?: string | null;
+    /**
+     * Optional URL for a Webhook node that fires after the call ends.
+     */
+    post_call_webhook_url?: string | null;
+    /**
+     * Optional credential applied to the post-call webhook.
+     */
+    post_call_webhook_credential_uuid?: string | null;
 };
 
 /**
@@ -6890,6 +6929,8 @@ export type UpdateToolRequest = {
     } & TransferCallToolDefinition) | ({
         type: 'calculator';
     } & CalculatorToolDefinition) | ({
+        type: 'current_time';
+    } & CurrentTimeToolDefinition) | ({
         type: 'mcp';
     } & McpToolDefinition) | null;
     /**

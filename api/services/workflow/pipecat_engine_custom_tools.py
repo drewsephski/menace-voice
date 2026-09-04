@@ -28,6 +28,11 @@ from api.services.telephony.external_pbx import resolve_external_pbx_field_mappi
 from api.services.telephony.factory import get_telephony_provider_for_run
 from api.services.telephony.transfer_event_protocol import TransferContext
 from api.services.workflow.tools.calculator import get_calculator_tools, safe_calculator
+from api.services.workflow.tools.timezone import (
+    convert_time,
+    get_current_time,
+    get_time_tools,
+)
 from api.services.workflow.tools.tool_result_limits import bound_tool_result_for_llm
 from api.services.workflow.tools.custom_tool import (
     execute_http_tool,
@@ -193,6 +198,19 @@ class CustomToolManager:
                         )
                     continue
 
+                if tool.category == ToolCategory.CURRENT_TIME.value:
+                    for tool_def in get_time_tools():
+                        func = tool_def["function"]
+                        schemas.append(
+                            get_function_schema(
+                                func["name"],
+                                func["description"],
+                                properties=func["parameters"]["properties"],
+                                required=func["parameters"]["required"],
+                            )
+                        )
+                    continue
+
                 if tool.category == ToolCategory.MCP.value:
                     session = self._engine._mcp_sessions.get(tool.tool_uuid)
                     if session is None or not session.available:
@@ -261,6 +279,14 @@ class CustomToolManager:
                     self._register_calculator_handler()
                     logger.debug(
                         f"Registered calculator tool handler "
+                        f"(tool_uuid: {tool.tool_uuid})"
+                    )
+                    continue
+
+                if tool.category == ToolCategory.CURRENT_TIME.value:
+                    self._register_current_time_handlers()
+                    logger.debug(
+                        f"Registered current time tool handlers "
                         f"(tool_uuid: {tool.tool_uuid})"
                     )
                     continue
@@ -393,6 +419,39 @@ class CustomToolManager:
                 await function_call_params.result_callback({"error": str(e)})
 
         self._engine.llm.register_function("safe_calculator", calculate_func)
+
+    def _register_current_time_handlers(self) -> None:
+        """Register current time and timezone conversion functions with the LLM."""
+
+        async def get_current_time_func(
+            function_call_params: FunctionCallParams,
+        ) -> None:
+            logger.info("LLM Function Call EXECUTED: get_current_time")
+            logger.info(f"Arguments: {function_call_params.arguments}")
+            try:
+                timezone = function_call_params.arguments.get("timezone", "UTC")
+                result = get_current_time(timezone)
+                await function_call_params.result_callback(result)
+            except Exception as e:
+                await function_call_params.result_callback({"error": str(e)})
+
+        async def convert_time_func(
+            function_call_params: FunctionCallParams,
+        ) -> None:
+            logger.info("LLM Function Call EXECUTED: convert_time")
+            logger.info(f"Arguments: {function_call_params.arguments}")
+            try:
+                result = convert_time(
+                    function_call_params.arguments.get("source_timezone", ""),
+                    function_call_params.arguments.get("time", ""),
+                    function_call_params.arguments.get("target_timezone", ""),
+                )
+                await function_call_params.result_callback(result)
+            except Exception as e:
+                await function_call_params.result_callback({"error": str(e)})
+
+        self._engine.llm.register_function("get_current_time", get_current_time_func)
+        self._engine.llm.register_function("convert_time", convert_time_func)
 
     def _create_http_tool_handler(self, tool: Any, function_name: str):
         """Create a handler function for an HTTP API tool.

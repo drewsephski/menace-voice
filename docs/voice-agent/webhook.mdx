@@ -20,6 +20,8 @@ description: "Webhook node allow you to sync the result of Voice Agent runs to y
 You can have multiple Webhook Nodes for a single Voice Agent, if you want to sync the result of the call at multiple places.
 </Note>
 
+During [agent onboarding](/getting-started/first-agent), the Launch step can add one webhook for you. Paste a Slack, n8n, Zapier, or backend URL and Menace Voice attaches a Webhook node with a recap payload. You can still edit the payload in the editor.
+
 ### Creating the Webhook Payload
 The payload can contain a valid JSON, and you can reference context variables while constructing it using double-brace syntax — for example `{{workflow_run_id}}`, [`{{initial_context.*}}`](/core-concepts/context-and-variables#initial_context), and [`{{gathered_context.*}}`](/core-concepts/context-and-variables#gathered_context), including the [final call outcome](../developer/call-dispositions) `{{gathered_context.call_disposition}}`.
 

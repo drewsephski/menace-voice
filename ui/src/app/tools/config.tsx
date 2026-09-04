@@ -1,6 +1,6 @@
 "use client";
 
-import { Calculator, Cog, Globe, type LucideIcon, PhoneForwarded, PhoneOff, Puzzle } from "lucide-react";
+import { Calculator, Clock, Cog, Globe, type LucideIcon, PhoneForwarded, PhoneOff, Puzzle } from "lucide-react";
 import { type ReactNode } from "react";
 
 import type {
@@ -8,6 +8,7 @@ import type {
     ContextDestinationMappingConfig,
     ContextDestinationRoute,
     ContextDestinationRule,
+    CurrentTimeToolDefinition,
     EndCallConfig,
     EndCallToolDefinition,
     HttpApiToolDefinition,
@@ -17,7 +18,7 @@ import type {
 } from "@/client/types.gen";
 import { createUuid } from "@/lib/uuid";
 
-export type ToolCategory = "http_api" | "end_call" | "transfer_call" | "calculator" | "native" | "integration" | "mcp";
+export type ToolCategory = "http_api" | "end_call" | "transfer_call" | "calculator" | "current_time" | "native" | "integration" | "mcp";
 
 export type EndCallMessageType = "none" | "custom" | "audio";
 export type TransferDestinationSource = "static" | "dynamic" | "context_mapping";
@@ -137,6 +138,18 @@ export const TOOL_CATEGORIES: ToolCategoryConfig[] = [
         },
     },
     {
+        value: "current_time",
+        label: "Current Time",
+        description: "Get the current date and time or convert between timezones",
+        icon: Clock,
+        iconName: "clock",
+        iconColor: "#0EA5E9",
+        autoFill: {
+            name: "Current Time",
+            description: "Get the current date and time in a timezone, or convert a time between timezones. Use this before confirming appointments, hours, or any time-sensitive detail.",
+        },
+    },
+    {
         value: "mcp",
         label: "MCP Server",
         description: "Connect a customer MCP server; its tools become available to the agent",
@@ -193,6 +206,8 @@ export function getToolTypeLabel(category: string): string {
             return "HTTP API Tool";
         case "calculator":
             return "Calculator Tool";
+        case "current_time":
+            return "Current Time Tool";
         case "native":
             return "Native Tool";
         case "integration":
@@ -225,6 +240,7 @@ export type ToolDefinition =
     | EndCallToolDefinition
     | TransferCallToolDefinition
     | CalculatorToolDefinition
+    | CurrentTimeToolDefinition
     | McpToolDefinition;
 
 export function createEndCallDefinition(config: EndCallConfig): EndCallToolDefinition {
@@ -261,6 +277,13 @@ export function createCalculatorDefinition(): CalculatorToolDefinition {
     };
 }
 
+export function createCurrentTimeDefinition(): CurrentTimeToolDefinition {
+    return {
+        schema_version: 1,
+        type: "current_time",
+    };
+}
+
 export const MCP_URL_PATTERN = /^https?:\/\//i;
 
 export function createMcpDefinition(
@@ -291,6 +314,8 @@ export function createToolDefinition(category: ToolCategory): ToolDefinition {
             return createTransferCallDefinition(DEFAULT_TRANSFER_CALL_CONFIG);
         case "calculator":
             return createCalculatorDefinition();
+        case "current_time":
+            return createCurrentTimeDefinition();
         case "http_api":
         default:
             return createHttpApiDefinition();

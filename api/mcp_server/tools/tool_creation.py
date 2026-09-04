@@ -22,7 +22,7 @@ async def create_tool(request: CreateToolRequest) -> dict[str, Any]:
 
     The request schema is the same `CreateToolRequest` used by the REST API
     and generated SDKs. Use it to create HTTP API, end-call, transfer-call,
-    calculator, or MCP-server tools. For authenticated HTTP or MCP tools,
+    calculator, current-time, or MCP-server tools. For authenticated HTTP or MCP tools,
     reference an existing `credential_uuid` from `list_credentials`; users
     create credential secrets in the UI, and this flow only stores the UUID
     reference. For MCP tools, the server best-effort discovers the remote
