@@ -39,6 +39,7 @@ MANAGED_SERVICE_KEY_NAME = "Default Menace Voice Model Service Key"
 BOOTSTRAP_LEASE_STALE_AFTER = timedelta(minutes=5)
 
 _BOOTSTRAP_KEY = OrganizationConfigurationKey.ORGANIZATION_BOOTSTRAP.value
+_BILLING_ACCOUNT_V2_MARKER = "billing_account_v2"
 
 
 async def ensure_organization_bootstrapped(
@@ -61,7 +62,23 @@ async def ensure_organization_bootstrapped(
     Never raises. A provisioning failure must not fail authentication — the
     caller is a legitimately authenticated user either way.
     """
-    if await _is_bootstrap_complete(organization_id):
+    bootstrap_state = await _get_bootstrap_state(organization_id)
+    if bootstrap_state.get("status") == LEASE_COMPLETED:
+        if DEPLOYMENT_MODE == "oss" or bootstrap_state.get(_BILLING_ACCOUNT_V2_MARKER):
+            return True
+        try:
+            await ensure_hosted_mps_billing_account_v2(
+                organization_id,
+                created_by=created_by,
+            )
+            await _mark_bootstrap_complete(organization_id)
+        except Exception:
+            logger.warning(
+                "Failed to backfill hosted MPS billing account for organization {}",
+                organization_id,
+                exc_info=True,
+            )
+            return False
         return True
 
     configuration = await get_organization_ai_model_configuration_v2(organization_id)
@@ -75,14 +92,6 @@ async def ensure_organization_bootstrapped(
     if owner_token is None:
         # Another request holds the lease and is provisioning right now.
         return False
-
-    if configuration is not None and sip_provisioned:
-        # Provisioned before the sentinel existed. Record it so subsequent
-        # requests take the single-read fast path above.
-        await db_client.complete_configuration_lease(
-            organization_id, _BOOTSTRAP_KEY, owner_token
-        )
-        return True
 
     try:
         complete = await _bootstrap_organization(
@@ -112,12 +121,24 @@ async def ensure_organization_bootstrapped(
     await db_client.complete_configuration_lease(
         organization_id, _BOOTSTRAP_KEY, owner_token
     )
+    await _mark_bootstrap_complete(organization_id)
     return True
 
 
-async def _is_bootstrap_complete(organization_id: int) -> bool:
+async def _get_bootstrap_state(organization_id: int) -> dict:
     row = await db_client.get_configuration(organization_id, _BOOTSTRAP_KEY)
-    return bool(row and (row.value or {}).get("status") == LEASE_COMPLETED)
+    return dict(row.value or {}) if row else {}
+
+
+async def _mark_bootstrap_complete(organization_id: int) -> None:
+    value: dict[str, object] = {"status": LEASE_COMPLETED}
+    if DEPLOYMENT_MODE != "oss":
+        value[_BILLING_ACCOUNT_V2_MARKER] = True
+    await db_client.upsert_configuration(
+        organization_id,
+        _BOOTSTRAP_KEY,
+        value,
+    )
 
 
 async def _has_managed_sip_connectivity(organization_id: int) -> bool:
@@ -140,21 +161,13 @@ async def _bootstrap_organization(
     Returns True when the organization ends up fully provisioned, i.e. when the
     lease may be marked terminal.
     """
-    if configuration is None:
-        # Billing is best effort: it is recoverable out of band, and failing the
-        # whole bootstrap over it would also cost the org its model config.
-        try:
-            await ensure_hosted_mps_billing_account_v2(
-                organization_id,
-                created_by=created_by,
-            )
-        except Exception:
-            logger.warning(
-                "Failed to initialize hosted MPS billing account for organization {}",
-                organization_id,
-                exc_info=True,
-            )
+    if DEPLOYMENT_MODE != "oss":
+        await ensure_hosted_mps_billing_account_v2(
+            organization_id,
+            created_by=created_by,
+        )
 
+    if configuration is None:
         configuration = await provision_dograh_managed_model_configuration(
             organization_id,
             created_by=created_by,

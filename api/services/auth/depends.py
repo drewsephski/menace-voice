@@ -8,8 +8,8 @@ from api.db import db_client
 from api.db.models import UserModel
 from api.enums import PostHogEvent
 from api.services.auth.stack_auth import stackauth
-from api.services.organization_bootstrap import ensure_organization_bootstrapped
 from api.services.billing.stripe_service import initialize_organization_trial
+from api.services.organization_bootstrap import ensure_organization_bootstrapped
 from api.services.posthog_client import (
     POSTHOG_ORGANIZATION_GROUP_TYPE,
     capture_event,
@@ -112,7 +112,8 @@ async def get_user(
                 organization=organization,
                 stack_user=stack_user,
             )
-            await initialize_organization_trial(organization.id)
+
+        await initialize_organization_trial(organization.id)
 
         # Check if user's selected organization differs from the current organization
         if user_model.selected_organization_id != organization.id:

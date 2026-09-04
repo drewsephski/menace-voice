@@ -194,34 +194,29 @@ _MCP_PRESET_DEFAULTS: dict[str, dict[str, Any]] = {
 
 TEMPLATE_BUILTIN_CATEGORIES: dict[str, list[ToolCategory]] = {
     "receptionist": [
-        ToolCategory.END_CALL,
         ToolCategory.TRANSFER_CALL,
         ToolCategory.CURRENT_TIME,
     ],
     "lead-qualifier": [
-        ToolCategory.END_CALL,
         ToolCategory.TRANSFER_CALL,
         ToolCategory.CURRENT_TIME,
     ],
     "support-desk": [
-        ToolCategory.END_CALL,
         ToolCategory.TRANSFER_CALL,
         ToolCategory.CURRENT_TIME,
     ],
-    "technical-docs": [ToolCategory.END_CALL],
+    "technical-docs": [],
     "appointment-coordinator": [
-        ToolCategory.END_CALL,
         ToolCategory.TRANSFER_CALL,
         ToolCategory.CALCULATOR,
         ToolCategory.CURRENT_TIME,
     ],
     "service-dispatcher": [
-        ToolCategory.END_CALL,
         ToolCategory.TRANSFER_CALL,
         ToolCategory.CURRENT_TIME,
     ],
-    "feedback-interviewer": [ToolCategory.END_CALL],
-    "custom": [ToolCategory.END_CALL],
+    "feedback-interviewer": [],
+    "custom": [],
 }
 
 TEMPLATE_MCP_URLS: dict[str, list[str]] = {
@@ -383,14 +378,17 @@ async def ensure_template_tools(
     template_id: str,
     organization_id: int,
     user_id: int,
+    excluded_categories: set[str] | None = None,
 ) -> list[str]:
-    """Return tool UUIDs that should be attached for an onboarding template."""
     if template_id not in AGENT_ONBOARDING_TEMPLATE_IDS:
         return []
 
     tool_uuids: list[str] = []
+    excluded_categories = excluded_categories or set()
 
     for category in TEMPLATE_BUILTIN_CATEGORIES.get(template_id, []):
+        if category.value in excluded_categories:
+            continue
         tool_uuids.append(
             await _ensure_builtin_tool(
                 organization_id=organization_id,

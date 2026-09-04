@@ -394,6 +394,80 @@ def test_create_workflow_from_template_attaches_launch_integrations():
     assert "call_disposition" in webhook_node["data"]["payload_template"]
 
 
+def test_create_workflow_from_template_persists_validated_model_configuration():
+    app = _make_test_app()
+    client = TestClient(app)
+    created_at = datetime.now(UTC)
+    generated_definition = {
+        "nodes": [{"id": "start", "type": "startCall", "data": {"prompt": "Hi"}}],
+        "edges": [],
+    }
+    workflow = SimpleNamespace(
+        id=42,
+        name="Maya",
+        status="draft",
+        created_at=created_at,
+        current_definition_id=7,
+        template_context_variables=None,
+        call_disposition_codes=None,
+        workflow_configurations={
+            "model_configuration_v2_override": {
+                "version": 2,
+                "mode": "dograh",
+                "dograh": {
+                    "api_key": "service-key",
+                    "voice": "recommended-voice",
+                    "speed": 1,
+                    "language": "en-US",
+                },
+            }
+        },
+    )
+
+    with (
+        patch("api.routes.workflow.db_client") as mock_db,
+        patch(
+            "api.routes.workflow.ensure_template_tools",
+            AsyncMock(return_value=[]),
+        ),
+        patch(
+            "api.routes.workflow.mps_service_key_client.call_workflow_api",
+            AsyncMock(return_value={"workflow_definition": generated_definition}),
+        ),
+        patch(
+            "api.routes.workflow.get_resolved_ai_model_configuration",
+            AsyncMock(return_value=SimpleNamespace(organization_configuration=None)),
+        ),
+        patch(
+            "api.routes.workflow.UserConfigurationValidator.validate",
+            AsyncMock(),
+        ) as validate_configuration,
+    ):
+        mock_db.get_tools_by_uuids = AsyncMock(return_value=[])
+        mock_db.get_documents_by_uuids = AsyncMock(return_value=[])
+        mock_db.create_workflow = AsyncMock(return_value=workflow)
+
+        response = client.post(
+            "/workflow/create/template",
+            json={
+                "call_type": "inbound",
+                "use_case": "Receptionist",
+                "activity_description": "Answer calls",
+                "name": "Maya",
+                "workflow_configurations": workflow.workflow_configurations,
+            },
+        )
+
+    assert response.status_code == 200
+    create_kwargs = mock_db.create_workflow.await_args.kwargs
+    saved_override = create_kwargs["workflow_configurations"][
+        "model_configuration_v2_override"
+    ]
+    assert saved_override["dograh"]["voice"] == "recommended-voice"
+    assert saved_override["dograh"]["language"] == "en-US"
+    validate_configuration.assert_awaited_once()
+
+
 def test_create_workflow_from_template_rejects_invalid_launch_url():
     app = _make_test_app()
     client = TestClient(app)

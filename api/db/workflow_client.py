@@ -27,12 +27,14 @@ class WorkflowClient(BaseDBClient):
         workflow_definition: dict,
         user_id: int,
         organization_id: int = None,
+        workflow_configurations: dict | None = None,
     ) -> WorkflowModel:
         async with self.async_session() as session:
             try:
                 new_workflow = WorkflowModel(
                     name=name,
                     workflow_definition=workflow_definition,  # Keep for backwards compatibility
+                    workflow_configurations=workflow_configurations or {},
                     user_id=user_id,
                     organization_id=organization_id,
                 )

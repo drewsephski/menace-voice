@@ -1,5 +1,6 @@
 "use client";
 
+import { motion, useReducedMotion } from "framer-motion";
 import {
   ArrowLeft,
   ArrowRight,
@@ -12,7 +13,10 @@ import {
   Loader2,
   Plus,
   Puzzle,
+  Settings2,
+  Sparkles,
   UploadCloud,
+  Volume2,
   X,
 } from "lucide-react";
 import Image from "next/image";
@@ -36,6 +40,12 @@ import {
   type McpPresetId,
   normalizeMcpUrl,
 } from "@/app/agent-onboarding/connection-catalog";
+import {
+  getAgentVoiceSelection,
+  getVoiceProviderLabel,
+  isCatalogVoiceProvider,
+  updateAgentVoiceSelection,
+} from "@/app/agent-onboarding/voice-configuration";
 import DocumentUpload from "@/app/files/DocumentUpload";
 import {
   createMcpDefinition,
@@ -46,14 +56,22 @@ import {
 import {
   createToolApiV1ToolsPost,
   createWorkflowFromTemplateApiV1WorkflowCreateTemplatePost,
+  getModelConfigurationV2ApiV1OrganizationsModelConfigurationsV2Get,
+  getModelConfigurationV2DefaultsApiV1OrganizationsModelConfigurationsV2DefaultsGet,
   listDocumentsApiV1KnowledgeBaseDocumentsGet,
   listToolsApiV1ToolsGet,
 } from "@/client/sdk.gen";
 import type {
   DocumentResponseSchema,
+  OrganizationAiModelConfigurationResponse,
+  OrganizationAiModelConfigurationV2,
   ToolResponse,
   WorkflowResponse,
 } from "@/client/types.gen";
+import {
+  AIModelConfigurationV2Editor,
+  type ModelConfigurationDefaultsV2,
+} from "@/components/AIModelConfigurationV2Editor";
 import { BrandLogo } from "@/components/BrandLogo";
 import { CredentialSelector } from "@/components/http/credential-selector";
 import { Button } from "@/components/ui/button";
@@ -65,6 +83,11 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -85,11 +108,12 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { VoiceSelectorModal } from "@/components/VoiceSelectorModal";
 import { detailFromError } from "@/lib/apiError";
 import { useAuth } from "@/lib/auth";
 import { cn } from "@/lib/utils";
 
-type StepIndex = 0 | 1 | 2 | 3 | 4;
+type StepIndex = 0 | 1 | 2 | 3 | 4 | 5;
 type TemplateId =
   | "receptionist"
   | "lead-qualifier"
@@ -281,6 +305,7 @@ const STEPS = [
   "Purpose",
   "Knowledge",
   "Behavior",
+  "Voice",
   "Connections",
   "Launch",
 ] as const;
@@ -301,7 +326,23 @@ const TONES = [
     description: "Curious, thoughtful, and guided by context.",
   },
 ] as const;
-const LANGUAGES = ["English (US)", "English (UK)", "Spanish"] as const;
+const LANGUAGES = [
+  { value: "en-US", label: "English (US)" },
+  { value: "en-GB", label: "English (UK)" },
+  { value: "es", label: "Spanish" },
+] as const;
+
+type LanguageCode = (typeof LANGUAGES)[number]["value"];
+
+function getLanguageLabel(language: LanguageCode): string {
+  return LANGUAGES.find((option) => option.value === language)?.label ?? language;
+}
+
+function getProviderCostLabel(provider: string): string {
+  if (provider === "dograh") return "Managed · uses Menace Voice credits";
+  if (provider === "speaches") return "Free provider · self-hosted";
+  return "Bring your own key · provider charges may apply";
+}
 
 function TemplateToolTooltip({
   label,
@@ -401,11 +442,15 @@ function TemplateMcpLogo({ preset }: { preset: McpPreset }) {
 function TemplateHttpLogo({ templateId }: { templateId: HttpTemplateId }) {
   const template = HTTP_TEMPLATE_BY_ID[templateId];
   if (!template) return null;
+  const Icon = template.icon;
 
   return (
     <TemplateToolTooltip label={template.name} description={template.description}>
-      <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md border border-border/50 bg-background/80 shadow-sm text-sky-500 transition-transform duration-300 ease-out group-hover/card:scale-105">
-        <Globe className="h-4 w-4" aria-hidden />
+      <div
+        className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md border border-border/50 bg-background/80 shadow-sm transition-transform duration-300 ease-out group-hover/card:scale-105"
+        style={{ color: template.iconColor }}
+      >
+        <Icon className="h-4 w-4" aria-hidden />
       </div>
     </TemplateToolTooltip>
   );
@@ -454,6 +499,7 @@ function TemplateOptionCard({
   onSelect: () => void;
 }) {
   const [showTools, setShowTools] = useState(false);
+  const reduceMotion = useReducedMotion();
   const toolCount = getTemplateToolCount(template);
 
   const handleCardKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
@@ -467,16 +513,40 @@ function TemplateOptionCard({
     event.stopPropagation();
   };
 
+  const avatarVariants = reduceMotion
+    ? {
+        rest: { opacity: isSelected ? 0.9 : 0.46 },
+        hover: { opacity: 0.9 },
+      }
+    : {
+        rest: {
+          opacity: isSelected ? 0.9 : 0.4,
+          scale: isSelected ? 1.02 : 0.94,
+          y: isSelected ? 0 : 3,
+          rotate: 0,
+        },
+        hover: {
+          opacity: 1,
+          scale: 1.13,
+          y: -3,
+          rotate: -1.25,
+        },
+      };
+
   return (
-    <div
+    <motion.div
       role="button"
       tabIndex={0}
       aria-pressed={isSelected}
       title={template.label}
       onClick={onSelect}
       onKeyDown={handleCardKeyDown}
+      initial={false}
+      animate="rest"
+      whileHover={reduceMotion ? undefined : "hover"}
+      whileFocus={reduceMotion ? undefined : "hover"}
       className={cn(
-        "group/card relative z-0 flex h-full min-h-[10.5rem] cursor-pointer flex-col overflow-visible rounded-xl border p-3.5 text-left transition-[border-color,background-color,box-shadow] duration-300 ease-out hover:z-10 focus-visible:z-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cta/70",
+        "group/card relative z-0 flex h-full min-h-[11rem] cursor-pointer flex-col overflow-visible rounded-xl border p-4 text-left transition-[border-color,background-color,box-shadow] duration-300 ease-out hover:z-10 focus-visible:z-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cta/70",
         isSelected
           ? "border-cta bg-cta/10 shadow-[0_0_0_1px_rgba(240,68,56,0.25)]"
           : "border-border/70 bg-background/25 hover:border-foreground/30 hover:bg-background/45",
@@ -556,23 +626,36 @@ function TemplateOptionCard({
         )}
 
         <div className="relative h-20 w-20 shrink-0 overflow-visible">
-          <Image
-            src={template.avatarUrl}
-            alt=""
-            aria-hidden
-            width={128}
-            height={128}
+          <div
             className={cn(
-              "pointer-events-none absolute bottom-0 right-0 h-20 w-20 origin-bottom-right object-contain will-change-[transform,opacity] motion-reduce:transition-none motion-reduce:will-change-auto",
-              "transition-[transform,opacity] duration-700 ease-[cubic-bezier(0.4,0,0.2,1)]",
-              isSelected
-                ? "scale-100 opacity-75"
-                : "scale-[0.88] opacity-[0.14] group-hover/card:scale-[1.28] group-hover/card:opacity-[0.82] group-focus-visible/card:scale-[1.28] group-focus-visible/card:opacity-[0.82]",
+              "pointer-events-none absolute inset-2 rounded-full bg-[radial-gradient(circle,rgba(240,68,56,0.14),transparent_68%)] opacity-0 blur-md transition-opacity duration-300",
+              isSelected && "opacity-100",
+              "group-hover/card:opacity-100 group-focus-visible/card:opacity-100",
             )}
+            aria-hidden
           />
+          <motion.div
+            variants={avatarVariants}
+            transition={{
+              type: "spring",
+              stiffness: 240,
+              damping: 20,
+              mass: 0.72,
+            }}
+            className="pointer-events-none absolute bottom-0 right-0 h-20 w-20 origin-bottom-right will-change-transform"
+          >
+            <Image
+              src={template.avatarUrl}
+              alt=""
+              aria-hidden
+              width={128}
+              height={128}
+              className="h-full w-full object-contain"
+            />
+          </motion.div>
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 }
 
@@ -722,9 +805,23 @@ export default function AgentOnboardingPage() {
   const [callType, setCallType] = useState<"inbound" | "outbound">("inbound");
   const [tone, setTone] =
     useState<(typeof TONES)[number]["value"]>("warm and helpful");
-  const [language, setLanguage] =
-    useState<(typeof LANGUAGES)[number]>("English (US)");
+  const [language, setLanguage] = useState<LanguageCode>("en-US");
   const [behaviorNotes, setBehaviorNotes] = useState("");
+  const [modelConfigurationDefaults, setModelConfigurationDefaults] =
+    useState<ModelConfigurationDefaultsV2 | null>(null);
+  const [organizationModelConfiguration, setOrganizationModelConfiguration] =
+    useState<OrganizationAiModelConfigurationResponse | null>(null);
+  const [agentModelConfiguration, setAgentModelConfiguration] =
+    useState<OrganizationAiModelConfigurationV2 | null>(null);
+  const [modelConfigurationLoading, setModelConfigurationLoading] =
+    useState(false);
+  const [modelConfigurationLoaded, setModelConfigurationLoaded] =
+    useState(false);
+  const [modelConfigurationError, setModelConfigurationError] = useState<
+    string | null
+  >(null);
+  const [voiceConfirmed, setVoiceConfirmed] = useState(false);
+  const [advancedSettingsOpen, setAdvancedSettingsOpen] = useState(false);
   const [documents, setDocuments] = useState<DocumentResponseSchema[]>([]);
   const [selectedDocumentUuids, setSelectedDocumentUuids] = useState<string[]>(
     [],
@@ -827,7 +924,7 @@ export default function AgentOnboardingPage() {
   );
 
   useEffect(() => {
-    if (step !== 3 || !user) return;
+    if (step !== 4 || !user) return;
 
     const fetchMcpTools = async () => {
       try {
@@ -864,6 +961,65 @@ export default function AgentOnboardingPage() {
     void fetchMcpTools();
   }, [getAccessToken, step, user]);
 
+  useEffect(() => {
+    if (step !== 3 || !user || modelConfigurationLoaded) return;
+
+    const loadModelConfiguration = async () => {
+      try {
+        setModelConfigurationLoading(true);
+        setModelConfigurationError(null);
+        const [defaultsResult, configurationResult] = await Promise.all([
+          getModelConfigurationV2DefaultsApiV1OrganizationsModelConfigurationsV2DefaultsGet(),
+          getModelConfigurationV2ApiV1OrganizationsModelConfigurationsV2Get(),
+        ]);
+
+        if (defaultsResult.error || !defaultsResult.data) {
+          throw new Error(
+            detailFromError(
+              defaultsResult.error,
+              "Could not load available voice providers.",
+            ),
+          );
+        }
+        if (configurationResult.error || !configurationResult.data) {
+          throw new Error(
+            detailFromError(
+              configurationResult.error,
+              "Could not load your current voice setup.",
+            ),
+          );
+        }
+
+        const defaults = defaultsResult.data as ModelConfigurationDefaultsV2;
+        const configuration = configurationResult.data;
+        setModelConfigurationDefaults(defaults);
+        setOrganizationModelConfiguration(configuration);
+
+        const current = configuration.configuration as
+          | OrganizationAiModelConfigurationV2
+          | null;
+        const currentVoice = getAgentVoiceSelection(current);
+        if (currentVoice?.language) {
+          const supportedLanguage = LANGUAGES.find(
+            (option) => option.value === currentVoice.language,
+          );
+          if (supportedLanguage) setLanguage(supportedLanguage.value);
+        }
+        setModelConfigurationLoaded(true);
+      } catch (err) {
+        setModelConfigurationError(
+          err instanceof Error
+            ? err.message
+            : "Could not load your current voice setup.",
+        );
+      } finally {
+        setModelConfigurationLoading(false);
+      }
+    };
+
+    void loadModelConfiguration();
+  }, [modelConfigurationLoaded, step, user]);
+
   const selectedTemplateOption = useMemo(
     () => TEMPLATE_OPTIONS.find((template) => template.id === selectedTemplate),
     [selectedTemplate],
@@ -897,6 +1053,11 @@ export default function AgentOnboardingPage() {
     ? MCP_PRESET_BY_ID[authPresetId]
     : null;
   const selectedHttpTemplate = HTTP_TEMPLATE_BY_ID[httpTemplateId];
+  const organizationConfiguration = organizationModelConfiguration
+    ?.configuration as OrganizationAiModelConfigurationV2 | null | undefined;
+  const activeModelConfiguration =
+    agentModelConfiguration ?? organizationConfiguration ?? null;
+  const voiceSelection = getAgentVoiceSelection(activeModelConfiguration);
   const unconnectedRecommendedReadyMcpPresets =
     recommendedReadyMcpPresets.filter(
       (preset) => !mcpServers.some((server) => server.url === preset.url),
@@ -913,6 +1074,66 @@ export default function AgentOnboardingPage() {
     setUseCase(template.useCase);
     setActivityDescription(template.activityDescription);
     if (template.id !== "custom") setAgentName(`${template.label} agent`);
+  };
+
+  const chooseVoice = (voice: string) => {
+    if (!activeModelConfiguration) {
+      setModelConfigurationError(
+        "Set up an organization model configuration before choosing a voice.",
+      );
+      return;
+    }
+    try {
+      const normalizedVoice = voice.trim();
+      setAgentModelConfiguration(
+        updateAgentVoiceSelection(
+          activeModelConfiguration,
+          normalizedVoice,
+          language,
+        ),
+      );
+      setVoiceConfirmed(Boolean(normalizedVoice));
+      setModelConfigurationError(null);
+    } catch (err) {
+      setModelConfigurationError(
+        err instanceof Error ? err.message : "The voice could not be selected.",
+      );
+    }
+  };
+
+  const chooseLanguage = (nextLanguage: LanguageCode) => {
+    setLanguage(nextLanguage);
+    if (!activeModelConfiguration || !voiceSelection) return;
+    try {
+      setAgentModelConfiguration(
+        updateAgentVoiceSelection(
+          activeModelConfiguration,
+          voiceSelection.voice,
+          nextLanguage,
+        ),
+      );
+    } catch (err) {
+      setModelConfigurationError(
+        err instanceof Error
+          ? err.message
+          : "The language could not be selected.",
+      );
+    }
+  };
+
+  const applyAdvancedModelConfiguration = async (
+    configuration: OrganizationAiModelConfigurationV2,
+  ) => {
+    setAgentModelConfiguration(configuration);
+    const advancedVoice = getAgentVoiceSelection(configuration);
+    setVoiceConfirmed(Boolean(advancedVoice?.voice));
+    if (advancedVoice?.language) {
+      const supportedLanguage = LANGUAGES.find(
+        (option) => option.value === advancedVoice.language,
+      );
+      if (supportedLanguage) setLanguage(supportedLanguage.value);
+    }
+    toast.success("Advanced voice settings applied");
   };
 
   const toggleDocument = (documentUuid: string, checked: boolean) => {
@@ -992,7 +1213,7 @@ export default function AgentOnboardingPage() {
             description || "MCP server connected during agent setup.",
           category: "mcp",
           icon: "puzzle",
-          icon_color: "#f04438",
+          icon_color: "#8B5CF6",
           definition: createMcpDefinition(
             normalizedUrl,
             credentialUuid,
@@ -1152,6 +1373,8 @@ export default function AgentOnboardingPage() {
       ? activityDescription.trim().length > 0
       : step === 2
         ? agentName.trim().length > 0
+        : step === 3
+          ? voiceConfirmed && Boolean(voiceSelection?.voice)
         : true;
 
   const createAgent = async () => {
@@ -1165,7 +1388,10 @@ export default function AgentOnboardingPage() {
       const accessToken = await getAccessToken();
       const configurationSummary = [
         `Tone: ${tone}.`,
-        `Language and voice: ${language}.`,
+        `Language: ${getLanguageLabel(language)}.`,
+        voiceSelection
+          ? `Voice: ${getVoiceProviderLabel(voiceSelection.provider)} / ${voiceSelection.voice}.`
+          : "",
         `Call direction: ${callType}.`,
         behaviorNotes.trim()
           ? `Additional behavior: ${behaviorNotes.trim()}`
@@ -1204,6 +1430,11 @@ export default function AgentOnboardingPage() {
               ...httpTools.map((tool) => tool.toolUuid),
             ],
             document_uuids: selectedDocumentUuids,
+            workflow_configurations: agentModelConfiguration
+              ? {
+                  model_configuration_v2_override: agentModelConfiguration,
+                }
+              : undefined,
             pre_call_fetch_url: preCallFetchUrl.trim() || null,
             pre_call_fetch_credential_uuid:
               preCallFetchUrl.trim()
@@ -1326,9 +1557,10 @@ export default function AgentOnboardingPage() {
               <CardTitle className="mt-5 text-2xl leading-tight sm:text-3xl">
                 {step === 0 && "What should your agent help with?"}
                 {step === 1 && "What should it know from day one?"}
-                {step === 2 && "How should it sound?"}
-                {step === 3 && "What should it connect to?"}
-                {step === 4 && "Ready to bring it to life?"}
+                {step === 2 && "How should it behave?"}
+                {step === 3 && "Choose the voice people will hear"}
+                {step === 4 && "What should it connect to?"}
+                {step === 5 && "Ready to bring it to life?"}
               </CardTitle>
               <CardDescription className="mt-2 max-w-2xl text-base">
                 {step === 0 &&
@@ -1336,10 +1568,12 @@ export default function AgentOnboardingPage() {
                 {step === 1 &&
                   "Upload the documents and references your agent can use during a call."}
                 {step === 2 &&
-                  "Give the agent a name, a voice, and a few guardrails for every conversation."}
+                  "Give the agent a name and a few guardrails for every conversation."}
                 {step === 3 &&
-                  "Connect MCP servers and HTTP APIs now, or leave this step for later."}
+                  "Listen to a few options and pick one. Provider and model controls stay available below when you need them."}
                 {step === 4 &&
+                  "Connect MCP servers and HTTP APIs now, or leave this step for later."}
+                {step === 5 &&
                   "Review the setup, optionally add a caller lookup and hangup webhook, then generate the first workflow."}
               </CardDescription>
             </CardHeader>
@@ -1545,29 +1779,6 @@ export default function AgentOnboardingPage() {
                         </SelectContent>
                       </Select>
                     </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="agent-language">Language and voice</Label>
-                      <Select
-                        value={language}
-                        onValueChange={(value) =>
-                          setLanguage(value as (typeof LANGUAGES)[number])
-                        }
-                      >
-                        <SelectTrigger
-                          id="agent-language"
-                          className="h-11 bg-background/35"
-                        >
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {LANGUAGES.map((option) => (
-                            <SelectItem key={option} value={option}>
-                              {option}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
                   </div>
                   <div className="space-y-3">
                     <div>
@@ -1620,6 +1831,198 @@ export default function AgentOnboardingPage() {
               )}
 
               {step === 3 && (
+                <div className="space-y-5">
+                  {modelConfigurationLoading ? (
+                    <div className="flex min-h-48 items-center justify-center gap-2 rounded-xl border border-border/70 bg-background/25 text-sm text-muted-foreground">
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Loading voices...
+                    </div>
+                  ) : modelConfigurationError ? (
+                    <div className="rounded-xl border border-destructive/40 bg-destructive/10 p-5">
+                      <p className="text-sm font-medium text-destructive">
+                        Voice setup is unavailable
+                      </p>
+                      <p className="mt-2 text-sm text-muted-foreground">
+                        {modelConfigurationError}
+                      </p>
+                      <Button asChild variant="outline" size="sm" className="mt-4">
+                        <Link href="/model-configurations">Configure models</Link>
+                      </Button>
+                    </div>
+                  ) : voiceSelection && activeModelConfiguration ? (
+                    <>
+                      <div className="overflow-hidden rounded-xl border border-cta/30 bg-[linear-gradient(135deg,color-mix(in_oklab,var(--cta)_12%,transparent),transparent_55%)]">
+                        <div className="flex flex-col gap-5 p-5 sm:p-6">
+                          <div className="flex items-start gap-3">
+                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-cta text-cta-foreground shadow-[0_0_24px_rgba(240,68,56,0.24)]">
+                              <Volume2 className="h-5 w-5" />
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <div className="flex flex-wrap items-center gap-2">
+                                <p className="font-medium">
+                                  {getVoiceProviderLabel(voiceSelection.provider)}
+                                </p>
+                                <span className="rounded-full border border-border/70 bg-background/70 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+                                  {getProviderCostLabel(voiceSelection.provider)}
+                                </span>
+                              </div>
+                              <p className="mt-1 text-sm leading-6 text-muted-foreground">
+                                Pick a voice you would trust to represent your
+                                business. {isCatalogVoiceProvider(voiceSelection.provider)
+                                  ? "The first two catalog matches are our recommended starting points."
+                                  : "Use the voice ID from your provider; you can switch providers below."}
+                              </p>
+                            </div>
+                          </div>
+
+                          <div className="grid gap-4 sm:grid-cols-[minmax(0,1fr)_220px]">
+                            <div className="space-y-2">
+                              <Label htmlFor="agent-voice">Agent voice</Label>
+                              {isCatalogVoiceProvider(voiceSelection.provider) ? (
+                                <div id="agent-voice">
+                                  <VoiceSelectorModal
+                                    provider={voiceSelection.provider}
+                                    model={voiceSelection.model}
+                                    value={voiceSelection.voice}
+                                    onChange={chooseVoice}
+                                    allowManualInput={
+                                      voiceSelection.provider !== "dograh" ||
+                                      (modelConfigurationDefaults?.dograh
+                                        .allow_custom_input ?? false)
+                                    }
+                                    recommendedCount={2}
+                                  />
+                                </div>
+                              ) : (
+                                <Input
+                                  id="agent-voice"
+                                  value={voiceSelection.voice}
+                                  onChange={(event) => chooseVoice(event.target.value)}
+                                  placeholder="Enter the provider voice ID"
+                                  className="h-11 bg-background/50"
+                                />
+                              )}
+                            </div>
+                            <div className="space-y-2">
+                              <Label htmlFor="agent-language">Language</Label>
+                              <Select
+                                value={language}
+                                onValueChange={(value) =>
+                                  chooseLanguage(value as LanguageCode)
+                                }
+                              >
+                                <SelectTrigger
+                                  id="agent-language"
+                                  className="h-11 bg-background/50"
+                                >
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {LANGUAGES.map((option) => (
+                                    <SelectItem
+                                      key={option.value}
+                                      value={option.value}
+                                    >
+                                      {option.label}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                            {voiceConfirmed ? (
+                              <>
+                                <CheckCircle2 className="h-4 w-4 text-green-400" />
+                                Voice selected and ready to save with this agent.
+                              </>
+                            ) : (
+                              <>
+                                <Sparkles className="h-4 w-4 text-cta" />
+                                Open the voice picker and confirm one to continue.
+                              </>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+
+                      <Collapsible
+                        open={advancedSettingsOpen}
+                        onOpenChange={setAdvancedSettingsOpen}
+                        className="overflow-hidden rounded-xl border border-border/70 bg-background/20"
+                      >
+                        <CollapsibleTrigger asChild>
+                          <button
+                            type="button"
+                            className="flex w-full items-center justify-between gap-4 p-4 text-left transition-colors hover:bg-background/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-cta/70 sm:p-5"
+                          >
+                            <span className="flex items-start gap-3">
+                              <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-muted/60 text-muted-foreground">
+                                <Settings2 className="h-4 w-4" />
+                              </span>
+                              <span>
+                                <span className="block text-sm font-medium">
+                                  Advanced model settings
+                                </span>
+                                <span className="mt-1 block text-xs leading-5 text-muted-foreground">
+                                  Optional. Change the voice, transcriber, LLM,
+                                  embeddings, or switch to speech-to-speech.
+                                </span>
+                              </span>
+                            </span>
+                            <ChevronDown
+                              className={cn(
+                                "h-4 w-4 shrink-0 text-muted-foreground transition-transform duration-300 motion-reduce:transition-none",
+                                advancedSettingsOpen && "rotate-180",
+                              )}
+                            />
+                          </button>
+                        </CollapsibleTrigger>
+                        <CollapsibleContent className="data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:slide-out-to-top-2 data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:slide-in-from-top-2 motion-reduce:animate-none">
+                          <div className="space-y-5 border-t border-border/60 p-4 sm:p-5">
+                            <div className="rounded-lg border border-border/60 bg-muted/20 p-4 text-xs leading-5 text-muted-foreground">
+                              Menace Voice is managed and uses account credits.
+                              Speaches is the free, self-hosted provider option;
+                              you still cover your own infrastructure. Other BYOK
+                              providers may bill usage separately.
+                            </div>
+                            {modelConfigurationDefaults &&
+                              organizationModelConfiguration && (
+                                <AIModelConfigurationV2Editor
+                                  defaults={modelConfigurationDefaults}
+                                  configuration={activeModelConfiguration}
+                                  effectiveConfiguration={
+                                    agentModelConfiguration
+                                      ? null
+                                      : organizationModelConfiguration.effective_configuration
+                                  }
+                                  submitLabel="Apply advanced settings"
+                                  onSave={applyAdvancedModelConfiguration}
+                                />
+                              )}
+                          </div>
+                        </CollapsibleContent>
+                      </Collapsible>
+                    </>
+                  ) : (
+                    <div className="rounded-xl border border-border/70 bg-background/25 p-5">
+                      <p className="text-sm font-medium">
+                        Configure a voice provider first
+                      </p>
+                      <p className="mt-2 text-sm text-muted-foreground">
+                        Your organization does not have a complete voice model
+                        setup yet.
+                      </p>
+                      <Button asChild variant="outline" size="sm" className="mt-4">
+                        <Link href="/model-configurations">Configure models</Link>
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {step === 4 && (
                 <div className="space-y-7">
                   {selectedTemplateOption &&
                     getTemplateToolSummary(selectedTemplateOption) && (
@@ -2082,7 +2485,7 @@ export default function AgentOnboardingPage() {
                 </div>
               )}
 
-              {step === 4 && (
+              {step === 5 && (
                 <div className="space-y-5">
                   <div className="grid gap-3 lg:grid-cols-2">
                     <div className="rounded-xl border border-border/70 bg-background/25 p-4 sm:p-5">
@@ -2175,8 +2578,14 @@ export default function AgentOnboardingPage() {
                       </p>
                       <p className="mt-2 font-medium">{agentName}</p>
                       <p className="mt-1 text-sm text-muted-foreground">
-                        {callType} · {language}
+                        {callType} · {getLanguageLabel(language)}
                       </p>
+                      {voiceSelection && (
+                        <p className="mt-1 truncate text-sm text-muted-foreground">
+                          {getVoiceProviderLabel(voiceSelection.provider)} ·{" "}
+                          {voiceSelection.voice}
+                        </p>
+                      )}
                     </div>
                     <div className="rounded-xl border border-border/70 bg-background/25 p-4">
                       <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">
@@ -2262,7 +2671,7 @@ export default function AgentOnboardingPage() {
                 Back
               </Button>
               <div className="flex items-center justify-end gap-3">
-                {step < 4 && (
+                {step < 5 && step !== 3 && (
                   <Button
                     type="button"
                     variant="ghost"
@@ -2275,7 +2684,7 @@ export default function AgentOnboardingPage() {
                     Skip for now
                   </Button>
                 )}
-                {step < 4 ? (
+                {step < 5 ? (
                   <Button
                     type="button"
                     onClick={() =>
@@ -2352,8 +2761,8 @@ export default function AgentOnboardingPage() {
                   })}
                 </ol>
                 <div className="mt-6 border-t border-border/60 pt-5 text-xs leading-5 text-muted-foreground">
-                  You can skip any step and finish setup later from your agent
-                  editor.
+                  Optional steps can be finished later from your agent editor.
+                  Voice is saved with the agent you create.
                 </div>
               </CardContent>
             </Card>

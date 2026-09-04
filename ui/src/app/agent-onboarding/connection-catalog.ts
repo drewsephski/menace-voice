@@ -4,11 +4,14 @@ import {
   Calendar,
   CloudSun,
   CreditCard,
+  Database,
   FileText,
   GitBranch,
   Github,
   type LucideIcon,
   Search,
+  UserPlus,
+  Webhook,
   Zap,
 } from "lucide-react";
 
@@ -37,6 +40,7 @@ export type McpPreset = {
   url: string;
   icon: LucideIcon;
   logoUrl?: string;
+  wordmarkUrl?: string;
   /** When false, skip the white tile behind the logo (e.g. logos with their own backdrop). */
   logoOnWhite?: boolean;
   iconClassName?: string;
@@ -50,6 +54,8 @@ export type HttpTemplate = {
   description: string;
   method: "GET" | "POST";
   urlPlaceholder: string;
+  icon: LucideIcon;
+  iconColor: string;
   parameters: Array<{
     name: string;
     type: "string";
@@ -92,7 +98,8 @@ export const MCP_PRESETS: McpPreset[] = [
     description: "Get current conditions and forecasts without an API key.",
     url: "https://open-meteo.caseyjhand.com/mcp",
     icon: CloudSun,
-    logoUrl: "/integrations/open-meteo.png",
+    logoUrl: "/integrations/open-meteo-mark.svg",
+    wordmarkUrl: "/integrations/open-meteo.svg",
   },
   {
     id: "calcom",
@@ -101,7 +108,9 @@ export const MCP_PRESETS: McpPreset[] = [
       "Check availability and manage bookings during the call.",
     url: "https://mcp.cal.com/mcp",
     icon: Calendar,
-    logoUrl: "/integrations/calcom.png",
+    logoUrl: "/integrations/calcom-mark.svg",
+    wordmarkUrl: "/integrations/calcom.svg",
+    logoOnWhite: false,
     requiresAuth: true,
     authHint: "Cal.com API key as a Bearer token",
   },
@@ -181,6 +190,8 @@ export const HTTP_TEMPLATES: HttpTemplate[] = [
       "POST a call summary to Slack, n8n, Zapier, or any incoming webhook.",
     method: "POST",
     urlPlaceholder: "https://hooks.example.com/voice-summary",
+    icon: Webhook,
+    iconColor: "#A855F7",
     parameters: [
       {
         name: "summary",
@@ -209,6 +220,8 @@ export const HTTP_TEMPLATES: HttpTemplate[] = [
       "GET a customer, order, or ticket by phone number before answering from memory.",
     method: "GET",
     urlPlaceholder: "https://api.example.com/customers",
+    icon: Database,
+    iconColor: "#0EA5E9",
     parameters: [
       {
         name: "phone",
@@ -225,6 +238,8 @@ export const HTTP_TEMPLATES: HttpTemplate[] = [
       "POST a qualified lead to your CRM or intake API after the caller confirms.",
     method: "POST",
     urlPlaceholder: "https://api.example.com/leads",
+    icon: UserPlus,
+    iconColor: "#10B981",
     parameters: [
       {
         name: "name",
@@ -307,6 +322,66 @@ export function getMcpUrl(tool: ToolResponse): string | null {
   return typeof config.url === "string"
     ? (normalizeMcpUrl(config.url) ?? config.url)
     : null;
+}
+
+export function getMcpPresetForTool(tool: ToolResponse): McpPreset | null {
+  if (tool.category !== "mcp") return null;
+
+  const toolUrl = getMcpUrl(tool);
+  const byUrl = toolUrl
+    ? MCP_PRESETS.find((preset) => normalizeMcpUrl(preset.url) === toolUrl)
+    : undefined;
+  if (byUrl) return byUrl;
+
+  const normalizedName = tool.name.trim().toLowerCase();
+  return (
+    MCP_PRESETS.find((preset) => {
+      const names = [preset.name, getMcpPresetShortName(preset)].map((name) =>
+        name.toLowerCase(),
+      );
+      return names.some(
+        (name) => normalizedName === name || normalizedName.startsWith(`${name} `),
+      );
+    }) ?? null
+  );
+}
+
+export function getHttpTemplateForTool(tool: ToolResponse): HttpTemplate | null {
+  if (tool.category !== "http_api") return null;
+
+  const normalizedName = tool.name.trim().toLowerCase();
+  const exactMatch = HTTP_TEMPLATES.find(
+    (template) => template.name.toLowerCase() === normalizedName,
+  );
+  if (exactMatch) return exactMatch;
+
+  if (normalizedName.includes("webhook")) {
+    return HTTP_TEMPLATE_BY_ID["notify-webhook"];
+  }
+  if (normalizedName.includes("lead")) {
+    return HTTP_TEMPLATE_BY_ID["create-lead"];
+  }
+  if (/(lookup|look up|record)/.test(normalizedName)) {
+    return HTTP_TEMPLATE_BY_ID["lookup-record"];
+  }
+
+  const config = tool.definition?.config;
+  if (config && typeof config === "object" && "url" in config) {
+    const url = typeof config.url === "string" ? config.url : "";
+    const normalizedUrl = normalizeMcpUrl(url);
+    if (normalizedUrl) {
+      const parsedUrl = new URL(normalizedUrl);
+      const isWebhookHost = /^(hooks?|webhooks?)\./i.test(parsedUrl.hostname);
+      const isWebhookPath = /\/(hooks?|webhooks?)(\/|$)/i.test(
+        parsedUrl.pathname,
+      );
+      if (isWebhookHost || isWebhookPath) {
+        return HTTP_TEMPLATE_BY_ID["notify-webhook"];
+      }
+    }
+  }
+
+  return null;
 }
 
 export function getDiscoveredToolCount(tool: ToolResponse): number {

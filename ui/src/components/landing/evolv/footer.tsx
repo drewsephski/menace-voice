@@ -8,7 +8,7 @@ import { Brand } from "./primitives";
 
 function getGroups(navigation: LandingNavigation) {
   const docs = navigation.docs;
-  const legacyDocs = "https://docs.dograh.com";
+  const legacyDocs = "https://voice.menaceui.com/docs";
   const external = { rel: "noreferrer", target: "_blank" } as const;
 
   return [

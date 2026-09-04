@@ -146,6 +146,35 @@ class TestWorkflowCreation:
         versions = await db_session.get_workflow_versions(workflow.id)
         assert workflow.released_definition_id == versions[0].id
 
+    async def test_create_workflow_persists_configurations_in_published_v1(
+        self, db_session, org_and_user
+    ):
+        org, user = org_and_user
+        configurations = {
+            "model_configuration_v2_override": {
+                "version": 2,
+                "mode": "dograh",
+                "dograh": {
+                    "api_key": "service-key",
+                    "voice": "recommended-voice",
+                    "speed": 1,
+                    "language": "en-US",
+                },
+            }
+        }
+
+        workflow = await db_session.create_workflow(
+            name="Configured Workflow",
+            workflow_definition=GRAPH_V1,
+            user_id=user.id,
+            organization_id=org.id,
+            workflow_configurations=configurations,
+        )
+
+        versions = await db_session.get_workflow_versions(workflow.id)
+        assert workflow.workflow_configurations == configurations
+        assert versions[0].workflow_configurations == configurations
+
 
 # ---------------------------------------------------------------------------
 # Saving a draft

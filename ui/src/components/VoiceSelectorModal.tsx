@@ -44,6 +44,7 @@ interface VoiceSelectorModalProps {
     model?: string;
     /** Allow typing a raw voice ID for voices outside the catalog. */
     allowManualInput?: boolean;
+    recommendedCount?: number;
     className?: string;
 }
 
@@ -74,6 +75,7 @@ export const VoiceSelectorModal: React.FC<VoiceSelectorModalProps> = ({
     onChange,
     model,
     allowManualInput = false,
+    recommendedCount = 0,
     className,
 }) => {
     const [isOpen, setIsOpen] = useState(false);
@@ -351,9 +353,10 @@ export const VoiceSelectorModal: React.FC<VoiceSelectorModalProps> = ({
                             </p>
                         ) : (
                             <div className="grid gap-2 sm:grid-cols-2">
-                                {voices.map((voice) => {
+                                {voices.map((voice, index) => {
                                     const isSelected = pendingVoiceId === voice.voice_id;
                                     const isPlaying = playingVoiceId === voice.voice_id;
+                                    const isRecommended = index < recommendedCount;
                                     return (
                                         <button
                                             type="button"
@@ -395,6 +398,11 @@ export const VoiceSelectorModal: React.FC<VoiceSelectorModalProps> = ({
                                             <span className="flex min-w-0 flex-1 flex-col">
                                                 <span className="flex items-center gap-2">
                                                     <span className="truncate text-sm font-medium">{voice.name}</span>
+                                                    {isRecommended && (
+                                                        <span className="rounded-full bg-cta/10 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-cta">
+                                                            Recommended
+                                                        </span>
+                                                    )}
                                                     {isSelected && <Check className="h-4 w-4 shrink-0 text-primary" />}
                                                 </span>
                                                 {voiceTraits(voice) && (

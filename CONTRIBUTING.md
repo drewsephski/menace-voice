@@ -28,7 +28,7 @@ Menace Voice is a full-stack platform for building voice agents with a drag-and-
 
 ## 🚀 Development Setup
 
-Please refer to our [Development Setup documentation](https://docs.dograh.com/contribution/setup).
+Please refer to our [Development Setup documentation](https://voice.menaceui.com/docs/contribution/setup).
 
 ### Getting Help
 

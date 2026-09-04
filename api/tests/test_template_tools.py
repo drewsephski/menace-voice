@@ -5,6 +5,7 @@ import pytest
 
 from api.enums import ToolCategory
 from api.services.workflow.template_tools import (
+    TEMPLATE_BUILTIN_CATEGORIES,
     TEMPLATE_MCP_URLS,
     ensure_template_tools,
     normalize_mcp_url,
@@ -20,11 +21,6 @@ def test_normalize_mcp_url_strips_trailing_slash():
 
 @pytest.mark.asyncio
 async def test_ensure_template_tools_reuses_existing_builtin_tools():
-    existing_end_call = SimpleNamespace(
-        tool_uuid="end-call-1",
-        category=ToolCategory.END_CALL.value,
-        definition={"type": "end_call"},
-    )
     existing_transfer = SimpleNamespace(
         tool_uuid="transfer-1",
         category=ToolCategory.TRANSFER_CALL.value,
@@ -40,7 +36,6 @@ async def test_ensure_template_tools_reuses_existing_builtin_tools():
         "api.services.workflow.template_tools.db_client.get_tools_for_organization",
         AsyncMock(
             side_effect=[
-                [existing_end_call],
                 [existing_transfer],
                 [existing_current_time],
             ]
@@ -52,8 +47,38 @@ async def test_ensure_template_tools_reuses_existing_builtin_tools():
             user_id=7,
         )
 
-    assert tool_uuids == ["end-call-1", "transfer-1", "current-time-1"]
-    assert get_tools.await_count == 3
+    assert tool_uuids == ["transfer-1", "current-time-1"]
+    assert get_tools.await_count == 2
+
+
+@pytest.mark.asyncio
+async def test_ensure_template_tools_does_not_add_selected_builtin_category():
+    existing_current_time = SimpleNamespace(
+        tool_uuid="current-time-1",
+        category=ToolCategory.CURRENT_TIME.value,
+        definition={"type": "current_time"},
+    )
+
+    with patch(
+        "api.services.workflow.template_tools.db_client.get_tools_for_organization",
+        AsyncMock(return_value=[existing_current_time]),
+    ) as get_tools:
+        tool_uuids = await ensure_template_tools(
+            template_id="receptionist",
+            organization_id=11,
+            user_id=7,
+            excluded_categories={ToolCategory.TRANSFER_CALL.value},
+        )
+
+    assert tool_uuids == ["current-time-1"]
+    assert get_tools.await_count == 1
+
+
+def test_template_defaults_use_graph_end_call_transition():
+    assert all(
+        ToolCategory.END_CALL not in categories
+        for categories in TEMPLATE_BUILTIN_CATEGORIES.values()
+    )
 
 
 @pytest.mark.asyncio
@@ -63,7 +88,6 @@ async def test_ensure_template_tools_creates_missing_builtin_tools():
     async def create_tool(**kwargs):
         category = kwargs["category"]
         tool_uuid = {
-            ToolCategory.END_CALL.value: "end-call-new",
             ToolCategory.TRANSFER_CALL.value: "transfer-new",
             ToolCategory.CURRENT_TIME.value: "current-time-new",
         }[category]
@@ -83,9 +107,8 @@ async def test_ensure_template_tools_creates_missing_builtin_tools():
             user_id=7,
         )
 
-    assert tool_uuids == ["end-call-new", "transfer-new", "current-time-new"]
+    assert tool_uuids == ["transfer-new", "current-time-new"]
     assert created_tools == [
-        ToolCategory.END_CALL.value,
         ToolCategory.TRANSFER_CALL.value,
         ToolCategory.CURRENT_TIME.value,
     ]

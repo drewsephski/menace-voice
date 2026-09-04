@@ -215,6 +215,10 @@ export function EmbeddedVoiceTester({
                 onNavigateToBilling={() => router.push("/billing")}
                 onNavigateToDevelopers={() => router.push("/api-keys")}
                 onNavigateToModelConfig={() => router.push("/model-configurations")}
+                onRetry={() => {
+                    setApiKeyModalOpen(false);
+                    void start();
+                }}
             />
 
             <WorkflowConfigErrorDialog

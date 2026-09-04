@@ -4,6 +4,8 @@ This module provides reusable quota checking functionality that can be used
 across different endpoints (WebRTC signaling, telephony, public API triggers).
 """
 
+import asyncio
+from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
 from typing import Any
 
@@ -20,6 +22,8 @@ from api.errors.failure import (
     classify_exception,
     log_failure,
 )
+from api.services.billing.stripe_service import stripe_billing_enabled
+from api.services.billing.subscription_access import get_subscription_access
 from api.services.configuration.ai_model_configuration import (
     get_effective_ai_model_configuration_for_workflow,
 )
@@ -29,8 +33,7 @@ from api.services.managed_model_services import (
     get_dograh_service_api_key,
     uses_managed_model_services_v2,
 )
-from api.services.billing.stripe_service import stripe_billing_enabled
-from api.services.billing.subscription_access import get_subscription_access
+from api.services.mps_service_key_client import mps_service_key_client
 
 MINIMUM_DOGRAH_CREDITS_FOR_CALL = 0.10
 
@@ -41,9 +44,13 @@ _MPS_UNREACHABLE_ERRORS = (
     httpx.ProxyError,
 )
 
+_RETRYABLE_MPS_STATUS_CODES = frozenset({429, 500, 502, 503, 504})
+_REJECTED_SERVICE_KEY_STATUS_CODES = frozenset({401, 403})
+_MPS_RETRY_DELAY_SECONDS = 0.2
+
 OSS_QUOTA_EXCEEDED_MESSAGE = (
     "You have exhausted your trial credits. "
-    "Please sign up on app.dograh.com to create a "
+    "Please sign up on voice.menaceui.com to create a "
     "new service key and set up in your model configurations."
 )
 
@@ -55,7 +62,7 @@ HOSTED_QUOTA_EXCEEDED_MESSAGE = (
 
 OSS_HOSTED_KEY_QUOTA_EXCEEDED_MESSAGE = (
     "The organization linked to this Menace Voice service key has insufficient credits. "
-    "Please add credits at app.dograh.com or change providers in Models configurations."
+    "Please add credits at voice.menaceui.com or change providers in Models configurations."
 )
 
 SERVICE_TOKEN_ORG_MISMATCH_MESSAGE = (
@@ -72,6 +79,24 @@ class QuotaCheckResult:
     has_quota: bool
     error_message: str = ""
     error_code: str = ""
+
+
+async def _call_mps_authorization(
+    operation: str,
+    call: Callable[[], Awaitable[dict[str, Any]]],
+) -> dict[str, Any]:
+    try:
+        return await call()
+    except (*_MPS_UNREACHABLE_ERRORS, httpx.HTTPStatusError) as error:
+        status_code = getattr(getattr(error, "response", None), "status_code", None)
+        if isinstance(error, httpx.HTTPStatusError) and (
+            status_code not in _RETRYABLE_MPS_STATUS_CODES
+        ):
+            raise
+
+        logger.warning("MPS {} failed transiently; retrying once", operation)
+        await asyncio.sleep(_MPS_RETRY_DELAY_SECONDS)
+        return await call()
 
 
 def _log_mps_exception(
@@ -319,21 +344,24 @@ async def _authorize_hosted_workflow_run_start(
         )
 
     try:
-        authorization = await mps_service_key_client.authorize_workflow_run_start(
-            organization_id=organization_id,
-            workflow_run_id=workflow_run_id,
-            service_key=service_key,
-            require_correlation_id=requires_correlation,
-            minimum_credits=MINIMUM_DOGRAH_CREDITS_FOR_CALL,
-            created_by=(
-                str(workflow_owner.provider_id)
-                if workflow_owner.provider_id is not None
-                else None
+        authorization = await _call_mps_authorization(
+            "hosted run authorization",
+            lambda: mps_service_key_client.authorize_workflow_run_start(
+                organization_id=organization_id,
+                workflow_run_id=workflow_run_id,
+                service_key=service_key,
+                require_correlation_id=requires_correlation,
+                minimum_credits=MINIMUM_DOGRAH_CREDITS_FOR_CALL,
+                created_by=(
+                    str(workflow_owner.provider_id)
+                    if workflow_owner.provider_id is not None
+                    else None
+                ),
+                metadata={
+                    "dograh_user_id": str(workflow_owner.id),
+                    "workflow_id": workflow_id,
+                },
             ),
-            metadata={
-                "dograh_user_id": str(workflow_owner.id),
-                "workflow_id": workflow_id,
-            },
         )
     except _MPS_UNREACHABLE_ERRORS as e:
         _log_mps_exception(
@@ -477,9 +505,12 @@ async def _authorize_oss_managed_v2_correlation(
         )
 
     try:
-        response = await mps_service_key_client.create_correlation_id(
-            service_key=service_key,
-            workflow_run_id=workflow_run_id,
+        response = await _call_mps_authorization(
+            "OSS managed-v2 correlation creation",
+            lambda: mps_service_key_client.create_correlation_id(
+                service_key=service_key,
+                workflow_run_id=workflow_run_id,
+            ),
         )
         correlation_id = _required_correlation_id(response)
         if not correlation_id:
@@ -523,15 +554,27 @@ async def _authorize_oss_managed_v2_run(
     user_config: Any,
 ) -> QuotaCheckResult:
     try:
-        authorization = await mps_service_key_client.authorize_service_key_run_start(
-            service_key=service_key,
-            workflow_run_id=workflow_run_id,
-            require_correlation_id=True,
-            minimum_credits=MINIMUM_DOGRAH_CREDITS_FOR_CALL,
-            metadata={"workflow_id": workflow_id},
+        authorization = await _call_mps_authorization(
+            "OSS managed-v2 run authorization",
+            lambda: mps_service_key_client.authorize_service_key_run_start(
+                service_key=service_key,
+                workflow_run_id=workflow_run_id,
+                require_correlation_id=True,
+                minimum_credits=MINIMUM_DOGRAH_CREDITS_FOR_CALL,
+                metadata={"workflow_id": workflow_id},
+            ),
         )
     except httpx.HTTPStatusError as e:
         status_code = getattr(e.response, "status_code", None)
+        if status_code in _REJECTED_SERVICE_KEY_STATUS_CODES:
+            return QuotaCheckResult(
+                has_quota=False,
+                error_code="invalid_service_key",
+                error_message=(
+                    "The Menace Voice service key in your model configuration "
+                    "was rejected. Replace it with an active service key."
+                ),
+            )
         if status_code not in {404, 405}:
             _log_mps_exception(
                 e,

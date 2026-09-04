@@ -7,8 +7,8 @@
 **本番向け音声エージェントを構築・デプロイするための音声 AI プラットフォーム** -- ビジュアルワークフロービルダーでエージェントを構築し、数分でテストし、MCP 経由で AI コーディングアシスタントに設計や編集を任せられます。
 
 <p align="center">
-  <a href="https://app.dograh.com">
-    <img src="https://img.shields.io/badge/▶_クラウド版を試す-app.dograh.com-2563eb?style=for-the-badge" alt="クラウド版を試す">
+  <a href="https://voice.menaceui.com">
+    <img src="https://img.shields.io/badge/▶_クラウド版を試す-voice.menaceui.com-2563eb?style=for-the-badge" alt="クラウド版を試す">
   </a>
   &nbsp;
   <a href="#-クイックスタート">
@@ -17,7 +17,7 @@
 </p>
 
 <p align="center">
-  <a href="https://docs.dograh.com">📖 ドキュメント</a> &nbsp;·&nbsp;
+  <a href="https://voice.menaceui.com/docs">📖 ドキュメント</a> &nbsp;·&nbsp;
   <a href="LICENSE">📜 BSD 2-Clause</a> &nbsp;·&nbsp;
   <a href="README.md">🌐 English</a> &nbsp;·&nbsp;
   <a href="README.zh-CN.md">🌐 中文</a>
@@ -79,7 +79,7 @@
 > 製品改善のため、匿名の利用状況データを収集します。無効にするには、起動スクリプトを実行する前に `ENABLE_TELEMETRY=false` を設定してください。
 
 > **注記**
-> リモートサーバーでプラットフォームを実行したい場合は、[ドキュメント](https://docs.dograh.com/deployment/docker#option-2:-remote-server-deployment)を参照してください。
+> リモートサーバーでプラットフォームを実行したい場合は、[ドキュメント](https://voice.menaceui.com/docs/deployment/docker#option-2:-remote-server-deployment)を参照してください。
 
 Menace から提供されたデプロイパッケージを使用し、デプロイのドキュメントに記載された起動手順に従ってください。
 
@@ -104,7 +104,7 @@ Codex、Claude Code、Cursor、または任意の MCP クライアントを接�
 
 コーディングエージェントに音声エージェントの構築を依頼するときは、1 行のプロンプトだけでなく、ユースケース用の短いスクリプトを共有してください。エージェントのペルソナ、通話フロー、ルール、反論処理、成功基準、可能であればサンプル会話を含めると効果的です。
 
-アシスタントの接続方法は [MCP ガイド](https://docs.dograh.com/integrations/mcp) を参照してください。
+アシスタントの接続方法は [MCP ガイド](https://voice.menaceui.com/docs/integrations/mcp) を参照してください。
 
 ## 機能
 
@@ -130,11 +130,11 @@ Codex、Claude Code、Cursor、または任意の MCP クライアントを接�
 
 ### ローカル開発
 
-[ローカルセットアップ](https://docs.dograh.com/contribution/setup)を参照してください。
+[ローカルセットアップ](https://voice.menaceui.com/docs/contribution/setup)を参照してください。
 
 ### セルフホストデプロイ
 
-リモートサーバーへのデプロイや HTTPS 設定を含む詳しい手順は、[Docker デプロイガイド](https://docs.dograh.com/deployment/docker#option-2-remote-server-deployment)を参照してください。
+リモートサーバーへのデプロイや HTTPS 設定を含む詳しい手順は、[Docker デプロイガイド](https://voice.menaceui.com/docs/deployment/docker#option-2-remote-server-deployment)を参照してください。
 
 ### クラウド版
 
@@ -142,7 +142,7 @@ Codex、Claude Code、Cursor、または任意の MCP クライアントを接�
 
 ## 📚 ドキュメント
 
-完全なドキュメントは [https://docs.dograh.com](https://docs.dograh.com/) を参照してください。
+完全なドキュメントは [https://voice.menaceui.com/docs](https://voice.menaceui.com/docs/) を参照してください。
 
 ## 📦 SDKs
 
@@ -161,5 +161,5 @@ Menace Voice は [BSD 2-Clause License](LICENSE) のもとで提供されてい�
 <br><br><br>
 
   <p align="center">
-    <a href="https://app.dograh.com">☁️ クラウド版を試す</a>
+    <a href="https://voice.menaceui.com">☁️ クラウド版を試す</a>
   </p>

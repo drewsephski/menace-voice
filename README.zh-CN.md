@@ -7,8 +7,8 @@
 **用于构建和部署生产级语音智能体的语音 AI 平台** —— 使用可视化工作流构建器搭建智能体,几分钟内完成测试,并让 AI 编码助手通过 MCP 帮你设计和编辑。
 
 <p align="center">
-  <a href="https://app.dograh.com">
-    <img src="https://img.shields.io/badge/▶_体验云端版本-app.dograh.com-2563eb?style=for-the-badge" alt="体验云端版本">
+  <a href="https://voice.menaceui.com">
+    <img src="https://img.shields.io/badge/▶_体验云端版本-voice.menaceui.com-2563eb?style=for-the-badge" alt="体验云端版本">
   </a>
   &nbsp;
   <a href="#-快速开始">
@@ -17,7 +17,7 @@
 </p>
 
 <p align="center">
-  <a href="https://docs.dograh.com">📖 文档</a> &nbsp;·&nbsp;
+  <a href="https://voice.menaceui.com/docs">📖 文档</a> &nbsp;·&nbsp;
   <a href="LICENSE">📜 BSD 2-Clause</a> &nbsp;·&nbsp;
   <a href="README.md">🌐 English</a> &nbsp;·&nbsp;
   <a href="README.ja-JP.md">🌐 日本語</a>
@@ -75,7 +75,7 @@
 > 我们会收集匿名使用数据以改进产品。如需关闭,请在下面的命令中将 `ENABLE_TELEMETRY` 设为 `false`。
 
 > **提示**
-> 如果希望在远程服务器上运行该平台,请参考[文档](https://docs.dograh.com/deployment/docker#option-2:-remote-server-deployment)。
+> 如果希望在远程服务器上运行该平台,请参考[文档](https://voice.menaceui.com/docs/deployment/docker#option-2:-remote-server-deployment)。
 
 请使用 Menace 提供的部署包,并按照部署文档中的启动步骤操作。
 
@@ -100,7 +100,7 @@ Menace Voice 内置 MCP 服务器,因此编码智能体可以直接在你的 Men
 
 让编码智能体构建语音智能体时,请分享一份面向该用例的简短脚本,而不是只给一行提示。脚本最好包含智能体 persona、通话流程、规则、异议处理、成功标准,以及可选的示例对话。
 
-请参见 [MCP 指南](https://docs.dograh.com/integrations/mcp) 来连接你的助手。
+请参见 [MCP 指南](https://voice.menaceui.com/docs/integrations/mcp) 来连接你的助手。
 
 ## 功能特性
 
@@ -126,11 +126,11 @@ Menace Voice 内置 MCP 服务器,因此编码智能体可以直接在你的 Men
 
 ### 本地开发
 
-参见[本地部署](https://docs.dograh.com/contribution/setup)。
+参见[本地部署](https://voice.menaceui.com/docs/contribution/setup)。
 
 ### 自托管部署
 
-如需了解远程服务器部署及 HTTPS 配置的详细步骤,请参见我们的 [Docker 部署指南](https://docs.dograh.com/deployment/docker#option-2-remote-server-deployment)。
+如需了解远程服务器部署及 HTTPS 配置的详细步骤,请参见我们的 [Docker 部署指南](https://voice.menaceui.com/docs/deployment/docker#option-2-remote-server-deployment)。
 
 ### 云端版本
 
@@ -138,7 +138,7 @@ Menace Voice 内置 MCP 服务器,因此编码智能体可以直接在你的 Men
 
 ## 📚 文档
 
-完整文档请访问 [https://docs.dograh.com](https://docs.dograh.com/)。
+完整文档请访问 [https://voice.menaceui.com/docs](https://voice.menaceui.com/docs/)。
 
 ## 📄 许可协议
 
@@ -152,5 +152,5 @@ Menace Voice 基于 [BSD 2-Clause 协议](LICENSE)提供。
 <br><br><br>
 
   <p align="center">
-    <a href="https://app.dograh.com">☁️ 试用云端版本</a>
+    <a href="https://voice.menaceui.com">☁️ 试用云端版本</a>
   </p>

@@ -287,14 +287,14 @@
   "logo": {
     "light": "/logo/light.svg",
     "dark": "/logo/dark.svg",
-    "href": "https://docs.dograh.com"
+    "href": "https://voice.menaceui.com/docs"
   },
   "navbar": {
     "links": [],
     "primary": {
       "type": "button",
       "label": "Dashboard",
-      "href": "https://app.dograh.com"
+      "href": "https://voice.menaceui.com"
     }
   },
   "banner": {

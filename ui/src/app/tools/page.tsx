@@ -52,6 +52,7 @@ import {
     TOOL_CATEGORIES,
     type ToolCategory,
 } from "./config";
+import { ToolLogo } from "./ToolLogo";
 
 export default function ToolsPage() {
     const { user, getAccessToken, redirectToLogin, loading } = useAuth();
@@ -315,7 +316,7 @@ export default function ToolsPage() {
                         <h1 className="text-3xl font-bold mb-2">Tools</h1>
                         <p className="text-muted-foreground">
                             Manage reusable tools that can be used across your workflows.{" "}
-                            <a href="https://docs.dograh.com/voice-agent/tools/introduction" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-0.5 underline">
+                            <a href="https://voice.menaceui.com/docs/voice-agent/tools/introduction" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-0.5 underline">
                                 Learn more <ExternalLink className="h-3 w-3" />
                             </a>
                         </p>
@@ -397,15 +398,7 @@ export default function ToolsPage() {
                                                     }
                                                 >
                                                     <div className="flex items-center gap-4">
-                                                        <div
-                                                            className="w-10 h-10 shrink-0 rounded-lg flex items-center justify-center"
-                                                            style={{
-                                                                backgroundColor:
-                                                                    tool.icon_color || getCategoryConfig(tool.category as ToolCategory)?.iconColor || "#3B82F6",
-                                                            }}
-                                                        >
-                                                            {renderToolIcon(tool.category)}
-                                                        </div>
+                                                        <ToolLogo tool={tool} />
                                                         <div>
                                                             <div className="flex items-center gap-2">
                                                                 <span className="font-medium">
@@ -460,15 +453,7 @@ export default function ToolsPage() {
                                                         }
                                                     >
                                                         <div className="flex items-center gap-4">
-                                                            <div
-                                                                className="w-10 h-10 shrink-0 rounded-lg flex items-center justify-center"
-                                                                style={{
-                                                                    backgroundColor:
-                                                                        tool.icon_color || getCategoryConfig(tool.category as ToolCategory)?.iconColor || "#3B82F6",
-                                                                }}
-                                                            >
-                                                                {renderToolIcon(tool.category)}
-                                                            </div>
+                                                            <ToolLogo tool={tool} />
                                                             <div>
                                                                 <div className="flex items-center gap-2">
                                                                     <span className="font-medium">

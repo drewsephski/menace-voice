@@ -38,6 +38,12 @@ function createFetchMock(autoStart: boolean) {
                         embedMode: 'inline',
                         containerId: 'dograh-inline-container',
                     },
+                    texts: {
+                        chatInputPlaceholder: 'Type a message',
+                        sendMessageLabel: 'Send message',
+                        endChatText: 'End chat',
+                        conversationEndedText: 'Conversation ended.',
+                    },
                     auto_start: autoStart,
                 }),
             } as Response;

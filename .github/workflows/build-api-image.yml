@@ -4,7 +4,7 @@ name: Build API Image
 # tag derived from the commit. docker-image.yml is the release path — it builds
 # api and ui for amd64 and arm64 and assembles manifest lists in a merge job.
 #
-# The cluster's nodes are x86_64 and app.dograh.com is served by Vercel, so of
+# The cluster's nodes are x86_64 and voice.menaceui.com is served by Vercel, so of
 # the four images a release builds, the cluster pulls one.
 
 on:

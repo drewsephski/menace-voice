@@ -3,7 +3,7 @@ import { AlertCircle, CreditCard, ExternalLink, Key } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
-const SERVICE_KEYS_DOCS_URL = "https://docs.dograh.com/configurations/api-keys#service-keys";
+const SERVICE_KEYS_DOCS_URL = "https://voice.menaceui.com/docs/configurations/api-keys#service-keys";
 
 interface ApiKeyErrorDialogProps {
     open: boolean;
@@ -13,6 +13,7 @@ interface ApiKeyErrorDialogProps {
     onNavigateToBilling: () => void;
     onNavigateToDevelopers: () => void;
     onNavigateToModelConfig: () => void;
+    onRetry: () => void;
 }
 
 export const ApiKeyErrorDialog = ({
@@ -23,23 +24,31 @@ export const ApiKeyErrorDialog = ({
     onNavigateToBilling,
     onNavigateToDevelopers,
     onNavigateToModelConfig,
+    onRetry,
 }: ApiKeyErrorDialogProps) => {
     const isBillingCreditsError = errorCode === 'insufficient_credits';
     const isServiceKeyOrgMismatch = errorCode === 'service_key_org_mismatch';
+    const isServiceUnavailable = errorCode === 'quota_check_failed';
     const isQuotaError = isBillingCreditsError || errorCode === 'quota_exceeded';
 
-    const title = isQuotaError
+    const title = isServiceUnavailable
+        ? "Call Service Temporarily Unavailable"
+        : isQuotaError
         ? "Insufficient Credits"
         : isServiceKeyOrgMismatch
             ? "Service Token Account Mismatch"
             : "API Configuration Error";
     const icon = isQuotaError ? <CreditCard className="h-5 w-5 text-[#f04438]" /> : <Key className="h-5 w-5 text-red-500" />;
-    const buttonText = isBillingCreditsError
+    const buttonText = isServiceUnavailable
+        ? "Try Again"
+        : isBillingCreditsError
         ? "Go to Billing"
         : isServiceKeyOrgMismatch
             ? "Go to Developers"
             : "Go to Model Configurations";
-    const onNavigate = isBillingCreditsError
+    const onNavigate = isServiceUnavailable
+        ? onRetry
+        : isBillingCreditsError
         ? onNavigateToBilling
         : isServiceKeyOrgMismatch
             ? onNavigateToDevelopers

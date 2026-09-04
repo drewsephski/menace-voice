@@ -59,19 +59,19 @@ from api.services.workflow.configuration_policy import (
 from api.services.workflow.dto import ReactFlowDTO, sanitize_workflow_definition
 from api.services.workflow.duplicate import duplicate_workflow
 from api.services.workflow.errors import ItemKind, WorkflowError
+from api.services.workflow.mcp_prompt import (
+    append_mcp_usage_instructions,
+    build_mcp_usage_instructions,
+)
 from api.services.workflow.run_creation import prepare_workflow_run_inputs
 from api.services.workflow.run_usage_response import (
     format_public_cost_info,
     format_public_usage_info,
 )
+from api.services.workflow.template_tools import ensure_template_tools
 from api.services.workflow.tool_name_validation import (
     validate_workflow_tool_name_collisions,
 )
-from api.services.workflow.mcp_prompt import (
-    append_mcp_usage_instructions,
-    build_mcp_usage_instructions,
-)
-from api.services.workflow.template_tools import ensure_template_tools
 from api.services.workflow.trigger_paths import (
     TriggerPathIssue,
     ensure_trigger_paths,
@@ -394,6 +394,7 @@ class CreateWorkflowTemplateRequest(BaseModel):
     )
     tool_uuids: list[str] = Field(default_factory=list, max_length=100)
     document_uuids: list[str] = Field(default_factory=list, max_length=100)
+    workflow_configurations: WorkflowConfigurationDefaults | None = None
     pre_call_fetch_url: str | None = Field(
         default=None,
         description=(
@@ -426,6 +427,46 @@ def _normalized_resource_uuids(values: list[str]) -> list[str]:
             if isinstance(value, str) and value.strip()
         )
     )
+
+
+async def _prepare_template_workflow_configurations(
+    configurations: WorkflowConfigurationDefaults | None,
+    *,
+    user: UserModel,
+) -> dict | None:
+    if configurations is None:
+        return None
+
+    prepared = configurations.model_dump(exclude_unset=True)
+    incoming_override = prepared.get(WORKFLOW_MODEL_CONFIGURATION_V2_OVERRIDE_KEY)
+    if not incoming_override:
+        return prepared
+
+    try:
+        override = OrganizationAIModelConfigurationV2.model_validate(incoming_override)
+        resolved = await get_resolved_ai_model_configuration(
+            organization_id=user.selected_organization_id,
+        )
+        override = merge_ai_model_configuration_v2_secrets(
+            override,
+            resolved.organization_configuration,
+        )
+        check_for_masked_keys_in_ai_model_configuration_v2(override)
+        effective = compile_ai_model_configuration_v2(override)
+        await UserConfigurationValidator().validate(
+            effective,
+            organization_id=user.selected_organization_id,
+            created_by=user.provider_id,
+        )
+    except (ValidationError, ValueError) as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+
+    prepared[WORKFLOW_MODEL_CONFIGURATION_V2_OVERRIDE_KEY] = override.model_dump(
+        mode="json",
+        exclude_none=True,
+    )
+    prepared.pop("model_overrides", None)
+    return prepared
 
 
 async def _validate_template_resources(
@@ -816,19 +857,31 @@ async def create_workflow_from_template(
         HTTPException: If MPS API call fails
     """
     try:
+        tool_uuids, document_uuids, selected_tools = await _validate_template_resources(
+            tool_uuids=request.tool_uuids,
+            document_uuids=request.document_uuids,
+            organization_id=user.selected_organization_id,
+        )
+
         template_tool_uuids: list[str] = []
         if request.template_id and user.selected_organization_id:
             template_tool_uuids = await ensure_template_tools(
                 template_id=request.template_id,
                 organization_id=user.selected_organization_id,
                 user_id=user.id,
+                excluded_categories={
+                    tool.category
+                    for tool in selected_tools
+                    if isinstance(getattr(tool, "category", None), str)
+                },
             )
 
-        tool_uuids, document_uuids, selected_tools = await _validate_template_resources(
-            tool_uuids=[*request.tool_uuids, *template_tool_uuids],
-            document_uuids=request.document_uuids,
-            organization_id=user.selected_organization_id,
-        )
+        if template_tool_uuids:
+            tool_uuids, _, selected_tools = await _validate_template_resources(
+                tool_uuids=[*tool_uuids, *template_tool_uuids],
+                document_uuids=[],
+                organization_id=user.selected_organization_id,
+            )
 
         pre_call_fetch_url = _http_url_or_none(
             request.pre_call_fetch_url, field_name="pre_call_fetch_url"
@@ -870,6 +923,11 @@ async def create_workflow_from_template(
                             "organization."
                         ),
                     )
+
+        workflow_configurations = await _prepare_template_workflow_configurations(
+            request.workflow_configurations,
+            user=user,
+        )
 
         # Call MPS API to generate workflow using the client
         if DEPLOYMENT_MODE == "oss":
@@ -933,6 +991,7 @@ async def create_workflow_from_template(
             workflow_definition=workflow_def,
             user_id=user.id,
             organization_id=user.selected_organization_id,
+            workflow_configurations=workflow_configurations,
         )
 
         capture_event(

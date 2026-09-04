@@ -24,8 +24,8 @@ from api.services.telephony.registry import (
 
 from .config import MANAGED_BY
 
-MANAGED_DOCS_URL = "https://docs.dograh.com/integrations/telephony/dograh-sip"
-SELF_SERVE_DOCS_URL = "https://docs.dograh.com/integrations/telephony/cloudonix"
+MANAGED_DOCS_URL = "https://voice.menaceui.com/docs/integrations/telephony/dograh-sip"
+SELF_SERVE_DOCS_URL = "https://voice.menaceui.com/docs/integrations/telephony/cloudonix"
 
 
 def resolve_setup_checklist(

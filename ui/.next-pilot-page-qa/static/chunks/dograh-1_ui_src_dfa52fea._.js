@@ -1293,7 +1293,7 @@ var __TURBOPACK__imported__module__$5b$project$5d2f$dograh$2d$1$2f$ui$2f$src$2f$
 ;
 ;
 const client = (0, __TURBOPACK__imported__module__$5b$project$5d2f$dograh$2d$1$2f$ui$2f$src$2f$client$2f$client$2f$client$2e$gen$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["createClient"])((0, __TURBOPACK__imported__module__$5b$project$5d2f$dograh$2d$1$2f$ui$2f$src$2f$lib$2f$apiClient$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["createClientConfig"])((0, __TURBOPACK__imported__module__$5b$project$5d2f$dograh$2d$1$2f$ui$2f$src$2f$client$2f$client$2f$utils$2e$gen$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["createConfig"])({
-    baseUrl: 'https://app.dograh.com'
+    baseUrl: 'https://voice.menaceui.com'
 })));
 if (typeof globalThis.$RefreshHelpers$ === 'object' && globalThis.$RefreshHelpers !== null) {
     __turbopack_context__.k.registerExports(__turbopack_context__.m, globalThis.$RefreshHelpers$);
@@ -3337,12 +3337,12 @@ async function impersonateAsSuperadmin(params) {
     // ---------------------------------------------------------------------------------
     // Instead of setting the cookie here (which would also affect the superadmin
     // sub-domain), redirect the browser to the dedicated impersonation helper route
-    // (served from the target sub-domain, e.g. app.dograh.com). The route will set the
+    // (served from the target sub-domain, e.g. voice.menaceui.com). The route will set the
     // cookie for the *current* sub-domain only and then forward the user to the final
     // destination.
     // ---------------------------------------------------------------------------------
     // Determine the base URL that should handle the impersonation cookie. Configured
-    // via NEXT_PUBLIC_APP_URL (e.g. https://app.dograh.com); falls back to the current
+    // via NEXT_PUBLIC_APP_URL (e.g. https://voice.menaceui.com); falls back to the current
     // origin (e.g. localhost, staging, or already on the app).
     const appBaseUrl = __TURBOPACK__imported__module__$5b$project$5d2f$dograh$2d$1$2f$ui$2f$node_modules$2f2e$pnpm$2f$next$40$15$2e$5$2e$25_$40$babel$2b$core$40$7$2e$29$2e$7_$40$opentelemetry$2b$api$40$1$2e$9$2e$1_$40$types$2b$node$40$20$2e$19$2e$43_react$2d$dom_6ba7cdcaec5cde500f6a59b53144a322$2f$node_modules$2f$next$2f$dist$2f$build$2f$polyfills$2f$process$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"].env.NEXT_PUBLIC_APP_URL || window.location.origin;
     const finalRedirect = redirectPath !== null && redirectPath !== void 0 ? redirectPath : '/workflow';
@@ -10328,7 +10328,7 @@ function AppSidebar() {
                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$dograh$2d$1$2f$ui$2f$node_modules$2f2e$pnpm$2f$next$40$15$2e$5$2e$25_$40$babel$2b$core$40$7$2e$29$2e$7_$40$opentelemetry$2b$api$40$1$2e$9$2e$1_$40$types$2b$node$40$20$2e$19$2e$43_react$2d$dom_6ba7cdcaec5cde500f6a59b53144a322$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$dograh$2d$1$2f$ui$2f$src$2f$components$2f$ui$2f$tooltip$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["TooltipTrigger"], {
                                                 asChild: true,
                                                 children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$dograh$2d$1$2f$ui$2f$node_modules$2f2e$pnpm$2f$next$40$15$2e$5$2e$25_$40$babel$2b$core$40$7$2e$29$2e$7_$40$opentelemetry$2b$api$40$1$2e$9$2e$1_$40$types$2b$node$40$20$2e$19$2e$43_react$2d$dom_6ba7cdcaec5cde500f6a59b53144a322$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("a", {
-                                                    href: "https://docs.dograh.com/deployment/update",
+                                                    href: "https://voice.menaceui.com/docs/deployment/update",
                                                     target: "_blank",
                                                     rel: "noopener noreferrer",
                                                     className: "inline-flex items-center gap-1 rounded-md border bg-amber-50 px-1.5 py-0.5 text-[10px] font-medium leading-none text-amber-900 transition-opacity hover:opacity-80 dark:bg-amber-950 dark:text-amber-200",

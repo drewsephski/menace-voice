@@ -227,7 +227,7 @@ async def test_authorize_workflow_run_oss_exhausted_key_blocks_run(
 
     assert result.has_quota is False
     assert result.error_code == "quota_exceeded"
-    assert "app.dograh.com" in result.error_message
+    assert "voice.menaceui.com" in result.error_message
     assert "/billing" not in result.error_message
     check_usage.assert_awaited_once_with(api_key)
 
@@ -554,6 +554,84 @@ async def test_oss_run_authorization_preserves_hosted_key_credit_denial(monkeypa
     assert result.has_quota is False
     assert result.error_code == "insufficient_credits"
     assert result.error_message == "Organization has insufficient billing credits."
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("status_code", [401, 403])
+async def test_oss_run_authorization_identifies_rejected_service_key(
+    monkeypatch,
+    status_code,
+):
+    request = httpx.Request(
+        "POST",
+        "https://services.dograh.com/api/v1/service-keys/run-authorization/self",
+    )
+    response = httpx.Response(status_code, request=request)
+    monkeypatch.setattr(
+        quota_service.mps_service_key_client,
+        "authorize_service_key_run_start",
+        AsyncMock(
+            side_effect=httpx.HTTPStatusError(
+                "Service key rejected",
+                request=request,
+                response=response,
+            )
+        ),
+    )
+
+    result = await quota_service._authorize_oss_managed_v2_run(
+        workflow_id=7,
+        workflow_run_id=88,
+        service_key="mps_sk_rejected",
+        user_config=_dograh_config(managed_service_version=2),
+    )
+
+    assert result.has_quota is False
+    assert result.error_code == "invalid_service_key"
+    assert "model configuration" in result.error_message
+
+
+@pytest.mark.asyncio
+async def test_oss_run_authorization_retries_transient_mps_failure(monkeypatch):
+    request = httpx.Request(
+        "POST",
+        "https://services.dograh.com/api/v1/service-keys/run-authorization/self",
+    )
+    authorize = AsyncMock(
+        side_effect=[
+            httpx.ConnectTimeout("timed out", request=request),
+            {
+                "allowed": True,
+                "remaining_credits": "25.0",
+                "correlation_id": "oss-corr-123",
+            },
+        ]
+    )
+    monkeypatch.setattr(
+        quota_service.mps_service_key_client,
+        "authorize_service_key_run_start",
+        authorize,
+    )
+    monkeypatch.setattr(
+        quota_service.db_client,
+        "get_workflow_run_by_id",
+        AsyncMock(return_value=SimpleNamespace(initial_context={})),
+    )
+    monkeypatch.setattr(
+        quota_service.db_client,
+        "update_workflow_run",
+        AsyncMock(),
+    )
+
+    result = await quota_service._authorize_oss_managed_v2_run(
+        workflow_id=7,
+        workflow_run_id=88,
+        service_key="mps_sk_12345678",
+        user_config=_dograh_config(managed_service_version=2),
+    )
+
+    assert result.has_quota is True
+    assert authorize.await_count == 2
 
 
 @pytest.mark.asyncio

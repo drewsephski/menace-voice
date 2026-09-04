@@ -44,7 +44,7 @@ export default function SettingsPage() {
               Let AI agents access your Menace Voice workspace and documentation via
               the Model Context Protocol.{" "}
               <a
-                href="https://docs.dograh.com/integrations/mcp"
+                href="https://voice.menaceui.com/docs/integrations/mcp"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-0.5 underline"
@@ -64,7 +64,7 @@ export default function SettingsPage() {
             <CardDescription>
               Configure Langfuse tracing for your voice agent calls.{" "}
               <a
-                href="https://docs.dograh.com/configurations/tracing"
+                href="https://voice.menaceui.com/docs/configurations/tracing"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-0.5 underline"

@@ -52,6 +52,11 @@ def _patch_get_user_dependencies(
     )
     monkeypatch.setattr(
         auth_depends,
+        "initialize_organization_trial",
+        AsyncMock(),
+    )
+    monkeypatch.setattr(
+        auth_depends,
         "group_identify",
         lambda *args, **kwargs: group_calls.append((args, kwargs)),
     )
@@ -200,6 +205,7 @@ async def test_get_user_bootstraps_org_it_did_not_just_create(monkeypatch):
 
     assert result is user
     bootstrap.assert_awaited_once_with(42, created_by="stack-user-1")
+    auth_depends.initialize_organization_trial.assert_awaited_once_with(42)
 
 
 @pytest.mark.asyncio

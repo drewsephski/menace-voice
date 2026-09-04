@@ -118,7 +118,8 @@ function getProviderDisplayName(
     providerSchema: ProviderSchema | undefined,
 ): string | undefined {
     if (!provider) return provider;
-    return providerSchema?.title || provider;
+    const label = providerSchema?.title || provider;
+    return provider === "speaches" ? `${label} · Free, self-hosted` : label;
 }
 
 function getGlobalSummary(

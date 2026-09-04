@@ -9,8 +9,8 @@
 **The voice AI platform for building and deploying production agents** — use a visual workflow builder, test agents in minutes, and let AI coding assistants help design and edit them through MCP.
 
 <p align="center">
-  <a href="https://app.dograh.com">
-    <img src="https://img.shields.io/badge/▶_Try_the_Cloud-app.dograh.com-2563eb?style=for-the-badge" alt="Try the Cloud">
+  <a href="https://voice.menaceui.com">
+    <img src="https://img.shields.io/badge/▶_Try_the_Cloud-voice.menaceui.com-2563eb?style=for-the-badge" alt="Try the Cloud">
   </a>
   &nbsp;
   <a href="#-get-started">
@@ -19,7 +19,7 @@
 </p>
 
 <p align="center">
-  <a href="https://docs.dograh.com">📖 Docs</a> &nbsp;·&nbsp;
+  <a href="https://voice.menaceui.com/docs">📖 Docs</a> &nbsp;·&nbsp;
   <a href="LICENSE">📜 BSD 2-Clause</a> &nbsp;·&nbsp;
   <a href="README.zh-CN.md">🌐 中文</a> &nbsp;·&nbsp;
   <a href="README.ja-JP.md">🌐 日本語</a>
@@ -89,7 +89,7 @@ An honest comparison on the axes that matter most to teams evaluating voice AI p
 > We collect anonymous usage data to improve the product. You can opt out by setting `ENABLE_TELEMETRY=false` before running the startup script.
 
 > **Note**
-> If you wish to run the platform on a remote server instead, checkout our [Documentation](https://docs.dograh.com/deployment/docker#option-2:-remote-server-deployment)
+> If you wish to run the platform on a remote server instead, checkout our [Documentation](https://voice.menaceui.com/docs/deployment/docker#option-2:-remote-server-deployment)
 
 Use the deployment package provided by Menace, then follow the startup instructions in the deployment documentation.
 
@@ -119,7 +119,7 @@ the use case instead of only a one-line prompt. Include the agent persona, call
 flow, rules, objection handling, success criteria, and a sample conversation if
 you have one.
 
-See the [MCP guide](https://docs.dograh.com/integrations/mcp) to connect your assistant.
+See the [MCP guide](https://voice.menaceui.com/docs/integrations/mcp) to connect your assistant.
 
 ## Features
 
@@ -145,11 +145,11 @@ See the [MCP guide](https://docs.dograh.com/integrations/mcp) to connect your as
 
 ### Local Development
 
-Refer [Local Setup](https://docs.dograh.com/contribution/setup)
+Refer [Local Setup](https://voice.menaceui.com/docs/contribution/setup)
 
 ### Self-Hosted Deployment
 
-For detailed deployment instructions including remote server setup with HTTPS, see our [Docker Deployment Guide](https://docs.dograh.com/deployment/docker#option-2-remote-server-deployment).
+For detailed deployment instructions including remote server setup with HTTPS, see our [Docker Deployment Guide](https://voice.menaceui.com/docs/deployment/docker#option-2-remote-server-deployment).
 
 ### Cloud Version
 
@@ -157,7 +157,7 @@ Visit [https://www.dograh.com](https://www.dograh.com/) for our managed cloud of
 
 ## 📚Documentation
 
-You can go to [https://docs.dograh.com](https://docs.dograh.com/) for our documentation.
+You can go to [https://voice.menaceui.com/docs](https://voice.menaceui.com/docs/) for our documentation.
 
 ## 📦 SDKs
 
@@ -176,5 +176,5 @@ Founded by YC alumni and exit founders committed to making voice AI accessible t
 <br><br><br>
 
   <p align="center">
-    <a href="https://app.dograh.com">☁️ Try Cloud Version</a>
+    <a href="https://voice.menaceui.com">☁️ Try Cloud Version</a>
   </p>

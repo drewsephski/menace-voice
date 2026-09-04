@@ -71,6 +71,7 @@ def lease(monkeypatch):
         claim=AsyncMock(return_value=LEASE_OWNER_TOKEN),
         complete=AsyncMock(),
         release=AsyncMock(),
+        mark=AsyncMock(),
     )
     monkeypatch.setattr(bootstrap.db_client, "claim_configuration_lease", calls.claim)
     monkeypatch.setattr(
@@ -79,6 +80,7 @@ def lease(monkeypatch):
     monkeypatch.setattr(
         bootstrap.db_client, "release_configuration_lease", calls.release
     )
+    monkeypatch.setattr(bootstrap.db_client, "upsert_configuration", calls.mark)
     return calls
 
 
@@ -112,6 +114,37 @@ async def test_completed_sentinel_short_circuits(
         ORG_ID, created_by=CREATED_BY
     )
 
+    config.assert_not_awaited()
+    lease.claim.assert_not_awaited()
+    mps.assert_not_awaited()
+    sip.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+async def test_completed_sentinel_backfills_missing_500_credit_account(
+    monkeypatch, sentinel, config, lease, mps, upsert, sip
+):
+    sentinel.row = SimpleNamespace(value={"status": LEASE_COMPLETED})
+    monkeypatch.setattr(bootstrap, "DEPLOYMENT_MODE", "saas")
+    ensure_billing = bootstrap.ensure_hosted_mps_billing_account_v2
+    ensure_billing.return_value = {"cached_balance_credits": "500.0000"}
+    mark_complete = AsyncMock()
+    monkeypatch.setattr(
+        bootstrap.db_client,
+        "upsert_configuration",
+        mark_complete,
+    )
+
+    assert await bootstrap.ensure_organization_bootstrapped(
+        ORG_ID, created_by=CREATED_BY
+    )
+
+    ensure_billing.assert_awaited_once_with(ORG_ID, created_by=CREATED_BY)
+    mark_complete.assert_awaited_once_with(
+        ORG_ID,
+        bootstrap._BOOTSTRAP_KEY,
+        {"status": LEASE_COMPLETED, "billing_account_v2": True},
+    )
     config.assert_not_awaited()
     lease.claim.assert_not_awaited()
     mps.assert_not_awaited()
@@ -176,12 +209,17 @@ async def test_existing_org_gets_owner_scoped_sip_without_minting_a_second_key(
 
 @pytest.mark.asyncio
 async def test_new_org_mints_key_and_independently_provisions_sip(
-    config, lease, mps, upsert, sip
+    monkeypatch, config, lease, mps, upsert, sip
 ):
+    monkeypatch.setattr(bootstrap, "DEPLOYMENT_MODE", "saas")
+    ensure_billing = bootstrap.ensure_hosted_mps_billing_account_v2
+    ensure_billing.return_value = {"cached_balance_credits": "500.0000"}
+
     assert await bootstrap.ensure_organization_bootstrapped(
         ORG_ID, created_by=CREATED_BY
     )
 
+    ensure_billing.assert_awaited_once_with(ORG_ID, created_by=CREATED_BY)
     mps.assert_awaited_once()
     configuration = upsert.await_args.args[1]
     assert configuration.mode == "dograh"
@@ -189,6 +227,11 @@ async def test_new_org_mints_key_and_independently_provisions_sip(
     sip.assert_awaited_once_with(ORG_ID, created_by=CREATED_BY)
     lease.complete.assert_awaited_once_with(
         ORG_ID, bootstrap._BOOTSTRAP_KEY, LEASE_OWNER_TOKEN
+    )
+    lease.mark.assert_awaited_once_with(
+        ORG_ID,
+        bootstrap._BOOTSTRAP_KEY,
+        {"status": LEASE_COMPLETED, "billing_account_v2": True},
     )
 
 
@@ -288,20 +331,23 @@ async def test_byok_org_still_gets_owner_scoped_sip(config, lease, mps, upsert, 
 
 
 @pytest.mark.asyncio
-async def test_billing_failure_does_not_discard_the_model_configuration(
+async def test_hosted_billing_failure_releases_lease_without_minting_key(
     monkeypatch, config, lease, mps, upsert, sip
 ):
+    monkeypatch.setattr(bootstrap, "DEPLOYMENT_MODE", "saas")
     monkeypatch.setattr(
         bootstrap,
         "ensure_hosted_mps_billing_account_v2",
         AsyncMock(side_effect=RuntimeError("billing down")),
     )
 
-    assert await bootstrap.ensure_organization_bootstrapped(
+    assert not await bootstrap.ensure_organization_bootstrapped(
         ORG_ID, created_by=CREATED_BY
     )
 
-    upsert.assert_awaited_once()
-    lease.complete.assert_awaited_once_with(
+    mps.assert_not_awaited()
+    upsert.assert_not_awaited()
+    lease.release.assert_awaited_once_with(
         ORG_ID, bootstrap._BOOTSTRAP_KEY, LEASE_OWNER_TOKEN
     )
+    lease.complete.assert_not_awaited()
