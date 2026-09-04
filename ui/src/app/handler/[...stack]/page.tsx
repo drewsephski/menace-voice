@@ -1,5 +1,6 @@
 import { StackHandler, StackTheme } from "@stackframe/stack";
 
+import { AccountSettingsShell } from "@/components/auth/AccountSettingsShell";
 import { AuthEnterpriseCTA } from "@/components/auth/AuthEnterpriseCTA";
 import { AuthShell } from "@/components/auth/AuthShell";
 import { getAuthProvider } from "@/lib/auth/config";
@@ -8,15 +9,16 @@ import { BackButton } from "./BackButton";
 import { stackAuthDarkTheme } from "./stack-theme";
 
 // Stack Auth serves every auth page from this one catch-all. We give the brand
-// split-screen shell to the user-facing FORM routes and render only the wide /
-// interstitial "machine" routes full-page (so account-settings etc. aren't
-// cramped into the narrow auth card). This is a BLOCKLIST, not an allowlist, so
-// new or aliased form routes — Stack's `log-in`/`register` aliases, case/dash
+// split-screen shell to the user-facing FORM routes, embed account-settings in
+// the main app chrome (see APP_SHELL_ROUTES), and render only interstitial
+// "machine" routes full-page. This is a BLOCKLIST, not an allowlist, so new or
+// aliased form routes — Stack's `log-in`/`register` aliases, case/dash
 // variants, email-verification, mfa, team-invitation — get the shell by default.
 // Matching is normalized (lowercase, dashes stripped) to mirror Stack's own
 // case- and dash-insensitive route resolution.
+const APP_SHELL_ROUTES = new Set(["accountsettings"]);
+
 const FULL_PAGE_ROUTES = new Set([
-  "accountsettings",
   "oauthcallback",
   "magiclinkcallback",
   "signout",
@@ -54,12 +56,17 @@ export default async function Handler(props: unknown) {
     segment = "";
   }
   const normalizedSegment = segment.toLowerCase().replace(/-/g, "");
-  const isAuthForm = segment !== "" && !FULL_PAGE_ROUTES.has(normalizedSegment);
+  const isAppShellRoute = APP_SHELL_ROUTES.has(normalizedSegment);
+  const isAuthForm =
+    segment !== "" &&
+    !FULL_PAGE_ROUTES.has(normalizedSegment) &&
+    !isAppShellRoute;
   const showBackButton = !new Set(["signin", "login"]).has(normalizedSegment);
+  const fullPage = !isAuthForm && !isAppShellRoute;
 
   const handler = (
     <StackTheme theme={stackAuthDarkTheme}>
-      <StackHandler fullPage={!isAuthForm} app={app!} routeProps={props} />
+      <StackHandler fullPage={fullPage} app={app!} routeProps={props} />
     </StackTheme>
   );
 
@@ -72,6 +79,10 @@ export default async function Handler(props: unknown) {
     );
   }
 
-  // account-settings and machine routes render full-page (Stack's own layout).
+  if (isAppShellRoute) {
+    return <AccountSettingsShell>{handler}</AccountSettingsShell>;
+  }
+
+  // OAuth callbacks, sign-out, and error routes render full-page.
   return handler;
 }

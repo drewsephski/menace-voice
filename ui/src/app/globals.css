@@ -390,3 +390,47 @@
   box-shadow: none;
   border-bottom-color: var(--cta);
 }
+
+/* Account settings embedded in the main app shell: align Stack's internal nav
+   with the floating-dock sidebar (rounded items, sidebar tokens, wider rail). */
+.account-settings-shell .stack-scope {
+  background: transparent;
+}
+
+.account-settings-shell .stack-scope.flex.w-full {
+  min-height: calc(100vh - 3.5rem);
+}
+
+.account-settings-shell .stack-scope .border-r {
+  min-width: 13.5rem;
+  max-width: 13.5rem;
+  border-color: var(--sidebar-border);
+  background-color: color-mix(in oklab, var(--sidebar) 88%, transparent);
+  padding: 0.75rem;
+}
+
+.account-settings-shell .stack-scope .border-r h2 {
+  color: var(--sidebar-foreground);
+  font-size: 0.875rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
+.account-settings-shell .stack-scope .border-r button {
+  border-radius: 0.75rem;
+  color: var(--sidebar-foreground);
+  font-size: 0.875rem;
+  justify-content: flex-start;
+  width: 100%;
+}
+
+.account-settings-shell .stack-scope .border-r button:hover {
+  background-color: var(--sidebar-accent);
+  color: var(--sidebar-accent-foreground);
+}
+
+.account-settings-shell .stack-scope .border-r button.sm\:bg-muted {
+  background-color: color-mix(in oklab, var(--cta) 15%, transparent);
+  color: var(--foreground);
+  font-weight: 600;
+}

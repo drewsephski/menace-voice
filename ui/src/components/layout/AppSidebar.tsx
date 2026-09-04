@@ -57,6 +57,7 @@ import { useAppConfig } from "@/context/AppConfigContext";
 import { useLeadForms } from "@/context/LeadFormsContext";
 import { useTelephonyConfigWarnings } from "@/context/TelephonyConfigWarningsContext";
 import { useLatestReleaseVersion } from "@/hooks/useLatestReleaseVersion";
+import { isAccountSettingsPath } from "@/lib/accountSettingsRoutes";
 import type { LocalUser } from "@/lib/auth";
 import { useAuth } from "@/lib/auth";
 import { cn } from "@/lib/utils";
@@ -179,6 +180,7 @@ export function AppSidebar() {
   );
 
   const isActive = (path: string) => pathname.startsWith(path);
+  const onAccountSettings = isAccountSettingsPath(pathname);
 
   const handleMobileNavClick = () => {
     if (isMobile) {
@@ -475,11 +477,17 @@ export function AppSidebar() {
                     </div>
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={() => router.push("/handler/account-settings")} className="cursor-pointer">
+                  <DropdownMenuItem
+                    onClick={() => router.push("/handler/account-settings")}
+                    className={cn("cursor-pointer", onAccountSettings && "bg-accent")}
+                  >
                     <Settings className="mr-2 h-4 w-4" />
                     Account settings
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => router.push("/settings")} className="cursor-pointer">
+                  <DropdownMenuItem
+                    onClick={() => router.push("/settings")}
+                    className={cn("cursor-pointer", pathname === "/settings" && "bg-accent")}
+                  >
                     <Settings className="mr-2 h-4 w-4" />
                     Platform Settings
                   </DropdownMenuItem>

@@ -11,6 +11,8 @@ import { SidebarInset, SidebarProvider, useSidebar } from "@/components/ui/sideb
 import { useAppConfig } from "@/context/AppConfigContext";
 import { LeadFormsProvider } from "@/context/LeadFormsContext";
 
+import { isAccountSettingsPath } from "@/lib/accountSettingsRoutes";
+
 import { AppSidebar } from "./AppSidebar";
 
 function AppHeader() {
@@ -83,9 +85,15 @@ const AppLayout: React.FC<AppLayoutProps> = ({
 }) => {
   const pathname = usePathname();
 
-  // Check if current route should have sidebar
-  // Hide sidebar for root (/), /handler routes (Stack Auth routes), and /auth routes
-  const shouldShowSidebar = pathname !== "/" && pathname !== "/pilot" && !pathname.startsWith("/handler") && !pathname.startsWith("/auth") && !pathname.startsWith("/docs");
+  // Check if current route should have sidebar.
+  // Hide sidebar for root (/), most /handler routes (Stack Auth), and /auth routes.
+  // Account settings is an exception: keep the main app sidebar for navigation back.
+  const shouldShowSidebar =
+    pathname !== "/" &&
+    pathname !== "/pilot" &&
+    (!pathname.startsWith("/handler") || isAccountSettingsPath(pathname)) &&
+    !pathname.startsWith("/auth") &&
+    !pathname.startsWith("/docs");
 
   // Only match the exact editor page /workflow/<id>, not sub-routes like /workflow/<id>/runs
   const isWorkflowEditor = /^\/workflow\/\d+$/.test(pathname);
