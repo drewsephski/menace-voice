@@ -89,9 +89,11 @@ def compose_system_prompt_for_node(
         }
         guidance = [
             "CURRENT CALL CAPABILITIES — INTERNAL",
-            "Only the tools exposed for this turn are callable. A workflow "
-            "transition changes the conversation stage; it does not itself "
-            "book, send, transfer, or complete an external action.",
+            (
+                "Only the tools exposed for this turn are callable. A workflow "
+                "transition changes the conversation stage; it does not itself "
+                "book, send, transfer, or complete an external action."
+            ),
         ]
         if action_names:
             guidance.append(

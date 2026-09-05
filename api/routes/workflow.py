@@ -988,7 +988,7 @@ async def create_workflow_from_template(
                 use_case=request.use_case,
                 call_type=request.call_type,
                 **request.onboarding_context.model_dump(),
-                tool_names=[tool.name for tool in selected_tools],
+                tool_names=[str(tool.name) for tool in selected_tools],
                 has_documents=bool(document_uuids),
                 has_pre_call_fetch=bool(pre_call_fetch_url),
                 has_post_call_webhook=bool(post_call_webhook_url),
