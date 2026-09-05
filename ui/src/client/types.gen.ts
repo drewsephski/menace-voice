@@ -785,6 +785,24 @@ export type BatchRecordingUploadResponseSchema = {
 };
 
 /**
+ * Body_create_voice_clone_api_v1_voice_clones_post
+ */
+export type BodyCreateVoiceCloneApiV1VoiceClonesPost = {
+    /**
+     * Name
+     */
+    name: string;
+    /**
+     * Consent
+     */
+    consent: boolean;
+    /**
+     * Sample
+     */
+    sample: Blob | File;
+};
+
+/**
  * Body_transcribe_audio_api_v1_workflow_recordings_transcribe_post
  */
 export type BodyTranscribeAudioApiV1WorkflowRecordingsTranscribePost = {
@@ -7434,6 +7452,96 @@ export type VobizConfigurationRequest = {
 };
 
 /**
+ * VoiceCloneAgent
+ */
+export type VoiceCloneAgent = {
+    /**
+     * Id
+     */
+    id: number;
+    /**
+     * Name
+     */
+    name: string;
+    /**
+     * Voice Clone Id
+     */
+    voice_clone_id: string | null;
+    /**
+     * Published Voice Clone Id
+     */
+    published_voice_clone_id: string | null;
+};
+
+/**
+ * VoiceCloneAssignment
+ */
+export type VoiceCloneAssignment = {
+    /**
+     * Voice Clone Id
+     */
+    voice_clone_id?: string | null;
+};
+
+/**
+ * VoiceCloneCapabilities
+ */
+export type VoiceCloneCapabilities = {
+    /**
+     * Available
+     */
+    available: boolean;
+    /**
+     * Message
+     */
+    message: string;
+    /**
+     * Max Sample Bytes
+     */
+    max_sample_bytes?: number;
+    /**
+     * Min Sample Seconds
+     */
+    min_sample_seconds?: number;
+    /**
+     * Max Sample Seconds
+     */
+    max_sample_seconds?: number;
+};
+
+/**
+ * VoiceClonePreviewRequest
+ */
+export type VoiceClonePreviewRequest = {
+    /**
+     * Text
+     */
+    text: string;
+};
+
+/**
+ * VoiceCloneResponse
+ */
+export type VoiceCloneResponse = {
+    /**
+     * Id
+     */
+    id: string;
+    /**
+     * Name
+     */
+    name: string;
+    /**
+     * Status
+     */
+    status: 'ready' | 'verification_required' | 'deleting' | 'deleted';
+    /**
+     * Created At
+     */
+    created_at: string;
+};
+
+/**
  * VoiceFacets
  *
  * Distinct selector values across a provider's full voice catalog.
@@ -8967,6 +9075,27 @@ export type GetWorkflowRunsApiV1SuperuserWorkflowRunsGetResponses = {
 };
 
 export type GetWorkflowRunsApiV1SuperuserWorkflowRunsGetResponse = GetWorkflowRunsApiV1SuperuserWorkflowRunsGetResponses[keyof GetWorkflowRunsApiV1SuperuserWorkflowRunsGetResponses];
+
+export type DocsChatApiV1DocsChatPostData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/v1/docs/chat';
+};
+
+export type DocsChatApiV1DocsChatPostErrors = {
+    /**
+     * Not found
+     */
+    404: unknown;
+};
+
+export type DocsChatApiV1DocsChatPostResponses = {
+    /**
+     * Successful Response
+     */
+    200: unknown;
+};
 
 export type ValidateWorkflowApiV1WorkflowWorkflowIdValidatePostData = {
     body?: never;
@@ -10654,6 +10783,298 @@ export type GetVoicesApiV1UserConfigurationsVoicesProviderGetResponses = {
 };
 
 export type GetVoicesApiV1UserConfigurationsVoicesProviderGetResponse = GetVoicesApiV1UserConfigurationsVoicesProviderGetResponses[keyof GetVoicesApiV1UserConfigurationsVoicesProviderGetResponses];
+
+export type VoiceCloneCapabilitiesApiV1VoiceClonesCapabilitiesGetData = {
+    body?: never;
+    headers?: {
+        /**
+         * Authorization
+         */
+        authorization?: string | null;
+        /**
+         * X-Api-Key
+         */
+        'X-API-Key'?: string | null;
+    };
+    path?: never;
+    query?: never;
+    url: '/api/v1/voice-clones/capabilities';
+};
+
+export type VoiceCloneCapabilitiesApiV1VoiceClonesCapabilitiesGetErrors = {
+    /**
+     * Not found
+     */
+    404: unknown;
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type VoiceCloneCapabilitiesApiV1VoiceClonesCapabilitiesGetError = VoiceCloneCapabilitiesApiV1VoiceClonesCapabilitiesGetErrors[keyof VoiceCloneCapabilitiesApiV1VoiceClonesCapabilitiesGetErrors];
+
+export type VoiceCloneCapabilitiesApiV1VoiceClonesCapabilitiesGetResponses = {
+    /**
+     * Successful Response
+     */
+    200: VoiceCloneCapabilities;
+};
+
+export type VoiceCloneCapabilitiesApiV1VoiceClonesCapabilitiesGetResponse = VoiceCloneCapabilitiesApiV1VoiceClonesCapabilitiesGetResponses[keyof VoiceCloneCapabilitiesApiV1VoiceClonesCapabilitiesGetResponses];
+
+export type ListVoiceClonesApiV1VoiceClonesGetData = {
+    body?: never;
+    headers?: {
+        /**
+         * Authorization
+         */
+        authorization?: string | null;
+        /**
+         * X-Api-Key
+         */
+        'X-API-Key'?: string | null;
+    };
+    path?: never;
+    query?: never;
+    url: '/api/v1/voice-clones';
+};
+
+export type ListVoiceClonesApiV1VoiceClonesGetErrors = {
+    /**
+     * Not found
+     */
+    404: unknown;
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type ListVoiceClonesApiV1VoiceClonesGetError = ListVoiceClonesApiV1VoiceClonesGetErrors[keyof ListVoiceClonesApiV1VoiceClonesGetErrors];
+
+export type ListVoiceClonesApiV1VoiceClonesGetResponses = {
+    /**
+     * Response List Voice Clones Api V1 Voice Clones Get
+     *
+     * Successful Response
+     */
+    200: Array<VoiceCloneResponse>;
+};
+
+export type ListVoiceClonesApiV1VoiceClonesGetResponse = ListVoiceClonesApiV1VoiceClonesGetResponses[keyof ListVoiceClonesApiV1VoiceClonesGetResponses];
+
+export type CreateVoiceCloneApiV1VoiceClonesPostData = {
+    body: BodyCreateVoiceCloneApiV1VoiceClonesPost;
+    headers?: {
+        /**
+         * Authorization
+         */
+        authorization?: string | null;
+        /**
+         * X-Api-Key
+         */
+        'X-API-Key'?: string | null;
+    };
+    path?: never;
+    query?: never;
+    url: '/api/v1/voice-clones';
+};
+
+export type CreateVoiceCloneApiV1VoiceClonesPostErrors = {
+    /**
+     * Not found
+     */
+    404: unknown;
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type CreateVoiceCloneApiV1VoiceClonesPostError = CreateVoiceCloneApiV1VoiceClonesPostErrors[keyof CreateVoiceCloneApiV1VoiceClonesPostErrors];
+
+export type CreateVoiceCloneApiV1VoiceClonesPostResponses = {
+    /**
+     * Successful Response
+     */
+    201: VoiceCloneResponse;
+};
+
+export type CreateVoiceCloneApiV1VoiceClonesPostResponse = CreateVoiceCloneApiV1VoiceClonesPostResponses[keyof CreateVoiceCloneApiV1VoiceClonesPostResponses];
+
+export type ListVoiceCloneAgentsApiV1VoiceClonesAgentsGetData = {
+    body?: never;
+    headers?: {
+        /**
+         * Authorization
+         */
+        authorization?: string | null;
+        /**
+         * X-Api-Key
+         */
+        'X-API-Key'?: string | null;
+    };
+    path?: never;
+    query?: never;
+    url: '/api/v1/voice-clones/agents';
+};
+
+export type ListVoiceCloneAgentsApiV1VoiceClonesAgentsGetErrors = {
+    /**
+     * Not found
+     */
+    404: unknown;
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type ListVoiceCloneAgentsApiV1VoiceClonesAgentsGetError = ListVoiceCloneAgentsApiV1VoiceClonesAgentsGetErrors[keyof ListVoiceCloneAgentsApiV1VoiceClonesAgentsGetErrors];
+
+export type ListVoiceCloneAgentsApiV1VoiceClonesAgentsGetResponses = {
+    /**
+     * Response List Voice Clone Agents Api V1 Voice Clones Agents Get
+     *
+     * Successful Response
+     */
+    200: Array<VoiceCloneAgent>;
+};
+
+export type ListVoiceCloneAgentsApiV1VoiceClonesAgentsGetResponse = ListVoiceCloneAgentsApiV1VoiceClonesAgentsGetResponses[keyof ListVoiceCloneAgentsApiV1VoiceClonesAgentsGetResponses];
+
+export type AssignVoiceCloneApiV1VoiceClonesAgentsWorkflowIdPutData = {
+    body: VoiceCloneAssignment;
+    headers?: {
+        /**
+         * Authorization
+         */
+        authorization?: string | null;
+        /**
+         * X-Api-Key
+         */
+        'X-API-Key'?: string | null;
+    };
+    path: {
+        /**
+         * Workflow Id
+         */
+        workflow_id: number;
+    };
+    query?: never;
+    url: '/api/v1/voice-clones/agents/{workflow_id}';
+};
+
+export type AssignVoiceCloneApiV1VoiceClonesAgentsWorkflowIdPutErrors = {
+    /**
+     * Not found
+     */
+    404: unknown;
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type AssignVoiceCloneApiV1VoiceClonesAgentsWorkflowIdPutError = AssignVoiceCloneApiV1VoiceClonesAgentsWorkflowIdPutErrors[keyof AssignVoiceCloneApiV1VoiceClonesAgentsWorkflowIdPutErrors];
+
+export type AssignVoiceCloneApiV1VoiceClonesAgentsWorkflowIdPutResponses = {
+    /**
+     * Successful Response
+     */
+    204: void;
+};
+
+export type AssignVoiceCloneApiV1VoiceClonesAgentsWorkflowIdPutResponse = AssignVoiceCloneApiV1VoiceClonesAgentsWorkflowIdPutResponses[keyof AssignVoiceCloneApiV1VoiceClonesAgentsWorkflowIdPutResponses];
+
+export type PreviewVoiceCloneApiV1VoiceClonesCloneIdPreviewPostData = {
+    body: VoiceClonePreviewRequest;
+    headers?: {
+        /**
+         * Authorization
+         */
+        authorization?: string | null;
+        /**
+         * X-Api-Key
+         */
+        'X-API-Key'?: string | null;
+    };
+    path: {
+        /**
+         * Clone Id
+         */
+        clone_id: string;
+    };
+    query?: never;
+    url: '/api/v1/voice-clones/{clone_id}/preview';
+};
+
+export type PreviewVoiceCloneApiV1VoiceClonesCloneIdPreviewPostErrors = {
+    /**
+     * Not found
+     */
+    404: unknown;
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type PreviewVoiceCloneApiV1VoiceClonesCloneIdPreviewPostError = PreviewVoiceCloneApiV1VoiceClonesCloneIdPreviewPostErrors[keyof PreviewVoiceCloneApiV1VoiceClonesCloneIdPreviewPostErrors];
+
+export type PreviewVoiceCloneApiV1VoiceClonesCloneIdPreviewPostResponses = {
+    /**
+     * Successful Response
+     */
+    200: Blob | File;
+};
+
+export type PreviewVoiceCloneApiV1VoiceClonesCloneIdPreviewPostResponse = PreviewVoiceCloneApiV1VoiceClonesCloneIdPreviewPostResponses[keyof PreviewVoiceCloneApiV1VoiceClonesCloneIdPreviewPostResponses];
+
+export type DeleteVoiceCloneApiV1VoiceClonesCloneIdDeleteData = {
+    body?: never;
+    headers?: {
+        /**
+         * Authorization
+         */
+        authorization?: string | null;
+        /**
+         * X-Api-Key
+         */
+        'X-API-Key'?: string | null;
+    };
+    path: {
+        /**
+         * Clone Id
+         */
+        clone_id: string;
+    };
+    query?: never;
+    url: '/api/v1/voice-clones/{clone_id}';
+};
+
+export type DeleteVoiceCloneApiV1VoiceClonesCloneIdDeleteErrors = {
+    /**
+     * Not found
+     */
+    404: unknown;
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type DeleteVoiceCloneApiV1VoiceClonesCloneIdDeleteError = DeleteVoiceCloneApiV1VoiceClonesCloneIdDeleteErrors[keyof DeleteVoiceCloneApiV1VoiceClonesCloneIdDeleteErrors];
+
+export type DeleteVoiceCloneApiV1VoiceClonesCloneIdDeleteResponses = {
+    /**
+     * Successful Response
+     */
+    204: void;
+};
+
+export type DeleteVoiceCloneApiV1VoiceClonesCloneIdDeleteResponse = DeleteVoiceCloneApiV1VoiceClonesCloneIdDeleteResponses[keyof DeleteVoiceCloneApiV1VoiceClonesCloneIdDeleteResponses];
 
 export type CreateCampaignApiV1CampaignCreatePostData = {
     body: CreateCampaignRequest;

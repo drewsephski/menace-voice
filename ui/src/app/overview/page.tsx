@@ -1,9 +1,11 @@
 "use client";
 
+import { AudioLines } from 'lucide-react';
 import Link from 'next/link';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { QuickAgentComposer } from '@/components/workflow/QuickAgentComposer';
 import { useAuth } from '@/lib/auth';
 
 export default function OverviewPage() {
@@ -33,6 +35,22 @@ export default function OverviewPage() {
                             )}
                         </CardDescription>
                     </CardHeader>
+                </Card>
+
+                <Card className="card-weave mb-8 min-w-0 overflow-hidden rounded-2xl">
+                    <CardHeader className="space-y-3 p-5 pb-4 sm:p-7 sm:pb-5">
+                        <p className="flex items-center gap-2.5 text-xs font-medium text-muted-foreground">
+                            <span className="flex h-7 w-7 items-center justify-center rounded-lg border border-border/70 bg-background/60 text-foreground">
+                                <AudioLines className="h-4 w-4" aria-hidden="true" />
+                            </span>
+                            Quick setup
+                        </p>
+                        <CardTitle className="max-w-xl text-xl leading-snug tracking-tight sm:text-2xl">What would you like your voice agent to do?</CardTitle>
+                        <CardDescription className="max-w-lg leading-relaxed">Describe the job. We’ll build the conversation.</CardDescription>
+                    </CardHeader>
+                    <CardContent className="p-5 pt-0 sm:p-7 sm:pt-0">
+                        <QuickAgentComposer />
+                    </CardContent>
                 </Card>
 
                 <Card className="card-weave mb-8 border-cta/35">

@@ -193,3 +193,32 @@ def test_rebuilds_ambiguous_start_or_global_nodes(node_type: str):
 def test_rejects_missing_generated_node_list():
     with pytest.raises(InvalidOnboardingWorkflowLayout, match="no node list"):
         _enhance({})
+
+
+@pytest.mark.parametrize("defect", ["disconnected", "cycle", "missing_end", "dangling", "duplicate_id"])
+def test_repairs_three_stage_drafts_without_a_valid_connected_path(defect: str):
+    source = _workflow()
+    if defect == "disconnected":
+        source["edges"] = []
+    elif defect == "cycle":
+        source["edges"].append({"id": "cycle", "source": "agent-2", "target": "agent-0"})
+    elif defect == "missing_end":
+        source["nodes"] = [node for node in source["nodes"] if node["type"] != "endCall"]
+    elif defect == "dangling":
+        source["edges"][0]["target"] = "missing"
+    else:
+        source["nodes"][1]["id"] = "start"
+    original = deepcopy(source)
+
+    result = _enhance(source)
+
+    assert source == original
+    parsed = ReactFlowDTO.model_validate(result)
+    assert sum(node.type == "agentNode" for node in parsed.nodes) == 3
+    assert sum(node.type == "globalNode" for node in parsed.nodes) == 1
+    assert [(edge.source, edge.target) for edge in parsed.edges[:4]] == [
+        ("start", "stage-1"),
+        ("stage-1", "stage-2"),
+        ("stage-2", "stage-3"),
+        ("stage-3", "end"),
+    ]

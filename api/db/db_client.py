@@ -14,6 +14,7 @@ from api.db.telephony_phone_number_client import TelephonyPhoneNumberClient
 from api.db.telephony_trunk_client import TelephonyTrunkClient
 from api.db.tool_client import ToolClient
 from api.db.user_client import UserClient
+from api.db.voice_clone_client import VoiceCloneClient
 from api.db.webhook_credential_client import WebhookCredentialClient
 from api.db.webhook_delivery_client import WebhookDeliveryClient
 from api.db.workflow_client import WorkflowClient
@@ -24,6 +25,7 @@ from api.db.workflow_template_client import WorkflowTemplateClient
 
 
 class DBClient(
+    VoiceCloneClient,
     WorkflowClient,
     WorkflowRunClient,
     WorkflowRunTextSessionClient,

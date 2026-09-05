@@ -99,6 +99,39 @@ def _ordered_agent_nodes(
     return ordered if len(ordered) == len(agent_nodes) else agent_nodes
 
 
+def _has_connected_onboarding_path(nodes: list[dict[str, Any]], edges: object) -> bool:
+    """Check connectivity as well as counts before accepting a generated draft."""
+    if not isinstance(edges, list):
+        return False
+    node_ids = [node.get("id") for node in nodes]
+    if any(not isinstance(node_id, str) or not node_id for node_id in node_ids):
+        return False
+    if len(set(node_ids)) != len(node_ids):
+        return False
+    links = set()
+    for edge in edges:
+        if not isinstance(edge, dict):
+            return False
+        source, target = edge.get("source"), edge.get("target")
+        if source not in node_ids or target not in node_ids:
+            return False
+        links.add((source, target))
+
+    start = next(node["id"] for node in nodes if node.get("type") == "startCall")
+    agents = _ordered_agent_nodes(
+        [node for node in nodes if node.get("type") == "agentNode"], edges
+    )
+    path = [start, *[node["id"] for node in agents]]
+    ends = {node["id"] for node in nodes if node.get("type") == "endCall"}
+    required = set(pairwise(path))
+    allowed = required | {(node_id, end) for node_id in path for end in ends}
+    return (
+        required.issubset(links)
+        and any((path[-1], end) in links for end in ends)
+        and links.issubset(allowed)
+    )
+
+
 def _global_prompt(
     *,
     agent_name: str,
@@ -267,7 +300,12 @@ def enhance_onboarding_workflow_prompts(
     agent_nodes = [node for node in nodes if node.get("type") == "agentNode"]
     global_nodes = [node for node in nodes if node.get("type") == "globalNode"]
 
-    if len(start_nodes) != 1 or len(agent_nodes) != 3 or len(global_nodes) > 1:
+    if (
+        len(start_nodes) != 1
+        or len(agent_nodes) != 3
+        or len(global_nodes) > 1
+        or not _has_connected_onboarding_path(nodes, updated.get("edges"))
+    ):
         logger.warning(
             "Rebuilding onboarding draft from structured answers: "
             "{} start nodes, {} agent nodes, {} global nodes",

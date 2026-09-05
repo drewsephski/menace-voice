@@ -33,9 +33,10 @@
     "**/*.ts",
     "**/*.tsx",
     ".next-icon-preview/types/**/*.ts",
+    ".next-layout-qa/types/**/*.ts",
     ".next/types/**/*.ts",
     "next-env.d.ts",
-    ".next-layout-qa/types/**/*.ts"
+    ".next-quick-setup/types/**/*.ts"
   ],
   "exclude": [
     "node_modules",

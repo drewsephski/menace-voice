@@ -100,6 +100,14 @@ app = FastAPI(
 )
 
 
+from api.services.voice_cloning.service import VoiceCloneError
+
+
+@app.exception_handler(VoiceCloneError)
+async def handle_voice_clone_error(_request: Request, exc: VoiceCloneError) -> JSONResponse:
+    return JSONResponse(status_code=exc.status_code, content={"detail": str(exc)})
+
+
 @app.exception_handler(MPSUnavailableError)
 async def handle_mps_unavailable_error(
     _request: Request,

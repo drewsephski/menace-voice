@@ -1,6 +1,6 @@
 'use client';
 
-import { Bot, ChevronDown, LayoutTemplate, PlusIcon } from 'lucide-react';
+import { Bot, ChevronDown, LayoutTemplate, PlusIcon, Sparkles } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { toast } from 'sonner';
@@ -91,11 +91,18 @@ export function CreateWorkflowButton() {
                 </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => router.push('/agent-onboarding/quick')} className="cursor-pointer">
+                    <Sparkles className="w-4 h-4 mr-2" />
+                    <div>
+                        <div className="font-medium">Quick setup</div>
+                        <div className="text-xs text-muted-foreground">Describe your agent. AI builds it.</div>
+                    </div>
+                </DropdownMenuItem>
                 <DropdownMenuItem onClick={handleAgentBuilder} className="cursor-pointer">
                     <Bot className="w-4 h-4 mr-2" />
                     <div>
-                        <div className="font-medium">Use Agent Builder</div>
-                        <div className="text-xs text-muted-foreground">AI generates a workflow from your description</div>
+                        <div className="font-medium">Guided setup</div>
+                        <div className="text-xs text-muted-foreground">Choose your voice, knowledge, and tools step by step</div>
                     </div>
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={handleBlankCanvas} disabled={isCreating} className="cursor-pointer">

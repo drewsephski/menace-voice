@@ -1548,3 +1548,17 @@ class KnowledgeBaseChunkModel(Base):
             postgresql_ops={"embedding": "vector_cosine_ops"},
         ),
     )
+
+
+class VoiceCloneModel(Base):
+    __tablename__ = "voice_clones"
+
+    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    organization_id = Column(Integer, ForeignKey("organizations.id"), nullable=False, index=True)
+    created_by = Column(Integer, ForeignKey("users.id"), nullable=False)
+    name = Column(String(80), nullable=False)
+    provider_voice_id = Column(String(128), nullable=False)
+    credential_source = Column(String(20), nullable=False)
+    status = Column(String(30), nullable=False, default="ready")
+    consent_version = Column(String(30), nullable=False)
+    created_at = Column(DateTime(timezone=True), nullable=False, default=lambda: datetime.now(UTC))

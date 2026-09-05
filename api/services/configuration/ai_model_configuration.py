@@ -92,17 +92,25 @@ async def get_effective_ai_model_configuration_for_workflow(
         WORKFLOW_MODEL_CONFIGURATION_V2_OVERRIDE_KEY
     )
     if v2_override:
-        return compile_ai_model_configuration_v2(
+        effective = compile_ai_model_configuration_v2(
             OrganizationAIModelConfigurationV2.model_validate(v2_override)
         )
+    else:
+        resolved_config = await get_resolved_ai_model_configuration(
+            organization_id=organization_id,
+        )
+        effective = resolve_effective_config(
+            resolved_config.effective,
+            workflow_configurations.get("model_overrides"),
+        )
+    clone_id = workflow_configurations.get("voice_clone_id")
+    if clone_id:
+        from api.services.voice_cloning.service import VoiceCloneError, apply_clone_to_config
 
-    resolved_config = await get_resolved_ai_model_configuration(
-        organization_id=organization_id,
-    )
-    return resolve_effective_config(
-        resolved_config.effective,
-        workflow_configurations.get("model_overrides"),
-    )
+        if not organization_id:
+            raise VoiceCloneError("Voice cloning requires an organization.", 403)
+        effective = await apply_clone_to_config(effective, clone_id, organization_id)
+    return effective
 
 
 async def get_organization_ai_model_configuration_v2(

@@ -1545,6 +1545,10 @@ export default function AgentOnboardingPage() {
                 A few focused questions are all it takes to get a useful first
                 draft.
               </p>
+              <Link href="/agent-onboarding/quick" className="mt-3 inline-flex items-center gap-1.5 text-sm font-medium hover:underline">
+                <Sparkles className="h-3.5 w-3.5" />
+                Skip the steps with Quick setup
+              </Link>
             </div>
           </div>
           <div className="hidden items-center gap-2 text-sm text-muted-foreground sm:flex">
