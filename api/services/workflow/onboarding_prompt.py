@@ -10,8 +10,11 @@ the saved workflow does not depend on the generator following prose perfectly.
 from __future__ import annotations
 
 from copy import deepcopy
+from itertools import pairwise
 from typing import Any
 from uuid import uuid4
+
+from loguru import logger
 
 ONBOARDING_EXECUTION_MARKER = "ONBOARDING EXECUTION CONTRACT"
 GENERATED_OBJECTIVE_MARKER = "GENERATED NODE OBJECTIVE — INTERNAL; NEVER RECITE"
@@ -163,6 +166,74 @@ def _global_prompt(
     )
 
 
+def _build_onboarding_layout(workflow_stages: list[str]) -> dict[str, Any]:
+    """Build a connected draft from the user's stages when generation drifts.
+
+    Do not splice arbitrary generated branches or objectives into different stages;
+    the structured brief and stage contracts supply the replacement prompts.
+    Resources and launch integrations must be attached after this step.
+    """
+    nodes: list[dict[str, Any]] = [
+        {
+            "id": "start",
+            "type": "startCall",
+            "position": {"x": 0, "y": 0},
+            "data": {"name": "Start Call", "is_start": True},
+        },
+        *[
+            {
+                "id": f"stage-{index + 1}",
+                "type": "agentNode",
+                "position": {"x": (index + 1) * 400, "y": 0},
+                "data": {"name": f"Stage {index + 1}"},
+            }
+            for index in range(3)
+        ],
+        {
+            "id": "end",
+            "type": "endCall",
+            "position": {"x": 1600, "y": 0},
+            "data": {"name": "End Call", "is_end": True},
+        },
+    ]
+    conditions = [
+        "The caller is oriented and ready for the first stage.",
+        *[f"This stage's outcome is complete: {stage}" for stage in workflow_stages],
+    ]
+    conditions[-1] += (
+        " Or the caller asks to stop, declines to continue, or the user's brief "
+        "requires ending the call."
+    )
+    edges: list[dict[str, Any]] = [
+        {
+            "id": f"transition-{index + 1}",
+            "source": source["id"],
+            "target": target["id"],
+            "data": {
+                "label": f"complete_stage_{index}",
+                "condition": conditions[index],
+            },
+        }
+        for index, (source, target) in enumerate(pairwise(nodes))
+    ]
+    edges.extend(
+        {
+            "id": f"stop-{node['id']}",
+            "source": node["id"],
+            "target": "end",
+            "data": {
+                "label": "end_on_request",
+                "condition": (
+                    "The caller asks to stop or end the call, declines to continue, "
+                    "or the user's brief requires ending the call."
+                ),
+            },
+        }
+        for node in nodes[:-2]
+    )
+    return {"nodes": nodes, "edges": edges}
+
+
 def enhance_onboarding_workflow_prompts(
     workflow_definition: dict[str, Any],
     *,
@@ -179,6 +250,11 @@ def enhance_onboarding_workflow_prompts(
 ) -> dict[str, Any]:
     """Return a copy with the fixed onboarding shape and prompt boundaries applied."""
 
+    if len(workflow_stages) != 3 or any(not _clean(stage) for stage in workflow_stages):
+        raise InvalidOnboardingWorkflowLayout(
+            "Exactly three non-empty onboarding stages are required."
+        )
+
     updated = deepcopy(workflow_definition)
     raw_nodes = updated.get("nodes")
     if not isinstance(raw_nodes, list):
@@ -191,22 +267,20 @@ def enhance_onboarding_workflow_prompts(
     agent_nodes = [node for node in nodes if node.get("type") == "agentNode"]
     global_nodes = [node for node in nodes if node.get("type") == "globalNode"]
 
-    if len(start_nodes) != 1:
-        raise InvalidOnboardingWorkflowLayout(
-            f"Expected exactly one Start Call node; received {len(start_nodes)}."
+    if len(start_nodes) != 1 or len(agent_nodes) != 3 or len(global_nodes) > 1:
+        logger.warning(
+            "Rebuilding onboarding draft from structured answers: "
+            "{} start nodes, {} agent nodes, {} global nodes",
+            len(start_nodes),
+            len(agent_nodes),
+            len(global_nodes),
         )
-    if len(agent_nodes) != 3:
-        raise InvalidOnboardingWorkflowLayout(
-            f"Expected exactly three Agent nodes; received {len(agent_nodes)}."
-        )
-    if len(global_nodes) > 1:
-        raise InvalidOnboardingWorkflowLayout(
-            f"Expected at most one Global node; received {len(global_nodes)}."
-        )
-    if len(workflow_stages) != 3 or any(not _clean(stage) for stage in workflow_stages):
-        raise InvalidOnboardingWorkflowLayout(
-            "Exactly three non-empty onboarding stages are required."
-        )
+        updated = _build_onboarding_layout(workflow_stages)
+        raw_nodes = updated["nodes"]
+        nodes = raw_nodes
+        start_nodes = [node for node in nodes if node["type"] == "startCall"]
+        agent_nodes = [node for node in nodes if node["type"] == "agentNode"]
+        global_nodes = []
 
     global_prompt = _global_prompt(
         agent_name=_clean(agent_name) or "the configured agent",

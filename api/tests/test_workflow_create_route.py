@@ -2,6 +2,7 @@ from datetime import UTC, datetime
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, patch
 
+import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
@@ -322,7 +323,10 @@ def test_create_workflow_from_template_attaches_selected_resources_atomically():
     assert create_kwargs["workflow_definition"]["nodes"][2]["data"] == {}
 
 
-def test_create_workflow_from_template_hardens_onboarding_prompts_and_layout():
+@pytest.mark.parametrize("agent_count", [0, 1, 2, 3, 4])
+def test_create_workflow_from_template_hardens_onboarding_prompts_and_layout(
+    agent_count,
+):
     app = _make_test_app()
     client = TestClient(app)
     created_at = datetime.now(UTC)
@@ -341,7 +345,7 @@ def test_create_workflow_from_template_hardens_onboarding_prompts_and_layout():
                     "position": {"x": (index + 1) * 400, "y": 0},
                     "data": {"name": f"Stage {index}", "prompt": "Continue."},
                 }
-                for index in range(3)
+                for index in range(agent_count)
             ],
             {
                 "id": "end",
@@ -379,8 +383,22 @@ def test_create_workflow_from_template_hardens_onboarding_prompts_and_layout():
             AsyncMock(return_value={"workflow_definition": generated_definition}),
         ),
     ):
-        mock_db.get_tools_by_uuids = AsyncMock(return_value=[])
-        mock_db.get_documents_by_uuids = AsyncMock(return_value=[])
+        mock_db.get_tools_by_uuids = AsyncMock(
+            return_value=[
+                SimpleNamespace(
+                    tool_uuid="mcp-1",
+                    category="mcp",
+                    name="Documentation",
+                    definition={
+                        "type": "mcp",
+                        "config": {"url": "https://docs.example.com/mcp"},
+                    },
+                )
+            ]
+        )
+        mock_db.get_documents_by_uuids = AsyncMock(
+            return_value=[SimpleNamespace(document_uuid="doc-1")]
+        )
         mock_db.create_workflow = AsyncMock(return_value=workflow)
 
         response = client.post(
@@ -390,6 +408,10 @@ def test_create_workflow_from_template_hardens_onboarding_prompts_and_layout():
                 "use_case": "Self-test prank call",
                 "activity_description": "Structured generator brief",
                 "name": "Maya",
+                "tool_uuids": ["mcp-1"],
+                "document_uuids": ["doc-1"],
+                "pre_call_fetch_url": "https://crm.example.com/lookup",
+                "post_call_webhook_url": "https://hooks.example.com/calls",
                 "onboarding_context": {
                     "agent_brief": "Call me about my organized sock drawer.",
                     "tone": "playful",
@@ -408,10 +430,22 @@ def test_create_workflow_from_template_hardens_onboarding_prompts_and_layout():
 
     assert response.status_code == 200
     definition = mock_db.create_workflow.await_args.kwargs["workflow_definition"]
-    assert len([node for node in definition["nodes"] if node["type"] == "agentNode"]) == 3
-    assert len([node for node in definition["nodes"] if node["type"] == "globalNode"]) == 1
+    assert (
+        len([node for node in definition["nodes"] if node["type"] == "agentNode"]) == 3
+    )
+    assert (
+        len([node for node in definition["nodes"] if node["type"] == "globalNode"]) == 1
+    )
     start = next(node for node in definition["nodes"] if node["type"] == "startCall")
     assert "opening itself" in start["data"]["prompt"]
+    assert start["data"]["pre_call_fetch_url"] == "https://crm.example.com/lookup"
+    webhook = next(node for node in definition["nodes"] if node["type"] == "webhook")
+    assert webhook["data"]["endpoint_url"] == "https://hooks.example.com/calls"
+    for node in definition["nodes"]:
+        if node["type"] in {"startCall", "agentNode"}:
+            assert node["data"]["tool_uuids"] == ["mcp-1"]
+            assert node["data"]["document_uuids"] == ["doc-1"]
+            assert "MCP tool guidance:" in node["data"]["prompt"]
     assert all(
         node["data"].get("add_global_prompt") is True
         for node in definition["nodes"]

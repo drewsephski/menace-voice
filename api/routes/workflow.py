@@ -1003,16 +1003,7 @@ async def create_workflow_from_template(
         # Regenerate trigger UUIDs to avoid conflicts with existing triggers
         workflow_def = regenerate_trigger_uuids(
             workflow_data.get("workflow_definition", {})
-        )
-        workflow_def = _attach_template_resources(
-            workflow_def,
-            tool_uuids=tool_uuids,
-            document_uuids=document_uuids,
-        )
-        workflow_def = append_mcp_usage_instructions(
-            workflow_def,
-            build_mcp_usage_instructions(selected_tools),
-        )
+        ) or {}
         if request.onboarding_context:
             context = request.onboarding_context
             try:
@@ -1042,6 +1033,15 @@ async def create_workflow_from_template(
                         "layout. Please create it again."
                     ),
                 ) from exc
+        workflow_def = _attach_template_resources(
+            workflow_def,
+            tool_uuids=tool_uuids,
+            document_uuids=document_uuids,
+        )
+        workflow_def = append_mcp_usage_instructions(
+            workflow_def,
+            build_mcp_usage_instructions(selected_tools),
+        )
         workflow_def = _attach_launch_integrations(
             workflow_def,
             call_type=request.call_type,

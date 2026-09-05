@@ -2,6 +2,7 @@ from copy import deepcopy
 
 import pytest
 
+from api.services.workflow.dto import ReactFlowDTO
 from api.services.workflow.onboarding_prompt import (
     GENERATED_OBJECTIVE_MARKER,
     ONBOARDING_EXECUTION_MARKER,
@@ -140,9 +141,55 @@ def test_adds_one_global_node_when_the_generator_omits_it():
     assert global_nodes[0]["data"]["name"] == "Voice and boundaries"
 
 
-@pytest.mark.parametrize("agent_count", [0, 2, 4])
-def test_rejects_generated_workflows_without_exactly_three_agent_nodes(
+@pytest.mark.parametrize("agent_count", [0, 1, 2, 4, 6])
+def test_rebuilds_generated_workflows_with_the_wrong_number_of_agent_nodes(
     agent_count: int,
 ):
-    with pytest.raises(InvalidOnboardingWorkflowLayout, match="three Agent nodes"):
-        _enhance(_workflow(agent_count=agent_count))
+    source = _workflow(agent_count=agent_count)
+    original = deepcopy(source)
+
+    result = _enhance(source)
+
+    assert source == original
+    parsed = ReactFlowDTO.model_validate(result)
+    stages = [node for node in parsed.nodes if node.type == "agentNode"]
+    assert len(stages) == 3
+    assert "Confirm the right person" in stages[0].data.prompt
+    assert "Ask playful questions" in stages[1].data.prompt
+    assert "Reveal the joke" in stages[2].data.prompt
+    assert [(edge.source, edge.target) for edge in parsed.edges[:4]] == [
+        ("start", "stage-1"),
+        ("stage-1", "stage-2"),
+        ("stage-2", "stage-3"),
+        ("stage-3", "end"),
+    ]
+    for node_id in ("start", "stage-1", "stage-2", "stage-3"):
+        assert any(
+            edge.source == node_id
+            and edge.target == "end"
+            and "stop" in edge.data.condition
+            for edge in parsed.edges
+        )
+    global_node = next(node for node in parsed.nodes if node.type == "globalNode")
+    assert "suspiciously organized sock drawer" in global_node.data.prompt
+    assert "Stop immediately" in global_node.data.prompt
+
+
+@pytest.mark.parametrize("node_type", ["startCall", "globalNode"])
+def test_rebuilds_ambiguous_start_or_global_nodes(node_type: str):
+    source = _workflow()
+    duplicate = deepcopy(
+        next(node for node in source["nodes"] if node["type"] == node_type)
+    )
+    duplicate["id"] = "duplicate"
+    source["nodes"].append(duplicate)
+
+    result = _enhance(source)
+
+    ReactFlowDTO.model_validate(result)
+    assert sum(node["type"] == node_type for node in result["nodes"]) == 1
+
+
+def test_rejects_missing_generated_node_list():
+    with pytest.raises(InvalidOnboardingWorkflowLayout, match="no node list"):
+        _enhance({})
