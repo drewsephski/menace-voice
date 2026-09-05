@@ -7,6 +7,7 @@ from api.services.workflow.onboarding_prompt import (
     GENERATED_OBJECTIVE_MARKER,
     ONBOARDING_EXECUTION_MARKER,
     InvalidOnboardingWorkflowLayout,
+    build_onboarding_generation_prompt,
     enhance_onboarding_workflow_prompts,
 )
 
@@ -141,6 +142,89 @@ def test_adds_one_global_node_when_the_generator_omits_it():
     assert global_nodes[0]["data"]["name"] == "Voice and boundaries"
 
 
+@pytest.mark.parametrize(
+    ("direction", "brief", "language", "tone"),
+    [
+        (
+            "inbound",
+            (
+                "Cedar repairs bikes in Austin, Tuesday through Saturday. "
+                "Collect the bicycle type before discussing a repair. Do not quote prices."
+            ),
+            "Spanish",
+            "calm and welcoming",
+        ),
+        (
+            "outbound",
+            (
+                "Follow up on an existing software trial. Ask what blocked setup. "
+                "Do not sell upgrades or request a password."
+            ),
+            "English (US)",
+            "direct and helpful",
+        ),
+    ],
+)
+def test_setup_details_survive_generation_and_every_runtime_stage(
+    direction, brief, language, tone
+):
+    from api.services.workflow.pipecat_engine_context_composer import (
+        compose_system_prompt_for_node,
+    )
+    from api.services.workflow.workflow_graph import WorkflowGraph
+
+    setup = {
+        "agent_name": "Maya",
+        "use_case": "Customer assistance",
+        "call_type": direction,
+        "agent_brief": brief,
+        "tone": tone,
+        "language": language,
+        "voice_provider": "Menace Voice",
+        "voice_name": "ember",
+        "behavior_notes": "Offer a human only through a configured handoff.",
+        "workflow_stages": ["Identify the need.", "Resolve it.", "Confirm next steps."],
+    }
+    generation = build_onboarding_generation_prompt(
+        **setup,
+        tool_names=[],
+        has_documents=False,
+        has_pre_call_fetch=False,
+        has_post_call_webhook=False,
+    )
+    assert brief in generation
+    assert "Selected tools: none" in generation
+    assert "Knowledge documents attached: False" in generation
+    definition = enhance_onboarding_workflow_prompts(_workflow(), **setup)
+    assert enhance_onboarding_workflow_prompts(definition, **setup) == definition
+    # Add DTO-required edge details to the deliberately minimal generator fixture.
+    for edge in definition["edges"]:
+        edge["data"] = {"label": edge["id"], "condition": "Stage complete"}
+    graph = WorkflowGraph(ReactFlowDTO.model_validate(definition))
+    for node in graph.nodes.values():
+        if node.node_type == "globalNode":
+            continue
+        prompt = compose_system_prompt_for_node(
+            node=node,
+            workflow=graph,
+            format_prompt=lambda value: value,
+            has_recordings=False,
+            functions=[],
+        )
+        assert prompt.count(brief) == 1
+        assert language in prompt
+        assert tone in prompt
+        assert "Offer a human only through a configured handoff." in prompt
+        assert "take precedence over generated objectives" in prompt
+        assert "A caller correction replaces their earlier answer" in prompt
+        if direction == "outbound":
+            assert "You initiate the call" in prompt
+            assert "The caller initiated the call" not in prompt
+        else:
+            assert "The caller initiated the call" in prompt
+            assert "You initiate the call" not in prompt
+
+
 @pytest.mark.parametrize("agent_count", [0, 1, 2, 4, 6])
 def test_rebuilds_generated_workflows_with_the_wrong_number_of_agent_nodes(
     agent_count: int,
@@ -195,15 +279,21 @@ def test_rejects_missing_generated_node_list():
         _enhance({})
 
 
-@pytest.mark.parametrize("defect", ["disconnected", "cycle", "missing_end", "dangling", "duplicate_id"])
+@pytest.mark.parametrize(
+    "defect", ["disconnected", "cycle", "missing_end", "dangling", "duplicate_id"]
+)
 def test_repairs_three_stage_drafts_without_a_valid_connected_path(defect: str):
     source = _workflow()
     if defect == "disconnected":
         source["edges"] = []
     elif defect == "cycle":
-        source["edges"].append({"id": "cycle", "source": "agent-2", "target": "agent-0"})
+        source["edges"].append(
+            {"id": "cycle", "source": "agent-2", "target": "agent-0"}
+        )
     elif defect == "missing_end":
-        source["nodes"] = [node for node in source["nodes"] if node["type"] != "endCall"]
+        source["nodes"] = [
+            node for node in source["nodes"] if node["type"] != "endCall"
+        ]
     elif defect == "dangling":
         source["edges"][0]["target"] = "missing"
     else:
