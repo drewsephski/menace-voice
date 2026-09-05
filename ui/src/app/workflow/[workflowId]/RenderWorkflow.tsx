@@ -30,11 +30,11 @@ import { PhoneCallDialog } from './components/PhoneCallDialog';
 import { VersionHistoryPanel } from './components/VersionHistoryPanel';
 import type { WorkflowRuntimeNodeTransition } from './components/workflow-tester/types';
 import { WorkflowEditorHeader } from "./components/WorkflowEditorHeader";
+import { WorkflowLayoutController } from './components/WorkflowLayoutController';
 import { WorkflowTesterPanel } from './components/WorkflowTesterPanel';
 import { WorkflowVersionDiffDialog } from './components/WorkflowVersionDiffDialog';
 import { WorkflowProvider } from "./contexts/WorkflowContext";
 import { useWorkflowState } from "./hooks/useWorkflowState";
-import { layoutNodes } from './utils/layoutNodes';
 
 const edgeTypes = {
     custom: CustomEdge,
@@ -103,6 +103,7 @@ function RenderWorkflow({
     const [documents, setDocuments] = useState<DocumentResponseSchema[] | undefined>(undefined);
     const [tools, setTools] = useState<ToolResponse[] | undefined>(undefined);
     const [recordings, setRecordings] = useState<RecordingResponseSchema[]>([]);
+    const [layoutRequest, setLayoutRequest] = useState(0);
     const [activeRuntimeNodeId, setActiveRuntimeNodeId] = useState<string | null>(null);
 
     const {
@@ -506,6 +507,15 @@ function RenderWorkflow({
         [rfInstance],
     );
 
+    const handleLayout = useCallback((layoutedNodes: FlowNode[]) => {
+        setNodes(layoutedNodes, isViewingHistoricalVersion ? undefined : layoutedNodes.map(node => ({
+            id: node.id,
+            type: 'position' as const,
+            position: node.position,
+            dragging: false,
+        })));
+    }, [setNodes, isViewingHistoricalVersion]);
+
     // Guard saveWorkflow so it's a no-op when viewing a historical version.
     // This is the single safety net that covers every save path: header button,
     // Cmd+S, node edit dialogs, stale doc/tool cleanup, etc.
@@ -610,10 +620,6 @@ function RenderWorkflow({
                                 minZoom={0.2}
                                 onInit={(instance) => {
                                     rfInstance.current = instance;
-                                    // Center the workflow on load
-                                    setTimeout(() => {
-                                        instance.fitView({ padding: 0.2, duration: 200, maxZoom: 0.75 });
-                                    }, 0);
                                 }}
                                 defaultEdgeOptions={defaultEdgeOptions}
                                 defaultViewport={initialFlow?.viewport}
@@ -623,6 +629,12 @@ function RenderWorkflow({
                                 zoomOnDoubleClick={false}
                                 deleteKeyCode={isViewingHistoricalVersion ? null : "Backspace"}
                             >
+                                <WorkflowLayoutController
+                                    nodes={nodes}
+                                    edges={edges}
+                                    layoutRequest={layoutRequest}
+                                    onLayout={handleLayout}
+                                />
                                 <Background
                                     variant={BackgroundVariant.Dots}
                                     gap={16}
@@ -729,10 +741,8 @@ function RenderWorkflow({
                                                 <Button
                                                     variant="outline"
                                                     size="icon"
-                                                    onClick={() => {
-                                                        setNodes(layoutNodes(nodes, edges, 'TB', rfInstance));
-                                                        setIsDirty(true);
-                                                    }}
+                                                    aria-label="Tidy up nodes"
+                                                    onClick={() => setLayoutRequest(request => request + 1)}
                                                     className="bg-white shadow-sm hover:shadow-md h-8 w-8"
                                                 >
                                                     <BrushCleaning className="h-4 w-4" />

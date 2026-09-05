@@ -39,6 +39,8 @@ import {
     type WorkflowConfigurations,
 } from "@/types/workflow-configurations";
 
+import { placeNodeWithoutOverlap } from '../utils/layoutNodes';
+
 // Pull a WorkflowError[] out of any validate-shaped payload — works whether
 // the body is the raw `{ is_valid, errors }` (validate success-with-errors)
 // or wrapped as `{ detail: { is_valid, errors } }` (HTTPException body for
@@ -512,7 +514,21 @@ export const useWorkflowState = ({
     const onNodesChange: OnNodesChange = useCallback(
         (changes) => {
             const currentNodes = useWorkflowStore.getState().nodes;
-            const newNodes = applyNodeChanges(changes, currentNodes) as FlowNode[];
+            let newNodes = applyNodeChanges(changes, currentNodes) as FlowNode[];
+            // Resolve movement before committing so the canvas and undo history
+            // receive the same collision-free positions.
+            const movedIds = new Set(changes.flatMap(change => {
+                if (change.type === 'add') return [change.item.id];
+                if (change.type === 'position') return [change.id];
+                return [];
+            }));
+            const placed = newNodes.filter(node => !movedIds.has(node.id));
+            newNodes = newNodes.map(node => {
+                if (!movedIds.has(node.id)) return node;
+                const positioned = placeNodeWithoutOverlap(node, placed);
+                placed.push(positioned);
+                return positioned;
+            });
             // Cast changes to FlowNode type - safe because setNodes only uses the type field
             // to determine history tracking, not the actual item data
             setNodes(newNodes, changes as NodeChange<FlowNode>[]);
