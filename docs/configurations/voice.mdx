@@ -62,7 +62,8 @@ choose another voice before running a restored version.
 ### Self-hosted configuration
 
 Administrators can enable hosted cloning by setting
-`VOICE_CLONING_ELEVENLABS_API_KEY` on the backend and restarting it. Use an
+`VOICE_CLONING_ELEVENLABS_API_KEY` on the backend and restarting it. With Docker
+Compose, set this in the root `.env` and recreate the API container. Use an
 ElevenLabs key with voice creation, deletion, and text-to-speech permissions.
 Apply the database migrations when upgrading. The backend also needs `ffmpeg`
 for recording validation and conversion; the repository's API image includes it.

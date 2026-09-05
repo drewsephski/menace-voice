@@ -145,6 +145,8 @@ services:
     environment:
       # Optional operator-selected workspace funding public documentation chat.
       DOCS_CHAT_ORGANIZATION_ID: "${DOCS_CHAT_ORGANIZATION_ID:-}"
+      # Optional hosted voice cloning (server-side ElevenLabs credentials).
+      VOICE_CLONING_ELEVENLABS_API_KEY: "${VOICE_CLONING_ELEVENLABS_API_KEY:-}"
       # Core application config
       ENVIRONMENT: "${ENVIRONMENT:-local}"
       LOG_LEVEL: "INFO"
