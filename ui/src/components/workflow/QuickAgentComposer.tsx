@@ -135,12 +135,20 @@ export function QuickAgentComposer() {
               className="min-h-36 w-full resize-y rounded-none border-0 bg-transparent p-4 text-base leading-7 shadow-none placeholder:text-muted-foreground/80 focus-visible:ring-0 dark:bg-transparent sm:p-5 md:text-base"
             />
             <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-3 border-t border-border/60 bg-muted/20 p-3 sm:px-4">
-              <fieldset disabled={isCreating} className="grid min-w-0 grid-cols-2 gap-1 rounded-lg border border-border/50 bg-muted/50 p-1 sm:w-fit">
+              <fieldset disabled={isCreating} className="relative grid min-w-0 grid-cols-2 gap-1 rounded-lg border border-border/50 bg-muted/50 p-1 sm:w-fit">
                 <legend className="sr-only">Call direction</legend>
+                <span
+                  aria-hidden="true"
+                  className="pointer-events-none absolute inset-y-1 left-1 rounded-md bg-background shadow-sm transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none"
+                  style={{
+                    width: "calc((100% - 0.75rem) / 2)",
+                    transform: callType === "inbound" ? "translateX(0)" : "translateX(calc(100% + 0.25rem))",
+                  }}
+                />
                 {(["inbound", "outbound"] as const).map((direction) => (
-                  <label key={direction} className="min-w-0 cursor-pointer">
+                  <label key={direction} className="relative min-w-0 cursor-pointer">
                     <input type="radio" name="call-direction" value={direction} checked={callType === direction} onChange={() => setCallType(direction)} className="peer sr-only" />
-                    <span className="flex min-h-9 items-center justify-center rounded-md px-2 text-xs font-medium capitalize text-muted-foreground transition-colors peer-checked:bg-background peer-checked:text-foreground peer-checked:shadow-sm peer-focus-visible:ring-2 peer-focus-visible:ring-ring peer-disabled:cursor-default sm:px-4">
+                    <span className="flex min-h-9 items-center justify-center rounded-md px-2 text-xs font-medium capitalize text-muted-foreground transition-colors peer-checked:text-foreground peer-focus-visible:ring-2 peer-focus-visible:ring-ring peer-disabled:cursor-default sm:px-4">
                       {direction}
                     </span>
                   </label>

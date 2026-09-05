@@ -95,6 +95,11 @@ const NAV_SECTIONS: SidebarNavSection[] = [
         icon: Workflow,
       },
       {
+        title: "Voice Cloning",
+        url: "/voice-cloning",
+        icon: AudioLines,
+      },
+      {
         title: "Campaigns",
         url: "/campaigns",
         icon: Megaphone,
