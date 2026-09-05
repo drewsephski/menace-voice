@@ -262,7 +262,7 @@ def wav_sample(seconds):
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize("sample", [b"not audio", wav_sample(2), wav_sample(181)])
+@pytest.mark.parametrize("sample", [b"not audio", wav_sample(2), wav_sample(181)], ids=["invalid", "too-short", "too-long"])
 async def test_real_decoder_rejects_invalid_or_out_of_range_samples(sample):
     with pytest.raises(service.VoiceCloneError):
         await service.normalize_sample(sample)
