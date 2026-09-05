@@ -1,4 +1,4 @@
-from typing import Annotated
+from typing import Annotated, cast
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Response, UploadFile
 
@@ -20,7 +20,7 @@ router = APIRouter(prefix="/voice-clones", tags=["voice-clones"])
 def organization_id(user: UserModel) -> int:
     if not user.selected_organization_id:
         raise HTTPException(403, "Select an organization first.")
-    return user.selected_organization_id
+    return cast(int, user.selected_organization_id)
 
 
 @router.get("/capabilities")
@@ -44,7 +44,10 @@ async def list_voice_clones(
 async def list_voice_clone_agents(
     user: Annotated[UserModel, Depends(get_user)],
 ) -> list[VoiceCloneAgent]:
-    return await db_client.list_voice_clone_agents(organization_id(user))
+    return [
+        VoiceCloneAgent.model_validate(agent)
+        for agent in await db_client.list_voice_clone_agents(organization_id(user))
+    ]
 
 
 @router.put("/agents/{workflow_id}", status_code=204)
@@ -68,7 +71,7 @@ async def create_voice_clone(
         data = await sample.read(service.MAX_SAMPLE_BYTES + 1)
         clone = await service.create_clone(
             organization_id=org_id,
-            user_id=user.id,
+            user_id=cast(int, user.id),
             name=name,
             consent=consent,
             sample=data,

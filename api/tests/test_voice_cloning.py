@@ -262,7 +262,11 @@ def wav_sample(seconds):
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize("sample", [b"not audio", wav_sample(2), wav_sample(181)], ids=["invalid", "too-short", "too-long"])
+@pytest.mark.parametrize(
+    "sample",
+    [b"not audio", wav_sample(2), wav_sample(181)],
+    ids=["invalid", "too-short", "too-long"],
+)
 async def test_real_decoder_rejects_invalid_or_out_of_range_samples(sample):
     with pytest.raises(service.VoiceCloneError):
         await service.normalize_sample(sample)
@@ -277,7 +281,7 @@ async def test_real_decoder_accepts_valid_sample():
 
 
 @pytest.mark.asyncio
-async def test_database_tenant_isolation_and_draft_publication(db_session, monkeypatch):
+async def test_database_tenant_isolation_and_deletion(db_session, monkeypatch):
     user, _ = await db_session.get_or_create_user_by_provider_id(
         "voice-clone-test-user"
     )

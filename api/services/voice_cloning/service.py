@@ -43,6 +43,7 @@ async def credentials(
         if (
             tts
             and tts.provider == "elevenlabs"
+            and isinstance(tts.api_key, str)
             and tts.api_key
             and getattr(tts, "base_url", PROVIDER_URL).rstrip("/") == PROVIDER_URL
         ):
