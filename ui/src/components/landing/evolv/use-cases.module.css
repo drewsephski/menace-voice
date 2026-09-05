@@ -114,8 +114,7 @@
     margin-top: 62px;
   }
 
-  .card,
-  .icon {
+  .card {
     min-height: 230px;
   }
 }
@@ -152,7 +151,8 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .card {
+  .card,
+  .icon {
     transition: none;
   }
 }
