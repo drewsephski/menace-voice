@@ -16,6 +16,7 @@ from api.schemas.voice_clone import VoiceCloneCapabilities
 from api.services.configuration.registry import ElevenlabsTTSConfiguration
 
 MAX_SAMPLE_BYTES = 20 * 1024 * 1024
+SAMPLE_RATE = 44100
 PROVIDER_URL = "https://api.elevenlabs.io"
 
 
@@ -100,7 +101,7 @@ async def normalize_sample(data: bytes) -> bytes:
             "-ac",
             "1",
             "-ar",
-            "16000",
+            str(SAMPLE_RATE),
             "-f",
             "s16le",
             "pipe:1",
@@ -118,7 +119,7 @@ async def normalize_sample(data: bytes) -> bytes:
         process.kill()
         await process.wait()
         raise
-    duration = len(pcm) / 32000
+    duration = len(pcm) / (SAMPLE_RATE * 2)
     if process.returncode != 0 or not 30 <= duration <= 180:
         raise VoiceCloneError(
             "Use a valid audio recording between 30 seconds and 3 minutes."
@@ -127,7 +128,7 @@ async def normalize_sample(data: bytes) -> bytes:
     with wave.open(output, "wb") as audio:
         audio.setnchannels(1)
         audio.setsampwidth(2)
-        audio.setframerate(16000)
+        audio.setframerate(SAMPLE_RATE)
         audio.writeframes(pcm)
     return output.getvalue()
 

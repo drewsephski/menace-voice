@@ -276,7 +276,7 @@ async def test_real_decoder_rejects_invalid_or_out_of_range_samples(sample):
 async def test_real_decoder_accepts_valid_sample():
     result = await service.normalize_sample(wav_sample(30))
     with wave.open(io.BytesIO(result)) as audio:
-        assert audio.getnframes() == 480000
+        assert audio.getnframes() == 30 * service.SAMPLE_RATE
         assert audio.getnchannels() == 1
 
 
@@ -356,3 +356,39 @@ async def test_database_assignment_preserves_published_voice_until_publish(
     assert await db_session.voice_clone_in_use(clone.id, org.id)
     await db_session.publish_workflow_draft(workflow.id)
     assert not await db_session.voice_clone_in_use(clone.id, org.id)
+
+
+@pytest.mark.asyncio
+async def test_provider_http_contract_and_safe_errors(monkeypatch):
+    real_client = httpx.AsyncClient
+    seen = []
+
+    def respond(request):
+        seen.append(request)
+        if request.method == "DELETE":
+            return httpx.Response(404)
+        return httpx.Response(
+            403, json={"detail": "private-provider-error-with-secret"}
+        )
+
+    monkeypatch.setattr(
+        service.httpx,
+        "AsyncClient",
+        lambda **kwargs: real_client(transport=httpx.MockTransport(respond), **kwargs),
+    )
+    with pytest.raises(service.VoiceCloneError) as error:
+        await service.provider_request(
+            "POST",
+            "/v1/voices/add",
+            "test-key",
+            data={"name": "Mine"},
+            files={"files": ("voice.wav", b"sample", "audio/wav")},
+        )
+    assert "private-provider" not in str(error.value)
+    assert error.value.status_code == 502
+    assert str(seen[0].url) == "https://api.elevenlabs.io/v1/voices/add"
+    assert seen[0].headers["xi-api-key"] == "test-key"
+    assert b'name="files"; filename="voice.wav"' in seen[0].content
+    assert (
+        await service.provider_request("DELETE", "/v1/voices/missing", "test-key")
+    ).status_code == 404
