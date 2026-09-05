@@ -65,14 +65,21 @@
   place-items: center;
   border: 1px solid rgb(255 255 255 / 16%);
   color: #9d9d9d;
+  transition: color 180ms ease, border-color 180ms ease;
+}
+
+.card:hover .icon,
+.card:focus-visible .icon {
+  border-color: var(--evolv-accent);
+  color: var(--evolv-accent);
 }
 
 .icon svg {
-  width: 40px;
-  height: 40px;
+  width: 24px;
+  height: 24px;
   stroke-linecap: round;
   stroke-linejoin: round;
-  stroke-width: 1.15;
+  stroke-width: 1.5;
 }
 
 .card h3 {
@@ -107,7 +114,8 @@
     margin-top: 62px;
   }
 
-  .card {
+  .card,
+  .icon {
     min-height: 230px;
   }
 }
