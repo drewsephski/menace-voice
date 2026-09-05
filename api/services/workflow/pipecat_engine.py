@@ -311,9 +311,8 @@ class PipecatEngine:
     async def _update_llm_context(self, system_prompt: str, functions: list[dict]):
         """Update LLM settings with the composed system prompt and tool list."""
 
-        if functions:
-            tools_schema = ToolsSchema(standard_tools=functions)
-            self.context.set_tools(tools_schema)
+        tools_schema = ToolsSchema(standard_tools=functions)
+        self.context.set_tools(tools_schema)
 
         # For Gemini Live, set context on the LLM before _update_settings so that
         # _connect (triggered by reconnect) can read tools from it.
@@ -325,7 +324,14 @@ class PipecatEngine:
     def _format_prompt(self, prompt: str) -> str:
         """Delegate prompt formatting to the shared workflow.utils implementation."""
 
-        return render_template(prompt, self._call_context_vars)
+        return render_template(
+            prompt,
+            {
+                **self._call_context_vars,
+                "initial_context": self._call_context_vars,
+                "gathered_context": self._gathered_context,
+            },
+        )
 
     async def _create_transition_func(
         self,
@@ -720,15 +726,16 @@ class PipecatEngine:
             await self._register_knowledge_base_function(node.document_uuids)
 
         # Compose prompt and functions via the context composer module
+        functions = await compose_functions_for_node(
+            node=node,
+            custom_tool_manager=self._custom_tool_manager,
+        )
         system_prompt = compose_system_prompt_for_node(
             node=node,
             workflow=self.workflow,
             format_prompt=self._format_prompt,
             has_recordings=self._has_recordings,
-        )
-        functions = await compose_functions_for_node(
-            node=node,
-            custom_tool_manager=self._custom_tool_manager,
+            functions=functions,
         )
         await self._update_llm_context(system_prompt, functions)
 

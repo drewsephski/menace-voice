@@ -381,7 +381,7 @@ def test_create_workflow_from_template_hardens_onboarding_prompts_and_layout(
         patch(
             "api.routes.workflow.mps_service_key_client.call_workflow_api",
             AsyncMock(return_value={"workflow_definition": generated_definition}),
-        ),
+        ) as mock_generator,
     ):
         mock_db.get_tools_by_uuids = AsyncMock(
             return_value=[
@@ -429,6 +429,15 @@ def test_create_workflow_from_template_hardens_onboarding_prompts_and_layout(
         )
 
     assert response.status_code == 200
+    generator_prompt = mock_generator.await_args.kwargs["activity_description"]
+    assert "Call me about my organized sock drawer." in generator_prompt
+    assert "Stop when I say the test is over." in generator_prompt
+    assert "Ask two playful questions." in generator_prompt
+    assert "Selected tools: Documentation" in generator_prompt
+    assert "Knowledge documents attached: True" in generator_prompt
+    assert "Pre-call record lookup configured: True" in generator_prompt
+    assert "Post-call webhook configured: True" in generator_prompt
+    assert "Structured generator brief" not in generator_prompt
     definition = mock_db.create_workflow.await_args.kwargs["workflow_definition"]
     assert (
         len([node for node in definition["nodes"] if node["type"] == "agentNode"]) == 3

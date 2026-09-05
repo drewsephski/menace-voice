@@ -65,6 +65,7 @@ from api.services.workflow.mcp_prompt import (
 )
 from api.services.workflow.onboarding_prompt import (
     InvalidOnboardingWorkflowLayout,
+    build_onboarding_generation_prompt,
     enhance_onboarding_workflow_prompts,
 )
 from api.services.workflow.run_creation import prepare_workflow_run_inputs
@@ -980,12 +981,25 @@ async def create_workflow_from_template(
             user=user,
         )
 
+        activity_description = request.activity_description
+        if request.onboarding_context:
+            activity_description = build_onboarding_generation_prompt(
+                agent_name=(request.name or "the configured agent").strip(),
+                use_case=request.use_case,
+                call_type=request.call_type,
+                **request.onboarding_context.model_dump(),
+                tool_names=[tool.name for tool in selected_tools],
+                has_documents=bool(document_uuids),
+                has_pre_call_fetch=bool(pre_call_fetch_url),
+                has_post_call_webhook=bool(post_call_webhook_url),
+            )
+
         # Call MPS API to generate workflow using the client
         if DEPLOYMENT_MODE == "oss":
             workflow_data = await mps_service_key_client.call_workflow_api(
                 call_type=request.call_type.upper(),
                 use_case=request.use_case,
-                activity_description=request.activity_description,
+                activity_description=activity_description,
                 created_by=str(user.provider_id),
             )
         else:
@@ -995,7 +1009,7 @@ async def create_workflow_from_template(
             workflow_data = await mps_service_key_client.call_workflow_api(
                 call_type=request.call_type.upper(),
                 use_case=request.use_case,
-                activity_description=request.activity_description,
+                activity_description=activity_description,
                 organization_id=user.selected_organization_id,
             )
 
