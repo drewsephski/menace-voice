@@ -210,7 +210,7 @@ async def create_clone(
                 raise ValueError("Invalid voice ID")
             verification = result["requires_verification"]
             if not isinstance(verification, bool):
-                raise ValueError("Invalid verification status")
+                raise TypeError("Invalid verification status")
         except (ValueError, KeyError, TypeError) as exc:
             raise VoiceCloneError(
                 "ElevenLabs returned an unexpected response. Check your provider voice library before retrying.",

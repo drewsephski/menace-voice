@@ -25,14 +25,14 @@ def organization_id(user: UserModel) -> int:
 
 @router.get("/capabilities")
 async def voice_clone_capabilities(
-    user: UserModel = Depends(get_user),
+    user: Annotated[UserModel, Depends(get_user)],
 ) -> VoiceCloneCapabilities:
     return await service.capabilities(organization_id(user))
 
 
 @router.get("")
 async def list_voice_clones(
-    user: UserModel = Depends(get_user),
+    user: Annotated[UserModel, Depends(get_user)],
 ) -> list[VoiceCloneResponse]:
     return [
         VoiceCloneResponse.model_validate(clone)
@@ -42,14 +42,16 @@ async def list_voice_clones(
 
 @router.get("/agents")
 async def list_voice_clone_agents(
-    user: UserModel = Depends(get_user),
+    user: Annotated[UserModel, Depends(get_user)],
 ) -> list[VoiceCloneAgent]:
     return await db_client.list_voice_clone_agents(organization_id(user))
 
 
 @router.put("/agents/{workflow_id}", status_code=204)
 async def assign_voice_clone(
-    workflow_id: int, body: VoiceCloneAssignment, user: UserModel = Depends(get_user)
+    workflow_id: int,
+    body: VoiceCloneAssignment,
+    user: Annotated[UserModel, Depends(get_user)],
 ) -> None:
     await service.assign_clone(workflow_id, body.voice_clone_id, organization_id(user))
 
@@ -59,7 +61,7 @@ async def create_voice_clone(
     name: Annotated[str, Form(min_length=1, max_length=80)],
     consent: Annotated[bool, Form()],
     sample: Annotated[UploadFile, File()],
-    user: UserModel = Depends(get_user),
+    user: Annotated[UserModel, Depends(get_user)],
 ) -> VoiceCloneResponse:
     org_id = organization_id(user)
     try:
@@ -88,7 +90,9 @@ async def create_voice_clone(
     },
 )
 async def preview_voice_clone(
-    clone_id: str, body: VoiceClonePreviewRequest, user: UserModel = Depends(get_user)
+    clone_id: str,
+    body: VoiceClonePreviewRequest,
+    user: Annotated[UserModel, Depends(get_user)],
 ) -> Response:
     audio = await service.preview_clone(clone_id, organization_id(user), body.text)
     return Response(
@@ -98,6 +102,6 @@ async def preview_voice_clone(
 
 @router.delete("/{clone_id}", status_code=204)
 async def delete_voice_clone(
-    clone_id: str, user: UserModel = Depends(get_user)
+    clone_id: str, user: Annotated[UserModel, Depends(get_user)]
 ) -> None:
     await service.delete_clone(clone_id, organization_id(user))
