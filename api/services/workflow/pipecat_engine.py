@@ -11,6 +11,7 @@ from typing import (
     Union,
 )
 
+from pipecat.adapters.schemas.function_schema import FunctionSchema
 from pipecat.adapters.schemas.tools_schema import ToolsSchema
 from pipecat.frames.frames import (
     BotStartedSpeakingFrame,
@@ -308,7 +309,9 @@ class PipecatEngine:
             logger.error(f"Error initializing {self.__class__.__name__}: {e}")
             raise
 
-    async def _update_llm_context(self, system_prompt: str, functions: list[dict]):
+    async def _update_llm_context(
+        self, system_prompt: str, functions: list[FunctionSchema]
+    ):
         """Update LLM settings with the composed system prompt and tool list."""
 
         tools_schema = ToolsSchema(standard_tools=functions)

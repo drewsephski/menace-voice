@@ -6,6 +6,8 @@ reusable functions. Defines recording response mode markers and instructions.
 
 from typing import TYPE_CHECKING, Callable, Optional
 
+from pipecat.adapters.schemas.function_schema import FunctionSchema
+
 if TYPE_CHECKING:
     from api.services.workflow.pipecat_engine_custom_tools import CustomToolManager
     from api.services.workflow.workflow_graph import Node, WorkflowGraph
@@ -52,7 +54,7 @@ def compose_system_prompt_for_node(
     workflow: "WorkflowGraph",
     format_prompt: Callable[[str], str],
     has_recordings: bool,
-    functions: list[dict] | None = None,
+    functions: list[FunctionSchema] | None = None,
 ) -> str:
     """Compose the full system prompt text for a workflow node.
 
@@ -81,9 +83,9 @@ def compose_system_prompt_for_node(
     if functions is not None:
         transition_names = {edge.get_function_name() for edge in node.out_edges}
         action_names = {
-            function["function"]["name"]
+            function.name
             for function in functions
-            if function["function"]["name"] not in transition_names
+            if function.name not in transition_names
         }
         guidance = [
             "CURRENT CALL CAPABILITIES — INTERNAL",
@@ -128,7 +130,7 @@ async def compose_functions_for_node(
     *,
     node: "Node",
     custom_tool_manager: Optional["CustomToolManager"],
-) -> list[dict]:
+) -> list[FunctionSchema]:
     """Compose the function/tool schemas for a workflow node.
 
     Gathers knowledge-base tools, custom tools (including built-in
@@ -142,7 +144,7 @@ async def compose_functions_for_node(
     Returns:
         A list of function schemas to register with the LLM.
     """
-    functions: list[dict] = []
+    functions: list[FunctionSchema] = []
 
     # Knowledge base retrieval tool
     if node.document_uuids:
