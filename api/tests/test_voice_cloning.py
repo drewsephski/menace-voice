@@ -306,7 +306,7 @@ async def test_database_tenant_isolation_and_deletion(db_session, monkeypatch):
 
 @pytest.mark.asyncio
 async def test_database_assignment_preserves_published_voice_until_publish(
-    db_session, monkeypatch
+    db_session, async_session, monkeypatch
 ):
     user, _ = await db_session.get_or_create_user_by_provider_id("voice-publish-user")
     org, _ = await db_session.get_or_create_organization_by_provider_id(
@@ -346,6 +346,7 @@ async def test_database_assignment_preserves_published_voice_until_publish(
     assert "voice_clone_id" not in current.released_definition.workflow_configurations
     assert await db_session.voice_clone_in_use(clone.id, org.id)
     await db_session.publish_workflow_draft(workflow.id)
+    await async_session.refresh(workflow, ["released_definition"])
     current = await db_session.get_workflow(workflow.id, organization_id=org.id)
     assert (
         current.released_definition.workflow_configurations["voice_clone_id"]

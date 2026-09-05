@@ -1,5 +1,5 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { CloneVoiceForm } from "./CloneVoiceForm";
 import { VoiceCloneAgents } from "./VoiceCloneAgents";
@@ -15,7 +15,8 @@ vi.mock("@/client/sdk.gen", () => ({
 vi.mock("./VoiceSampleRecorder", () => ({ VoiceSampleRecorder: ({ onChange }: { onChange: (file: File) => void }) => <button type="button" onClick={() => onChange(new File(["sample"], "voice.wav", { type: "audio/wav" }))}>Choose sample</button> }));
 const clone = { id: "clone-1", name: "My voice", status: "ready" as const, created_at: "2026-09-05T00:00:00Z" };
 
-beforeEach(() => { vi.resetAllMocks(); URL.createObjectURL = vi.fn(() => "blob:preview"); URL.revokeObjectURL = vi.fn(); });
+afterEach(() => vi.unstubAllGlobals());
+beforeEach(() => { vi.stubGlobal("ResizeObserver", class { observe() {} unobserve() {} disconnect() {} }); vi.resetAllMocks(); URL.createObjectURL = vi.fn(() => "blob:preview"); URL.revokeObjectURL = vi.fn(); });
 
 describe("voice cloning", () => {
   it("requires a sample and explicit consent before creation", async () => {

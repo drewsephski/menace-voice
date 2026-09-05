@@ -7,6 +7,7 @@ import {
     ReactFlow,
 } from "@xyflow/react";
 import { BrushCleaning, Maximize2, Minus, Plus, Settings } from 'lucide-react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
@@ -602,6 +603,13 @@ function RenderWorkflow({
                     onPublished={handlePublished}
                     renameWorkflow={renameWorkflow}
                 />
+
+                {workflowConfigurations?.voice_clone_id && !isViewingHistoricalVersion ? (
+                    <div className="flex flex-wrap items-center justify-between gap-2 border-b bg-muted/40 px-4 py-2 text-sm">
+                        <span>This agent uses your cloned voice. Model voice settings are overridden.</span>
+                        <Link className="font-medium underline" href="/voice-cloning">Manage cloned voice</Link>
+                    </div>
+                ) : null}
 
                 {/* Workflow Canvas */}
                 <div className="flex-1 min-h-0">
