@@ -32,7 +32,10 @@ export function VoiceSampleRecorder({ disabled, onChange }: Props) {
   }, []);
 
   useEffect(() => {
-    if (!sample) { setUrl(undefined); return; }
+    if (!sample) {
+      setUrl(undefined);
+      return;
+    }
     const next = URL.createObjectURL(sample);
     setUrl(next);
     return () => URL.revokeObjectURL(next);
@@ -44,7 +47,8 @@ export function VoiceSampleRecorder({ disabled, onChange }: Props) {
     const timer = setInterval(() => {
       const elapsed = Math.floor((Date.now() - startedAt) / 1000);
       setSeconds(elapsed);
-      if (elapsed >= 175 && recorder.current?.state === "recording") recorder.current.stop();
+      if (elapsed >= 175 && recorder.current?.state === "recording")
+        recorder.current.stop();
     }, 250);
     return () => clearInterval(timer);
   }, [recording]);
@@ -61,30 +65,56 @@ export function VoiceSampleRecorder({ disabled, onChange }: Props) {
 
   async function start() {
     setError(undefined);
-    if (!navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === "undefined") {
-      setError("Recording is unavailable in this browser. Upload an audio file instead.");
+    if (
+      !navigator.mediaDevices?.getUserMedia ||
+      typeof MediaRecorder === "undefined"
+    ) {
+      setError(
+        "Recording is unavailable in this browser. Upload an audio file instead.",
+      );
       return;
     }
     setStarting(true);
     try {
       const media = await navigator.mediaDevices.getUserMedia({ audio: true });
-      if (!mounted.current) { media.getTracks().forEach((track) => track.stop()); return; }
+      if (!mounted.current) {
+        media.getTracks().forEach((track) => track.stop());
+        return;
+      }
       stream.current = media;
-      const mimeType = ["audio/webm;codecs=opus", "audio/mp4", "audio/webm"].find((type) => MediaRecorder.isTypeSupported(type));
-      const next = new MediaRecorder(media, mimeType ? { mimeType } : undefined);
+      const mimeType = [
+        "audio/webm;codecs=opus",
+        "audio/mp4",
+        "audio/webm",
+      ].find((type) => MediaRecorder.isTypeSupported(type));
+      const next = new MediaRecorder(
+        media,
+        mimeType ? { mimeType } : undefined,
+      );
       recorder.current = next;
       const chunks: Blob[] = [];
-      next.ondataavailable = (event) => { if (event.data.size) chunks.push(event.data); };
+      next.ondataavailable = (event) => {
+        if (event.data.size) chunks.push(event.data);
+      };
       next.onstop = () => {
         media.getTracks().forEach((track) => track.stop());
         if (!mounted.current) return;
         setRecording(false);
         const type = next.mimeType || "audio/webm";
-        selectSample(new File(chunks, `my-voice.${type.includes("mp4") ? "m4a" : "webm"}`, { type }));
+        selectSample(
+          new File(
+            chunks,
+            `my-voice.${type.includes("mp4") ? "m4a" : "webm"}`,
+            { type },
+          ),
+        );
       };
       next.onerror = () => {
         media.getTracks().forEach((track) => track.stop());
-        if (mounted.current) { setError("Recording failed. Please try again or upload a file."); setRecording(false); }
+        if (mounted.current) {
+          setError("Recording failed. Please try again or upload a file.");
+          setRecording(false);
+        }
       };
       selectSample(null);
       next.start(1000);
@@ -92,22 +122,81 @@ export function VoiceSampleRecorder({ disabled, onChange }: Props) {
       setRecording(true);
     } catch {
       stream.current?.getTracks().forEach((track) => track.stop());
-      if (mounted.current) setError("Microphone access was not available. Allow microphone access or upload a recording.");
+      if (mounted.current)
+        setError(
+          "Microphone access was not available. Allow microphone access or upload a recording.",
+        );
     } finally {
       if (mounted.current) setStarting(false);
     }
   }
 
-  return <div className="space-y-3">
-    <div className="flex flex-wrap items-center gap-3">
-      {recording ? <Button type="button" variant="destructive" onClick={() => recorder.current?.stop()}><Square className="mr-2 h-4 w-4" />Stop recording · {seconds}s</Button>
-        : <Button type="button" variant="outline" disabled={disabled || starting} onClick={start}><Mic className="mr-2 h-4 w-4" />{starting ? "Connecting microphone…" : "Record my voice"}</Button>}
-      <Button type="button" variant="outline" disabled={disabled || recording || starting} onClick={() => input.current?.click()}><Upload className="mr-2 h-4 w-4" />Upload audio</Button>
-      <input ref={input} type="file" accept="audio/*,.mp3,.wav,.m4a,.webm,.ogg,.flac" className="hidden" onChange={(event) => { selectSample(event.target.files?.[0] ?? null); event.target.value = ""; }} />
+  return (
+    <div className="space-y-3">
+      <div className="flex flex-wrap items-center gap-3">
+        {recording ? (
+          <Button
+            type="button"
+            variant="destructive"
+            onClick={() => recorder.current?.stop()}
+          >
+            <Square className="mr-2 h-4 w-4" />
+            Stop recording · {seconds}s
+          </Button>
+        ) : (
+          <Button
+            type="button"
+            variant="outline"
+            disabled={disabled || starting}
+            onClick={start}
+          >
+            <Mic className="mr-2 h-4 w-4" />
+            {starting ? "Connecting microphone…" : "Record my voice"}
+          </Button>
+        )}
+        <Button
+          type="button"
+          variant="outline"
+          disabled={disabled || recording || starting}
+          onClick={() => input.current?.click()}
+        >
+          <Upload className="mr-2 h-4 w-4" />
+          Upload audio
+        </Button>
+        <input
+          ref={input}
+          type="file"
+          accept="audio/*,.mp3,.wav,.m4a,.webm,.ogg,.flac"
+          className="hidden"
+          onChange={(event) => {
+            selectSample(event.target.files?.[0] ?? null);
+            event.target.value = "";
+          }}
+        />
+      </div>
+      {recording && (
+        <p className="text-sm text-muted-foreground" role="status">
+          Speak naturally for 1–2 minutes. At least 30 seconds is required.
+        </p>
+      )}
+      {sample && (
+        <p className="break-all text-sm text-muted-foreground">
+          {sample.name} · {(sample.size / 1024 / 1024).toFixed(1)} MB
+        </p>
+      )}
+      {url && (
+        <audio
+          controls
+          src={url}
+          className="w-full"
+          aria-label="Your original voice recording"
+        />
+      )}
+      {error && (
+        <p role="alert" className="text-sm text-destructive">
+          {error}
+        </p>
+      )}
     </div>
-    {recording && <p className="text-sm text-muted-foreground" role="status">Speak naturally for 1–2 minutes. At least 30 seconds is required.</p>}
-    {sample && <p className="break-all text-sm text-muted-foreground">{sample.name} · {(sample.size / 1024 / 1024).toFixed(1)} MB</p>}
-    {url && <audio controls src={url} className="w-full" aria-label="Your original voice recording" />}
-    {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
-  </div>;
+  );
 }

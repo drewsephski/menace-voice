@@ -302,3 +302,56 @@ async def test_database_tenant_isolation_and_deletion(db_session, monkeypatch):
     assert (await db_session.list_voice_clones(org.id))[0].id == clone.id
     await db_session.set_voice_clone_status(clone.id, org.id, "deleted")
     assert await db_session.get_voice_clone(clone.id, org.id) is None
+
+
+@pytest.mark.asyncio
+async def test_database_assignment_preserves_published_voice_until_publish(
+    db_session, monkeypatch
+):
+    user, _ = await db_session.get_or_create_user_by_provider_id("voice-publish-user")
+    org, _ = await db_session.get_or_create_organization_by_provider_id(
+        org_provider_id="voice-publish-org", user_id=user.id
+    )
+    clone = await db_session.create_voice_clone(
+        organization_id=org.id,
+        created_by=user.id,
+        name="Test",
+        provider_voice_id="provider-id",
+        credential_source="platform",
+        status="ready",
+    )
+    workflow = await db_session.create_workflow(
+        name="Voice test",
+        workflow_definition={"nodes": [], "edges": []},
+        user_id=user.id,
+        organization_id=org.id,
+        workflow_configurations={"dictionary": "keep me"},
+    )
+    monkeypatch.setenv("VOICE_CLONING_ELEVENLABS_API_KEY", "test-only")
+    monkeypatch.setattr(service, "db_client", db_session)
+    monkeypatch.setattr(
+        ai_model_configuration,
+        "get_resolved_ai_model_configuration",
+        AsyncMock(
+            return_value=SimpleNamespace(effective=EffectiveAIModelConfiguration())
+        ),
+    )
+    await service.assign_clone(workflow.id, clone.id, org.id)
+    current = await db_session.get_workflow(workflow.id, organization_id=org.id)
+    draft = await db_session.get_draft_version(workflow.id)
+    assert draft.workflow_configurations == {
+        "dictionary": "keep me",
+        "voice_clone_id": clone.id,
+    }
+    assert "voice_clone_id" not in current.released_definition.workflow_configurations
+    assert await db_session.voice_clone_in_use(clone.id, org.id)
+    await db_session.publish_workflow_draft(workflow.id)
+    current = await db_session.get_workflow(workflow.id, organization_id=org.id)
+    assert (
+        current.released_definition.workflow_configurations["voice_clone_id"]
+        == clone.id
+    )
+    await service.assign_clone(workflow.id, None, org.id)
+    assert await db_session.voice_clone_in_use(clone.id, org.id)
+    await db_session.publish_workflow_draft(workflow.id)
+    assert not await db_session.voice_clone_in_use(clone.id, org.id)
