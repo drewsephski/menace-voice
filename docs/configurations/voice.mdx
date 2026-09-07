@@ -40,7 +40,9 @@ agents; speech-to-speech realtime agents need to switch to pipeline mode first.
    connected provider account, then generate a preview again.
 4. Under **Use your voice on calls**, choose the clone for an agent. The change
    is saved to its draft. Open **Test & publish** to test the agent and publish
-   the change for live calls.
+   the change for live calls. You can also choose a clone in the agent's
+   **Settings → Agent Voice** section and select **Save Voice**. Choose
+   **Use model voice** there to return to the configured voice.
 5. Connect that published agent to a number in **Phone numbers**. To cover calls
    you miss on your existing number, configure forwarding for unanswered or busy
    calls with your carrier. Voice cloning does not enable carrier forwarding.
@@ -51,7 +53,8 @@ AI assistant. Drew is unavailable, but I can take a message.”
 ### Manage your voices
 
 Your organization can keep up to 10 clones. Voices remain private to the
-organization in Menace Voice. Menace Voice does not retain the uploaded recording;
+organization in Menace Voice. Menace Voice temporarily processes the uploaded
+recording and removes the temporary file after conversion;
 ElevenLabs processes the sample and manages the provider voice.
 
 Remove a voice from agent drafts and publish those changes before deleting it.
@@ -63,7 +66,8 @@ choose another voice before running a restored version.
 
 Administrators can enable hosted cloning by setting
 `VOICE_CLONING_ELEVENLABS_API_KEY` on the backend and restarting it. With Docker
-Compose, set this in the root `.env` and recreate the API container. Use an
+Compose, set this in the root `.env` and recreate the API container. The Hostinger
+Compose deployment accepts the same setting. Use an
 ElevenLabs key with voice creation, deletion, and text-to-speech permissions.
 Apply the database migrations when upgrading. The backend also needs `ffmpeg`
 for recording validation and conversion; the repository's API image includes it.

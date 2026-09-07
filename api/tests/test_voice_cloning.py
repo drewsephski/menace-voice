@@ -1,3 +1,4 @@
+import asyncio
 import io
 import wave
 from types import SimpleNamespace
@@ -155,11 +156,15 @@ async def test_preview_requires_audio_before_marking_voice_ready(mocks):
 @pytest.mark.asyncio
 async def test_runtime_uses_same_credentials_and_keeps_original_config(mocks):
     config = EffectiveAIModelConfiguration(
-        tts=ElevenlabsTTSConfiguration(api_key="original", voice="stock")
+        tts=ElevenlabsTTSConfiguration(
+            api_key="original", voice="stock", speed=0.85, model="eleven_multilingual_v2"
+        )
     )
     result = await service.apply_clone_to_config(config, "clone-1", 7)
     assert result.tts.voice == "private-voice"
     assert result.tts.api_key == "test-platform-key"
+    assert result.tts.speed == 0.85
+    assert result.tts.model == "eleven_multilingual_v2"
     assert config.tts.voice == "stock"
     assert result.llm is config.llm
 
@@ -278,6 +283,32 @@ async def test_real_decoder_accepts_valid_sample():
     with wave.open(io.BytesIO(result)) as audio:
         assert audio.getnframes() == 30 * service.SAMPLE_RATE
         assert audio.getnchannels() == 1
+
+
+@pytest.mark.asyncio
+async def test_real_decoder_accepts_seekable_m4a_and_removes_temp_file(tmp_path, monkeypatch):
+    monkeypatch.setattr(service.tempfile, "tempdir", str(tmp_path))
+    recording = tmp_path / "voice.m4a"
+    process = await asyncio.create_subprocess_exec(
+        "ffmpeg", "-v", "error", "-f", "lavfi", "-i",
+        "sine=frequency=440:duration=40", "-c:a", "aac", str(recording),
+    )
+    assert await process.wait() == 0
+    result = await service.normalize_sample(recording.read_bytes())
+    with wave.open(io.BytesIO(result)) as audio:
+        assert 40 <= audio.getnframes() / audio.getframerate() < 41
+    assert list(tmp_path.iterdir()) == [recording]
+
+
+@pytest.mark.asyncio
+async def test_real_decoder_rejects_playlist_and_removes_temp_file(tmp_path, monkeypatch):
+    monkeypatch.setattr(service.tempfile, "tempdir", str(tmp_path))
+    recording = tmp_path / "voice.wav"
+    recording.write_bytes(wav_sample(30))
+    playlist = f"ffconcat version 1.0\nfile '{recording}'\n".encode()
+    with pytest.raises(service.VoiceCloneError):
+        await service.normalize_sample(playlist)
+    assert list(tmp_path.iterdir()) == [recording]
 
 
 @pytest.mark.asyncio

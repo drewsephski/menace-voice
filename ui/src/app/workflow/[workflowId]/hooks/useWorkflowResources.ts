@@ -16,7 +16,15 @@ export function useWorkflowResources(workflowId: number) {
     const retry = useCallback(() => setAttempt(value => value + 1), []);
 
     useEffect(() => {
-        if (authLoading || !user) return;
+        if (authLoading) return;
+        if (!user) {
+            setLoading(false);
+            setErrors(['Your session has ended. Sign in again to load workflow resources.']);
+            setDocuments(undefined);
+            setTools(undefined);
+            setRecordings([]);
+            return;
+        }
         let cancelled = false;
         setLoading(true);
         setErrors([]);

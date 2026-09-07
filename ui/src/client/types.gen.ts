@@ -190,12 +190,34 @@ export type AgentOnboardingContext = {
     behavior_notes?: string | null;
     /**
      * Workflow Stages
+     *
+     * Optional template hints; the planner chooses the stages from the brief.
      */
-    workflow_stages: [
-        string,
-        string,
-        string
-    ];
+    workflow_stages?: Array<string>;
+};
+
+/**
+ * AgentPreviewResponse
+ */
+export type AgentPreviewResponse = {
+    /**
+     * Workflow Definition
+     */
+    workflow_definition: {
+        [key: string]: unknown;
+    };
+    agent_setup: OnboardingSetup;
+};
+
+/**
+ * AgentSetupResponse
+ */
+export type AgentSetupResponse = {
+    setup: OnboardingSetup | null;
+    /**
+     * Source
+     */
+    source: 'saved' | 'legacy' | 'missing';
 };
 
 /**
@@ -4240,6 +4262,54 @@ export type NumberInputOptions = {
 };
 
 /**
+ * OnboardingSetup
+ */
+export type OnboardingSetup = {
+    /**
+     * Agent Brief
+     */
+    agent_brief: string;
+    /**
+     * Tone
+     */
+    tone: string;
+    /**
+     * Language
+     */
+    language: string;
+    /**
+     * Voice Provider
+     */
+    voice_provider: string;
+    /**
+     * Voice Name
+     */
+    voice_name: string;
+    /**
+     * Behavior Notes
+     */
+    behavior_notes?: string | null;
+    /**
+     * Workflow Stages
+     *
+     * Optional template hints; the planner chooses the stages from the brief.
+     */
+    workflow_stages?: Array<string>;
+    /**
+     * Agent Name
+     */
+    agent_name: string;
+    /**
+     * Use Case
+     */
+    use_case: string;
+    /**
+     * Call Type
+     */
+    call_type: 'inbound' | 'outbound';
+};
+
+/**
  * OnboardingState
  *
  * Per-user onboarding state, stored under UserConfigurationKey.ONBOARDING.
@@ -7751,6 +7821,11 @@ export type WidgetTexts = {
  * WorkflowConfigurationDefaults
  */
 export type WorkflowConfigurationDefaults = {
+    agent_setup?: OnboardingSetup | null;
+    /**
+     * Voice Clone Id
+     */
+    voice_clone_id?: string | null;
     ambient_noise_configuration?: AmbientNoiseConfigurationDefaults;
     /**
      * Max Call Duration
@@ -9349,6 +9424,94 @@ export type GetWorkflowApiV1WorkflowFetchWorkflowIdGetResponses = {
 };
 
 export type GetWorkflowApiV1WorkflowFetchWorkflowIdGetResponse = GetWorkflowApiV1WorkflowFetchWorkflowIdGetResponses[keyof GetWorkflowApiV1WorkflowFetchWorkflowIdGetResponses];
+
+export type GetAgentSetupApiV1WorkflowWorkflowIdAgentSetupGetData = {
+    body?: never;
+    headers?: {
+        /**
+         * Authorization
+         */
+        authorization?: string | null;
+        /**
+         * X-Api-Key
+         */
+        'X-API-Key'?: string | null;
+    };
+    path: {
+        /**
+         * Workflow Id
+         */
+        workflow_id: number;
+    };
+    query?: never;
+    url: '/api/v1/workflow/{workflow_id}/agent-setup';
+};
+
+export type GetAgentSetupApiV1WorkflowWorkflowIdAgentSetupGetErrors = {
+    /**
+     * Not found
+     */
+    404: unknown;
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type GetAgentSetupApiV1WorkflowWorkflowIdAgentSetupGetError = GetAgentSetupApiV1WorkflowWorkflowIdAgentSetupGetErrors[keyof GetAgentSetupApiV1WorkflowWorkflowIdAgentSetupGetErrors];
+
+export type GetAgentSetupApiV1WorkflowWorkflowIdAgentSetupGetResponses = {
+    /**
+     * Successful Response
+     */
+    200: AgentSetupResponse;
+};
+
+export type GetAgentSetupApiV1WorkflowWorkflowIdAgentSetupGetResponse = GetAgentSetupApiV1WorkflowWorkflowIdAgentSetupGetResponses[keyof GetAgentSetupApiV1WorkflowWorkflowIdAgentSetupGetResponses];
+
+export type PreviewAgentApiV1WorkflowWorkflowIdAgentPreviewPostData = {
+    body: OnboardingSetup;
+    headers?: {
+        /**
+         * Authorization
+         */
+        authorization?: string | null;
+        /**
+         * X-Api-Key
+         */
+        'X-API-Key'?: string | null;
+    };
+    path: {
+        /**
+         * Workflow Id
+         */
+        workflow_id: number;
+    };
+    query?: never;
+    url: '/api/v1/workflow/{workflow_id}/agent-preview';
+};
+
+export type PreviewAgentApiV1WorkflowWorkflowIdAgentPreviewPostErrors = {
+    /**
+     * Not found
+     */
+    404: unknown;
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type PreviewAgentApiV1WorkflowWorkflowIdAgentPreviewPostError = PreviewAgentApiV1WorkflowWorkflowIdAgentPreviewPostErrors[keyof PreviewAgentApiV1WorkflowWorkflowIdAgentPreviewPostErrors];
+
+export type PreviewAgentApiV1WorkflowWorkflowIdAgentPreviewPostResponses = {
+    /**
+     * Successful Response
+     */
+    200: AgentPreviewResponse;
+};
+
+export type PreviewAgentApiV1WorkflowWorkflowIdAgentPreviewPostResponse = PreviewAgentApiV1WorkflowWorkflowIdAgentPreviewPostResponses[keyof PreviewAgentApiV1WorkflowWorkflowIdAgentPreviewPostResponses];
 
 export type GetWorkflowVersionsApiV1WorkflowWorkflowIdVersionsGetData = {
     body?: never;

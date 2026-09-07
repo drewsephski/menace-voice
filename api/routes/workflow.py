@@ -1,6 +1,7 @@
 import json
 import re
 import uuid
+from contextlib import nullcontext
 from datetime import datetime
 from typing import Any, List, Literal, Optional
 
@@ -8,7 +9,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import StreamingResponse
 from httpx import HTTPStatusError
 from loguru import logger
-from pydantic import BaseModel, Field, ValidationError, field_validator
+from pydantic import BaseModel, Field, ValidationError
 
 from api.constants import DEPLOYMENT_MODE
 from api.db import db_client
@@ -33,6 +34,7 @@ from api.services.configuration.ai_model_configuration import (
     check_for_masked_keys_in_ai_model_configuration_v2,
     compile_ai_model_configuration_v2,
     convert_legacy_ai_model_configuration_to_v2,
+    get_effective_ai_model_configuration_for_workflow,
     get_resolved_ai_model_configuration,
     merge_ai_model_configuration_v2_secrets,
 )
@@ -51,6 +53,7 @@ from api.services.mps_service_key_client import mps_service_key_client
 from api.services.posthog_client import capture_event
 from api.services.reports import generate_workflow_report_csv
 from api.services.storage import storage_fs
+from api.services.voice_cloning.service import VoiceCloneError, operation_lock
 from api.services.workflow.configuration_policy import (
     ExternalPBXConfigurationDisabledError,
     WorkflowConfigurationNotFoundError,
@@ -63,10 +66,23 @@ from api.services.workflow.mcp_prompt import (
     append_mcp_usage_instructions,
     build_mcp_usage_instructions,
 )
-from api.services.workflow.onboarding_prompt import (
-    InvalidOnboardingWorkflowLayout,
-    build_onboarding_generation_prompt,
-    enhance_onboarding_workflow_prompts,
+from api.services.workflow.onboarding_capabilities import (
+    build_onboarding_capability_catalog,
+)
+from api.services.workflow.onboarding_generation import (
+    AgentOnboardingContext,
+    OnboardingSetup,
+    generate_onboarding_workflow,
+)
+from api.services.workflow.onboarding_layout import InvalidOnboardingWorkflowLayout
+from api.services.workflow.onboarding_planner import (
+    OnboardingPlanningError,
+    plan_onboarding_workflow,
+)
+from api.services.workflow.onboarding_revision import (
+    preserve_launch_configuration,
+    recover_agent_setup,
+    revision_resources,
 )
 from api.services.workflow.run_creation import prepare_workflow_run_inputs
 from api.services.workflow.run_usage_response import (
@@ -385,46 +401,6 @@ class CreateWorkflowRunResponse(BaseModel):
     initial_context: dict | None = None
 
 
-class AgentOnboardingContext(BaseModel):
-    agent_brief: str = Field(min_length=1, max_length=8_000)
-    tone: str = Field(min_length=1, max_length=100)
-    language: str = Field(min_length=1, max_length=100)
-    voice_provider: str = Field(min_length=1, max_length=100)
-    voice_name: str = Field(min_length=1, max_length=255)
-    behavior_notes: str | None = Field(default=None, max_length=4_000)
-    workflow_stages: list[str] = Field(min_length=3, max_length=3)
-
-    @field_validator(
-        "agent_brief",
-        "tone",
-        "language",
-        "voice_provider",
-        "voice_name",
-    )
-    @classmethod
-    def _strip_required_text(cls, value: str) -> str:
-        value = value.strip()
-        if not value:
-            raise ValueError("must not be blank")
-        return value
-
-    @field_validator("behavior_notes")
-    @classmethod
-    def _strip_optional_text(cls, value: str | None) -> str | None:
-        value = value.strip() if value else ""
-        return value or None
-
-    @field_validator("workflow_stages")
-    @classmethod
-    def _validate_workflow_stages(cls, stages: list[str]) -> list[str]:
-        cleaned = [stage.strip() for stage in stages]
-        if any(not stage for stage in cleaned):
-            raise ValueError("workflow stages must not be blank")
-        if any(len(stage) > 2_000 for stage in cleaned):
-            raise ValueError("workflow stages must be 2,000 characters or fewer")
-        return cleaned
-
-
 class CreateWorkflowTemplateRequest(BaseModel):
     call_type: Literal[CallType.INBOUND.value, CallType.OUTBOUND.value]
     use_case: str
@@ -454,9 +430,7 @@ class CreateWorkflowTemplateRequest(BaseModel):
     )
     post_call_webhook_url: str | None = Field(
         default=None,
-        description=(
-            "Optional URL for a Webhook node that fires after the call ends."
-        ),
+        description=("Optional URL for a Webhook node that fires after the call ends."),
     )
     post_call_webhook_credential_uuid: str | None = Field(
         default=None,
@@ -526,11 +500,11 @@ async def _validate_template_resources(
     tool_uuids: list[str],
     document_uuids: list[str],
     organization_id: int | None,
-) -> tuple[list[str], list[str], list[Any]]:
+) -> tuple[list[str], list[str], list[Any], list[Any]]:
     normalized_tools = _normalized_resource_uuids(tool_uuids)
     normalized_documents = _normalized_resource_uuids(document_uuids)
     if not normalized_tools and not normalized_documents:
-        return normalized_tools, normalized_documents, []
+        return normalized_tools, normalized_documents, [], []
     if organization_id is None:
         raise HTTPException(status_code=400, detail="No organization selected")
 
@@ -548,6 +522,7 @@ async def _validate_template_resources(
                 ),
             )
 
+    documents: list[Any] = []
     if normalized_documents:
         documents = await db_client.get_documents_by_uuids(
             normalized_documents, organization_id
@@ -565,7 +540,7 @@ async def _validate_template_resources(
                 ),
             )
 
-    return normalized_tools, normalized_documents, tools
+    return normalized_tools, normalized_documents, tools, documents
 
 
 def _attach_template_resources(
@@ -681,9 +656,7 @@ def _attach_launch_integrations(
 
         if post_call_webhook_url and node.get("type") == "webhook":
             existing_url = updated_data.get("endpoint_url")
-            existing_url = (
-                existing_url.strip() if isinstance(existing_url, str) else ""
-            )
+            existing_url = existing_url.strip() if isinstance(existing_url, str) else ""
             if not existing_url or existing_url == post_call_webhook_url:
                 updated_data["name"] = updated_data.get("name") or "Post-call webhook"
                 updated_data["enabled"] = True
@@ -894,9 +867,9 @@ async def create_workflow_from_template(
     Create a new workflow from a natural language template request.
 
     This endpoint:
-    1. Uses mps_service_key_client to call MPS workflow API
-    2. Passes organization ID (authenticated mode) or created_by (OSS mode)
-    3. Creates the workflow in the database
+    1. Plans onboarding graphs with the configured organization/workflow model
+    2. Validates prompts, graph connectivity, and authorized stage resources
+    3. Persists a validated draft; legacy template requests use the MPS API
 
     Args:
         request: The template creation request with call_type, use_case, and activity_description
@@ -909,7 +882,12 @@ async def create_workflow_from_template(
         HTTPException: If MPS API call fails
     """
     try:
-        tool_uuids, document_uuids, selected_tools = await _validate_template_resources(
+        (
+            tool_uuids,
+            document_uuids,
+            selected_tools,
+            documents,
+        ) = await _validate_template_resources(
             tool_uuids=request.tool_uuids,
             document_uuids=request.document_uuids,
             organization_id=user.selected_organization_id,
@@ -929,7 +907,7 @@ async def create_workflow_from_template(
             )
 
         if template_tool_uuids:
-            tool_uuids, _, selected_tools = await _validate_template_resources(
+            tool_uuids, _, selected_tools, _ = await _validate_template_resources(
                 tool_uuids=[*tool_uuids, *template_tool_uuids],
                 document_uuids=[],
                 organization_id=user.selected_organization_id,
@@ -981,81 +959,84 @@ async def create_workflow_from_template(
             user=user,
         )
 
-        activity_description = request.activity_description
-        if request.onboarding_context:
-            activity_description = build_onboarding_generation_prompt(
-                agent_name=(request.name or "the configured agent").strip(),
-                use_case=request.use_case,
-                call_type=request.call_type,
-                **request.onboarding_context.model_dump(),
-                tool_names=[str(tool.name) for tool in selected_tools],
-                has_documents=bool(document_uuids),
-                has_pre_call_fetch=bool(pre_call_fetch_url),
-                has_post_call_webhook=bool(post_call_webhook_url),
-            )
-
-        # Call MPS API to generate workflow using the client
-        if DEPLOYMENT_MODE == "oss":
-            workflow_data = await mps_service_key_client.call_workflow_api(
-                call_type=request.call_type.upper(),
-                use_case=request.use_case,
-                activity_description=activity_description,
-                created_by=str(user.provider_id),
-            )
-        else:
+        async def generate(activity_description: str) -> dict[str, Any]:
+            if DEPLOYMENT_MODE == "oss":
+                return await mps_service_key_client.call_workflow_api(
+                    call_type=request.call_type.upper(),
+                    use_case=request.use_case,
+                    activity_description=activity_description,
+                    created_by=str(user.provider_id),
+                )
             if not user.selected_organization_id:
                 raise HTTPException(status_code=400, detail="No organization selected")
-
-            workflow_data = await mps_service_key_client.call_workflow_api(
+            return await mps_service_key_client.call_workflow_api(
                 call_type=request.call_type.upper(),
                 use_case=request.use_case,
                 activity_description=activity_description,
                 organization_id=user.selected_organization_id,
             )
 
-        # Create the workflow in our database
-        # Regenerate trigger UUIDs to avoid conflicts with existing triggers
-        workflow_def = regenerate_trigger_uuids(
-            workflow_data.get("workflow_definition", {})
-        ) or {}
         if request.onboarding_context:
-            context = request.onboarding_context
-            try:
-                workflow_def = enhance_onboarding_workflow_prompts(
-                    workflow_def,
-                    agent_name=(
-                        request.name
-                        or workflow_data.get("name")
-                        or "the configured agent"
-                    ),
-                    use_case=request.use_case,
-                    call_type=request.call_type,
-                    agent_brief=context.agent_brief,
-                    tone=context.tone,
-                    language=context.language,
-                    voice_provider=context.voice_provider,
-                    voice_name=context.voice_name,
-                    behavior_notes=context.behavior_notes,
-                    workflow_stages=context.workflow_stages,
+            if not user.selected_organization_id:
+                raise HTTPException(status_code=400, detail="No organization selected")
+            capabilities = build_onboarding_capability_catalog(
+                selected_tools, documents, organization_id=user.selected_organization_id
+            )
+
+            async def plan(prompt: str) -> dict[str, Any]:
+                return await plan_onboarding_workflow(
+                    prompt, user=user, workflow_configurations=workflow_configurations
                 )
+
+            try:
+                workflow_data = await generate_onboarding_workflow(
+                    generate=plan,
+                    setup=OnboardingSetup(
+                        **request.onboarding_context.model_dump(),
+                        agent_name=(request.name or "").strip() or "the configured agent",
+                        use_case=request.use_case,
+                        call_type=request.call_type,
+                    ),
+                    capabilities=capabilities,
+                    has_pre_call_fetch=bool(pre_call_fetch_url),
+                    has_post_call_webhook=bool(post_call_webhook_url),
+                    selected_tools=selected_tools,
+                )
+            except OnboardingPlanningError as exc:
+                raise HTTPException(status_code=502, detail=str(exc)) from exc
             except InvalidOnboardingWorkflowLayout as exc:
-                logger.warning("Rejected invalid onboarding workflow layout: {}", exc)
+                logger.warning("Onboarding generation failed validation after repair")
                 raise HTTPException(
                     status_code=502,
-                    detail=(
-                        "The agent draft did not match the required three-stage "
-                        "layout. Please create it again."
-                    ),
+                    detail="We could not generate a valid workflow from this setup. "
+                    "No agent was saved. Please try creating it again.",
                 ) from exc
-        workflow_def = _attach_template_resources(
-            workflow_def,
-            tool_uuids=tool_uuids,
-            document_uuids=document_uuids,
-        )
-        workflow_def = append_mcp_usage_instructions(
-            workflow_def,
-            build_mcp_usage_instructions(selected_tools),
-        )
+            workflow_def = workflow_data["workflow_definition"]
+            workflow_configurations = {
+                **(workflow_configurations or {}),
+                "agent_setup": OnboardingSetup(
+                    **request.onboarding_context.model_dump(),
+                    agent_name=(request.name or workflow_data.get("name") or request.use_case).strip(),
+                    use_case=request.use_case,
+                    call_type=request.call_type,
+                ).model_dump(),
+                "agent_setup_template_id": request.template_id,
+            }
+        else:
+            workflow_data = await generate(request.activity_description)
+            workflow_def = (
+                regenerate_trigger_uuids(workflow_data.get("workflow_definition", {}))
+                or {}
+            )
+            workflow_def = _attach_template_resources(
+                workflow_def,
+                tool_uuids=tool_uuids,
+                document_uuids=document_uuids,
+            )
+            workflow_def = append_mcp_usage_instructions(
+                workflow_def,
+                build_mcp_usage_instructions(selected_tools),
+            )
         workflow_def = _attach_launch_integrations(
             workflow_def,
             call_type=request.call_type,
@@ -1297,6 +1278,82 @@ async def get_workflow(
     }
 
 
+class AgentSetupResponse(BaseModel):
+    setup: OnboardingSetup | None
+    source: Literal["saved", "legacy", "missing"]
+
+
+class AgentPreviewResponse(BaseModel):
+    workflow_definition: dict
+    agent_setup: OnboardingSetup
+
+
+@router.get("/{workflow_id}/agent-setup")
+async def get_agent_setup(
+    workflow_id: int, user: UserModel = Depends(get_user)
+) -> AgentSetupResponse:
+    if not user.selected_organization_id:
+        raise HTTPException(status_code=400, detail="No organization selected")
+    workflow = await db_client.get_workflow(
+        workflow_id, organization_id=user.selected_organization_id
+    )
+    if workflow is None:
+        raise HTTPException(status_code=404, detail="Agent not found")
+    version = await db_client.get_draft_version(workflow_id) or workflow.released_definition
+    setup, source = recover_agent_setup(
+        version.workflow_json, version.workflow_configurations, workflow.name
+    )
+    return AgentSetupResponse(setup=setup, source=source)
+
+
+@router.post("/{workflow_id}/agent-preview")
+async def preview_agent(
+    workflow_id: int, request: OnboardingSetup, user: UserModel = Depends(get_user)
+) -> AgentPreviewResponse:
+    if not user.selected_organization_id:
+        raise HTTPException(status_code=400, detail="No organization selected")
+    workflow = await db_client.get_workflow(
+        workflow_id, organization_id=user.selected_organization_id
+    )
+    if workflow is None:
+        raise HTTPException(status_code=404, detail="Agent not found")
+    version = await db_client.get_draft_version(workflow_id) or workflow.released_definition
+    original = version.workflow_json
+    try:
+        preserve_launch_configuration(original, {"nodes": [n for n in original["nodes"] if n["type"] in {"startCall", "agentNode", "endCall", "globalNode"}], "edges": []})
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    tool_ids, document_ids = revision_resources(original)
+    _, _, selected_tools, documents = await _validate_template_resources(
+        tool_uuids=tool_ids, document_uuids=document_ids,
+        organization_id=user.selected_organization_id,
+    )
+    capabilities = build_onboarding_capability_catalog(
+        selected_tools, documents, organization_id=user.selected_organization_id
+    )
+
+    async def plan(prompt: str) -> dict[str, Any]:
+        return await plan_onboarding_workflow(
+            prompt, user=user, workflow_configurations=version.workflow_configurations
+        )
+
+    try:
+        result = await generate_onboarding_workflow(
+            generate=plan, setup=request, capabilities=capabilities,
+            has_pre_call_fetch=any(n.get("data", {}).get("pre_call_fetch_url") for n in original["nodes"]),
+            has_post_call_webhook=any(n["type"] == "webhook" for n in original["nodes"]),
+            selected_tools=selected_tools,
+        )
+        definition = preserve_launch_configuration(original, result["workflow_definition"])
+    except OnboardingPlanningError as exc:
+        raise HTTPException(status_code=502, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail="We could not produce a complete conversation from this brief. Your current agent is unchanged. Please try again.") from exc
+    return AgentPreviewResponse(
+        workflow_definition=mask_workflow_definition(definition), agent_setup=request
+    )
+
+
 @router.get("/{workflow_id}/versions")
 async def get_workflow_versions(
     workflow_id: int,
@@ -1361,16 +1418,32 @@ async def publish_workflow(
     if draft is None:
         raise HTTPException(status_code=400, detail="No draft to publish")
 
-    errors = await _validate_workflow_definition(
-        draft.workflow_json,
-        organization_id=user.selected_organization_id,
-        exclude_workflow_id=workflow_id,
-    )
-    if errors:
-        raise _validation_errors_http_exception(errors)
-
     try:
-        published = await db_client.publish_workflow_draft(workflow_id)
+        has_voice_clone = bool((draft.workflow_configurations or {}).get("voice_clone_id"))
+        async with (
+            operation_lock(user.selected_organization_id)
+            if has_voice_clone and user.selected_organization_id
+            else nullcontext()
+        ):
+            if has_voice_clone:
+                draft = await db_client.get_draft_version(workflow_id)
+                if draft is None:
+                    raise HTTPException(status_code=400, detail="No draft to publish")
+            errors = await _validate_workflow_definition(
+                draft.workflow_json,
+                organization_id=user.selected_organization_id,
+                exclude_workflow_id=workflow_id,
+            )
+            if errors:
+                raise _validation_errors_http_exception(errors)
+            if (draft.workflow_configurations or {}).get("voice_clone_id"):
+                await get_effective_ai_model_configuration_for_workflow(
+                    organization_id=user.selected_organization_id,
+                    workflow_configurations=draft.workflow_configurations,
+                )
+            published = await db_client.publish_workflow_draft(workflow_id)
+    except VoiceCloneError as exc:
+        raise HTTPException(status_code=exc.status_code, detail=str(exc)) from exc
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
@@ -1767,14 +1840,25 @@ async def update_workflow(
                         workflow_definition, e.trigger_paths
                     )
 
-        workflow = await db_client.update_workflow(
-            workflow_id=workflow_id,
-            name=request.name,
-            workflow_definition=workflow_definition,
-            template_context_variables=request.template_context_variables,
-            workflow_configurations=workflow_configurations,
-            organization_id=user.selected_organization_id,
-        )
+        has_voice_clone = bool((workflow_configurations or {}).get("voice_clone_id"))
+        async with (
+            operation_lock(user.selected_organization_id)
+            if has_voice_clone and user.selected_organization_id
+            else nullcontext()
+        ):
+            if has_voice_clone:
+                await get_effective_ai_model_configuration_for_workflow(
+                    organization_id=user.selected_organization_id,
+                    workflow_configurations=workflow_configurations,
+                )
+            workflow = await db_client.update_workflow(
+                workflow_id=workflow_id,
+                name=request.name,
+                workflow_definition=workflow_definition,
+                template_context_variables=request.template_context_variables,
+                workflow_configurations=workflow_configurations,
+                organization_id=user.selected_organization_id,
+            )
 
         # Sync agent triggers if workflow definition was updated
         if workflow_definition:
@@ -1814,6 +1898,8 @@ async def update_workflow(
         }
     except HTTPException:
         raise
+    except VoiceCloneError as exc:
+        raise HTTPException(status_code=exc.status_code, detail=str(exc)) from exc
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
     except Exception as e:

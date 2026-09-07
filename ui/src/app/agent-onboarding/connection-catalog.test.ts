@@ -48,6 +48,30 @@ describe("tool presentation catalog", () => {
   });
 
   it.each([
+    ["https://mcp.exa.ai/mcp?tools=web_search_exa", "exa"],
+    ["https://mcp.linear.app/sse", "linear"],
+    ["https://mcp.zapier.com/api/v1/connect/workspace", "zapier"],
+  ])("recognizes the provider at %s after the tool is renamed", (url, id) => {
+    expect(getMcpPresetForTool(createTool({
+      category: "mcp",
+      name: "My connection",
+      definition: { type: "mcp", config: { url } },
+    }))?.id).toBe(id);
+  });
+
+  it.each([
+    "https://mcp.exa.ai.example.com/mcp",
+    "https://example.com/mcp.exa.ai",
+    "invalid url",
+  ])("does not assign a provider logo to an unknown endpoint %s", (url) => {
+    expect(getMcpPresetForTool(createTool({
+      category: "mcp",
+      name: "My connection",
+      definition: { type: "mcp", config: { url } },
+    }))).toBeNull();
+  });
+
+  it.each([
     ["Notify a webhook", "notify-webhook"],
     ["Look up a record", "lookup-record"],
     ["Create a lead", "create-lead"],

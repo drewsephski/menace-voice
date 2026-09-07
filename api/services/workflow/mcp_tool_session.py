@@ -18,6 +18,7 @@ from mcp.client.session_group import StreamableHttpParameters
 from pipecat.adapters.schemas.function_schema import FunctionSchema
 from pipecat.services.mcp_service import MCPClient
 
+from api.services.workflow.onboarding_capabilities import sanitize_capability_schema
 from api.services.workflow.tools.mcp_tool import namespace_function_name
 from api.services.workflow.tools.tool_result_limits import bound_tool_result_for_llm
 from api.utils.credential_auth import build_auth_header
@@ -197,16 +198,28 @@ class McpToolSession:
             s for s in self._schemas if self._name_map.get(s.name) in allowed_raw_names
         ]
 
-    def discovered_tools(self) -> List[Dict[str, str]]:
-        """Raw MCP tool catalog for UI/cache: ``[{name, description}]``
+    def discovered_tools(self) -> list[dict[str, Any]]:
+        """Raw MCP tool catalog for UI/cache: ``[{name, description, inputSchema}]``
         using the *raw* server names (not the namespaced LLM names).
         Empty if the session is unavailable."""
-        out: List[Dict[str, str]] = []
+        out: list[dict[str, Any]] = []
         for s in self._schemas:
             raw = self._name_map.get(s.name)
             if raw is None:
                 continue
-            out.append({"name": raw, "description": s.description or ""})
+            out.append(
+                {
+                    "name": raw,
+                    "description": s.description or "",
+                    "inputSchema": sanitize_capability_schema(
+                        {
+                            "type": "object",
+                            "properties": s.properties,
+                            "required": s.required,
+                        }
+                    ),
+                }
+            )
         return out
 
     async def call(self, namespaced_name: str, arguments: Dict[str, Any]) -> str:
@@ -244,9 +257,9 @@ async def discover_mcp_tools(
     credential: Optional["ExternalCredentialModel"],
     timeout_secs: int,
     sse_read_timeout_secs: int,
-) -> List[Dict[str, str]]:
+) -> list[dict[str, Any]]:
     """Open an ephemeral MCP session, list its tools, close it. Returns
-    ``[{name, description}]`` (raw names). Never raises — on any connect
+    ``[{name, description, inputSchema}]`` (raw names). Never raises — on any connect
     failure returns ``[]``."""
     session = McpToolSession(
         tool_uuid="discover",

@@ -8,6 +8,8 @@ const media = { getTracks: () => [{ stop: stopTrack }] };
 const getUserMedia = vi.fn();
 
 class RecorderMock {
+  static latest: RecorderMock;
+  constructor() { RecorderMock.latest = this; }
   static isTypeSupported() { return true; }
   state = "inactive";
   mimeType = "audio/webm";
@@ -63,4 +65,31 @@ it("offers upload when microphone permission is denied", async () => {
   fireEvent.click(screen.getByRole("button", { name: "Record my voice" }));
   expect((await screen.findByRole("alert")).textContent).toContain("upload a recording");
   expect((screen.getByRole("button", { name: "Upload audio" }) as HTMLButtonElement).disabled).toBe(false);
+});
+
+it("does not submit partial audio or erase errors when a recorder fails then stops", async () => {
+  getUserMedia.mockResolvedValue(media);
+  const changed = vi.fn();
+  render(<VoiceSampleRecorder disabled={false} onChange={changed} />);
+  fireEvent.click(screen.getByRole("button", { name: "Record my voice" }));
+  await screen.findByRole("button", { name: /Stop recording/ });
+  act(() => RecorderMock.latest.onerror?.());
+  expect((await screen.findByRole("alert")).textContent).toContain("Recording failed");
+  expect(changed.mock.calls.at(-1)?.[0]).toBeNull();
+  expect(screen.queryByLabelText("Your original voice recording")).toBeNull();
+  expect(stopTrack).toHaveBeenCalled();
+});
+
+it("clears a previous sample when its replacement is empty or too large", () => {
+  const changed = vi.fn();
+  const { container } = render(<VoiceSampleRecorder disabled={false} onChange={changed} />);
+  const input = container.querySelector('input[type="file"]');
+  if (!input) throw new Error("Upload input not found");
+  fireEvent.change(input, { target: { files: [new File(["sample"], "valid.wav")] } });
+  expect(changed.mock.calls.at(-1)?.[0]).toBeInstanceOf(File);
+  fireEvent.change(input, { target: { files: [new File([], "empty.wav")] } });
+  expect(changed.mock.calls.at(-1)?.[0]).toBeNull();
+  const oversized = new File([new Uint8Array(20 * 1024 * 1024 + 1)], "large.wav");
+  fireEvent.change(input, { target: { files: [oversized] } });
+  expect(changed.mock.calls.at(-1)?.[0]).toBeNull();
 });

@@ -70,6 +70,7 @@ import {
     normalizeCallDispositions,
     validateCallDispositionRows,
 } from "./components/CallDispositionEditor";
+import { ClonedVoiceSection } from "./components/ClonedVoiceSection";
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -103,6 +104,7 @@ Respond with ONLY "CONVERSATION" if a person answered, or "VOICEMAIL" if it's vo
 const NAV_ITEMS = [
     { id: "general", label: "General", icon: Settings },
     { id: "models", label: "Model Overrides", icon: Brain },
+    { id: "voice", label: "Agent Voice", icon: Mic },
     { id: "variables", label: "Template Variables", icon: Variable },
     { id: "dictionary", label: "Dictionary", icon: BookA },
     { id: "voicemail", label: "Voicemail Detection", icon: PhoneOff },
@@ -1807,6 +1809,12 @@ function WorkflowSettingsInner({
                                 modelConfigurationPricing={modelConfigurationPricing}
                                 modelConfigurationLoading={modelConfigurationLoading}
                                 modelConfigurationError={modelConfigurationError}
+                            />
+
+                            <ClonedVoiceSection
+                                workflowConfigurations={resolvedWorkflowConfigurationsForRender}
+                                workflowName={workflowName}
+                                onSave={saveWorkflowConfigurations}
                             />
 
                             {/* Template Variables */}

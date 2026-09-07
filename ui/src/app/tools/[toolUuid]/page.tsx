@@ -4,6 +4,7 @@ import { ArrowLeft, Code, ExternalLink, FlaskConical, Loader2, Save } from "luci
 import { useParams, useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 
+import { ToolLogo } from "@/app/tools/ToolLogo";
 import {
     getToolApiV1ToolsToolUuidGet,
     listRecordingsApiV1WorkflowRecordingsGet,
@@ -51,12 +52,9 @@ import {
     createMcpDefinition,
     DEFAULT_END_CALL_REASON_DESCRIPTION,
     type EndCallMessageType,
-    getCategoryConfig,
     getToolTypeLabel,
     MCP_URL_PATTERN,
-    renderToolIcon,
     ruleRowsToContextMappingRules,
-    type ToolCategory,
     type TransferDestinationSource,
 } from "../config";
 import {
@@ -844,7 +842,6 @@ const data = await response.json();`;
                 customMessageType,
                 customMessageRecordingId,
             }) !== savedHttpTestSnapshot);
-    const categoryConfig = getCategoryConfig(tool.category as ToolCategory);
 
     return (
         <div className="min-h-screen">
@@ -862,14 +859,7 @@ const data = await response.json();`;
                                 Back
                             </Button>
                             <div className="flex items-center gap-3">
-                                <div
-                                    className="w-10 h-10 rounded-lg flex items-center justify-center"
-                                    style={{
-                                        backgroundColor: tool.icon_color || categoryConfig?.iconColor || "#3B82F6",
-                                    }}
-                                >
-                                    {renderToolIcon(tool.category)}
-                                </div>
+                                <ToolLogo tool={tool} />
                                 <div>
                                     <h1 className="text-xl font-bold">{name}</h1>
                                     <p className="text-sm text-muted-foreground">

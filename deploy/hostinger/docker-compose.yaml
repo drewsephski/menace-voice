@@ -143,6 +143,7 @@ services:
       # order TURN URIs UDP-first. Required for correct remote WebRTC.
       ENVIRONMENT: "production"
       LOG_LEVEL: "INFO"
+      VOICE_CLONING_ELEVENLABS_API_KEY: "${VOICE_CLONING_ELEVENLABS_API_KEY:-}"
 
       # Public HTTPS origin (Traefik-terminated). Used for absolute URLs and
       # for verifying inbound telephony webhook signatures.

@@ -97,8 +97,8 @@ export function CloneVoiceForm({
         </Label>
       </div>
       <p className="text-xs text-muted-foreground">
-        30 seconds–3 minutes · Up to 20 MB. Menace Voice does not retain the
-        uploaded sample; ElevenLabs processes and stores it with your clone.
+        30 seconds–3 minutes · Up to 20 MB. Menace Voice removes its temporary
+        sample after processing; ElevenLabs stores it with your clone.
       </p>
       {error && (
         <p role="alert" className="text-sm text-destructive">

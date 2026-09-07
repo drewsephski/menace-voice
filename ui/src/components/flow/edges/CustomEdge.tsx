@@ -1,6 +1,6 @@
 import { BaseEdge, type Edge, EdgeLabelRenderer, type EdgeProps, getSmoothStepPath, useReactFlow } from '@xyflow/react';
 import { AlertCircle, Pencil, Trash2 } from 'lucide-react';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { useWorkflow, useWorkflowOptional } from "@/app/workflow/[workflowId]/contexts/WorkflowContext";
 import { useWorkflowStore } from "@/app/workflow/[workflowId]/stores/workflowStore";
@@ -154,12 +154,21 @@ export default function CustomEdge(props: CustomEdgeProps) {
     const { id, source, target, sourceX, sourceY, targetX, targetY, sourcePosition, targetPosition, data, style, selected } = props;
 
     const { getEdges, setNodes } = useReactFlow<FlowNode, FlowEdge>();
-    const { saveWorkflow } = useWorkflow();
+    const { saveWorkflow, readOnly = false } = useWorkflow();
+    const readOnlyRef = useRef(readOnly);
+    readOnlyRef.current = readOnly;
     const updateEdge = useWorkflowStore((state) => state.updateEdge);
     const deleteEdge = useWorkflowStore((state) => state.deleteEdge);
     const [open, setOpen] = useState(false);
     const [confirmDelete, setConfirmDelete] = useState(false);
     const [isHovered, setIsHovered] = useState(false);
+
+    useEffect(() => {
+        if (readOnly) {
+            setOpen(false);
+            setConfirmDelete(false);
+        }
+    }, [readOnly]);
 
     const parallel = getEdges().filter(
         (e) =>
@@ -254,12 +263,14 @@ export default function CustomEdge(props: CustomEdgeProps) {
     }, [selected, isHovered, source, target, setNodes]);
 
     const handleSaveEdgeData = useCallback(async (updatedData: FlowEdgeData) => {
+        if (readOnlyRef.current) return;
         // Use the workflow store's updateEdge method to properly track history
         updateEdge(id, { data: updatedData });
         await saveWorkflow();
     }, [id, updateEdge, saveWorkflow]);
 
     const handleDeleteEdge = useCallback(() => {
+        if (readOnlyRef.current) return;
         deleteEdge(id);
         setConfirmDelete(false);
     }, [id, deleteEdge]);
@@ -269,7 +280,7 @@ export default function CustomEdge(props: CustomEdgeProps) {
             <g
                 onMouseEnter={() => setIsHovered(true)}
                 onMouseLeave={() => setIsHovered(false)}
-                onDoubleClick={() => setOpen(true)}
+                onDoubleClick={readOnly ? undefined : () => setOpen(true)}
             >
                 <BaseEdge
                     id={id}
@@ -305,7 +316,7 @@ export default function CustomEdge(props: CustomEdgeProps) {
                     className="nodrag nopan"
                     onMouseEnter={() => setIsHovered(true)}
                     onMouseLeave={() => setIsHovered(false)}
-                    onDoubleClick={() => setOpen(true)}
+                    onDoubleClick={readOnly ? undefined : () => setOpen(true)}
                 >
                     {/* Show full EdgeLabel when selected or hovered, otherwise show simple label */}
                     {(selected || isHovered) ? (
@@ -326,11 +337,12 @@ export default function CustomEdge(props: CustomEdgeProps) {
                                 <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
                                     Condition
                                 </span>
-                                <div className="flex items-center gap-1">
+                                {!readOnly && <div className="flex items-center gap-1">
                                     <Button
                                         variant="ghost"
                                         size="icon"
                                         className="h-6 w-6 p-0 hover:bg-destructive/10 hover:text-destructive text-muted-foreground"
+                                        aria-label="Delete connection"
                                         onClick={() => setConfirmDelete(true)}
                                     >
                                         <Trash2 className="h-3 w-3" />
@@ -339,16 +351,17 @@ export default function CustomEdge(props: CustomEdgeProps) {
                                         variant="ghost"
                                         size="icon"
                                         className="h-6 w-6 p-0 hover:bg-muted text-muted-foreground"
+                                        aria-label="Edit connection"
                                         onClick={() => setOpen(true)}
                                     >
                                         <Pencil className="h-3 w-3" />
                                     </Button>
-                                </div>
+                                </div>}
                             </div>
                             {/* Content */}
                             <div className="px-3 pb-3">
                                 <div className="text-sm font-medium text-card-foreground break-words">
-                                    {data?.label || data?.condition || 'Click to set condition'}
+                                    {data?.label || data?.condition || (readOnly ? 'No condition' : 'Click to set condition')}
                                 </div>
                             </div>
                         </div>
@@ -367,13 +380,13 @@ export default function CustomEdge(props: CustomEdgeProps) {
                 </div>
             </EdgeLabelRenderer>
             <EdgeDetailsDialog
-                open={open}
+                open={open && !readOnly}
                 onOpenChange={setOpen}
                 data={data}
                 onSave={handleSaveEdgeData}
             />
             <DeleteConfirmationDialog
-                open={confirmDelete}
+                open={confirmDelete && !readOnly}
                 onOpenChange={setConfirmDelete}
                 title="Delete connection?"
                 description="This connection and its condition will be removed from the workflow."

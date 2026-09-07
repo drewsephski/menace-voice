@@ -4,6 +4,7 @@ import asyncio
 import io
 import os
 import re
+import tempfile
 import wave
 from contextlib import asynccontextmanager
 from datetime import timedelta
@@ -12,6 +13,7 @@ import httpx
 from loguru import logger
 
 from api.db import db_client
+from api.schemas.ai_model_configuration import EffectiveAIModelConfiguration
 from api.schemas.voice_clone import VoiceCloneCapabilities
 from api.services.configuration.registry import ElevenlabsTTSConfiguration
 
@@ -85,40 +87,46 @@ async def operation_lock(organization_id: int):
 async def normalize_sample(data: bytes) -> bytes:
     if not data or len(data) > MAX_SAMPLE_BYTES:
         raise VoiceCloneError("Upload an audio recording up to 20 MB.")
-    try:
-        process = await asyncio.create_subprocess_exec(
-            "ffmpeg",
-            "-v",
-            "error",
-            "-nostdin",
-            "-protocol_whitelist",
-            "pipe",
-            "-i",
-            "pipe:0",
-            "-t",
-            "181",
-            "-vn",
-            "-ac",
-            "1",
-            "-ar",
-            str(SAMPLE_RATE),
-            "-f",
-            "s16le",
-            "pipe:1",
-            stdin=asyncio.subprocess.PIPE,
-            stdout=asyncio.subprocess.PIPE,
-            stderr=asyncio.subprocess.PIPE,
-        )
-    except FileNotFoundError as exc:
-        raise VoiceCloneError(
-            "Audio processing is unavailable. Contact your administrator.", 503
-        ) from exc
-    try:
-        pcm, _ = await asyncio.wait_for(process.communicate(data), timeout=30)
-    except (TimeoutError, asyncio.CancelledError):
-        process.kill()
-        await process.wait()
-        raise
+    # M4A/MP4 recordings may put their index at the end and require seekable input.
+    # Restrict demuxers to audio containers so playlists cannot reference other files.
+    with tempfile.NamedTemporaryFile(suffix=".audio") as sample_file:
+        sample_file.write(data)
+        sample_file.flush()
+        try:
+            process = await asyncio.create_subprocess_exec(
+                "ffmpeg",
+                "-v",
+                "error",
+                "-nostdin",
+                "-protocol_whitelist",
+                "file,pipe",
+                "-format_whitelist",
+                "mov,mp3,wav,ogg,flac,matroska,webm,aac,aiff",
+                "-i",
+                sample_file.name,
+                "-t",
+                "181",
+                "-vn",
+                "-ac",
+                "1",
+                "-ar",
+                str(SAMPLE_RATE),
+                "-f",
+                "s16le",
+                "pipe:1",
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.PIPE,
+            )
+        except FileNotFoundError as exc:
+            raise VoiceCloneError(
+                "Audio processing is unavailable. Contact your administrator.", 503
+            ) from exc
+        try:
+            pcm, _ = await asyncio.wait_for(process.communicate(), timeout=30)
+        except (TimeoutError, asyncio.CancelledError):
+            process.kill()
+            await process.wait()
+            raise
     duration = len(pcm) / (SAMPLE_RATE * 2)
     if process.returncode != 0 or not 30 <= duration <= 180:
         raise VoiceCloneError(
@@ -280,7 +288,9 @@ async def delete_clone(clone_id: str, organization_id: int) -> None:
         await db_client.set_voice_clone_status(clone_id, organization_id, "deleted")
 
 
-async def apply_clone_to_config(configuration, clone_id: str, organization_id: int):
+async def apply_clone_to_config(
+    configuration: EffectiveAIModelConfiguration, clone_id: str, organization_id: int
+) -> EffectiveAIModelConfiguration:
     clone = await get_clone(clone_id, organization_id)
     if clone.status != "ready":
         raise VoiceCloneError(
@@ -293,13 +303,19 @@ async def apply_clone_to_config(configuration, clone_id: str, organization_id: i
             409,
         )
     api_key, _ = await credentials(organization_id, clone.credential_source)
+    tts = configuration.tts
+    if isinstance(tts, ElevenlabsTTSConfiguration):
+        tts = tts.model_copy(
+            update={
+                "api_key": api_key,
+                "voice": clone.provider_voice_id,
+                "base_url": PROVIDER_URL,
+            }
+        )
+    else:
+        tts = ElevenlabsTTSConfiguration(api_key=api_key, voice=clone.provider_voice_id)
     return configuration.model_copy(
-        update={
-            "tts": ElevenlabsTTSConfiguration(
-                api_key=api_key,
-                voice=clone.provider_voice_id,
-            )
-        }
+        update={"tts": tts}
     )
 
 
@@ -319,7 +335,7 @@ async def assign_clone(
         draft = await db_client.get_draft_version(workflow_id)
         base = draft or workflow.released_definition
         config = dict(
-            base.workflow_configurations
+            base.workflow_configurations or {}
             if base
             else workflow.workflow_configurations or {}
         )

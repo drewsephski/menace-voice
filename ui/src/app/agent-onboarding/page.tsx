@@ -21,7 +21,7 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { type KeyboardEvent, type MouseEvent, type ReactNode, useCallback, useEffect, useMemo, useState } from "react";
+import { type KeyboardEvent, type MouseEvent, type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import {
@@ -57,6 +57,7 @@ import {
   MCP_URL_PATTERN,
   type ToolCategory,
 } from "@/app/tools/config";
+import { ToolLogo } from "@/app/tools/ToolLogo";
 import {
   createToolApiV1ToolsPost,
   createWorkflowFromTemplateApiV1WorkflowCreateTemplatePost,
@@ -139,7 +140,7 @@ type TemplateOption = {
   description: string;
   useCase: string;
   activityDescription: string;
-  workflowStages?: readonly [string, string, string];
+  workflowStages?: readonly string[];
   avatarUrl: string;
   recommendedBuiltinToolCategories?: BuiltinToolCategory[];
   recommendedMcpPresetIds?: McpPresetId[];
@@ -300,11 +301,7 @@ const TEMPLATE_OPTIONS: TemplateOption[] = [
     description: "Start with a blank canvas and describe the job yourself.",
     useCase: "Custom voice agent",
     activityDescription: "",
-    workflowStages: [
-      "Open naturally and establish the specific context needed to begin the user's requested interaction.",
-      "Carry out the core interaction from the user's brief, adapting to the other person's responses and using configured capabilities when relevant.",
-      "Reach the intended outcome, confirm any commitments or next steps, and close the interaction naturally.",
-    ],
+    workflowStages: [],
     avatarUrl: "/avatars/custom.png",
     recommendedBuiltinToolCategories: ["end_call"],
   },
@@ -861,6 +858,8 @@ export default function AgentOnboardingPage() {
   const [isAddingHttp, setIsAddingHttp] = useState(false);
   const [isAddingMcp, setIsAddingMcp] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
+  const submitting = useRef(false);
+  const [pendingTemplate, setPendingTemplate] = useState<TemplateOption | null>(null);
   const [createdWorkflow, setCreatedWorkflow] =
     useState<WorkflowResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -1078,11 +1077,34 @@ export default function AgentOnboardingPage() {
     if (recommendedId) setHttpTemplateId(recommendedId);
   }, [selectedTemplateOption]);
 
-  const chooseTemplate = (template: TemplateOption) => {
+  const applyTemplate = (template: TemplateOption) => {
     setSelectedTemplate(template.id);
     setUseCase(template.useCase);
-    setActivityDescription(template.activityDescription);
-    if (template.id !== "custom") setAgentName(`${template.label} agent`);
+    if (template.id !== "custom") {
+      setActivityDescription(template.activityDescription);
+      setAgentName(`${template.label} agent`);
+    }
+    setPendingTemplate(null);
+  };
+
+  const chooseTemplate = (template: TemplateOption) => {
+    if (template.id === selectedTemplate) return;
+    if (template.id !== "custom" && activityDescription.trim()
+      && activityDescription !== selectedTemplateOption?.activityDescription) {
+      setPendingTemplate(template);
+      return;
+    }
+    applyTemplate(template);
+  };
+
+  const editBrief = (brief: string) => {
+    setActivityDescription(brief);
+    setSelectedTemplate("custom");
+    setUseCase("Custom voice agent");
+    setPendingTemplate(null);
+    if (agentName === `${selectedTemplateOption?.label} agent`) {
+      setAgentName("New voice agent");
+    }
   };
 
   const chooseVoice = (voice: string) => {
@@ -1387,6 +1409,11 @@ export default function AgentOnboardingPage() {
         : true;
 
   const createAgent = async () => {
+    if (submitting.current || createdWorkflow) return;
+    if (!activityDescription.trim() || !agentName.trim() || pendingTemplate) {
+      setError("Review the job description and agent name before creating your agent.");
+      return;
+    }
     if (!user) {
       setError("You must be signed in to create an agent.");
       return;
@@ -1395,16 +1422,12 @@ export default function AgentOnboardingPage() {
       setError("Choose and confirm a voice before creating the agent.");
       return;
     }
+    submitting.current = true;
     try {
       setIsCreating(true);
       setError(null);
       const accessToken = await getAccessToken();
-      const workflowStages: readonly [string, string, string] =
-        selectedTemplateOption?.workflowStages ?? [
-          "Open naturally and establish the context needed for the requested interaction.",
-          "Carry out the core interaction and adapt to the other person's responses.",
-          "Confirm the outcome and any next step, then close naturally.",
-        ];
+      const workflowStages = selectedTemplateOption?.workflowStages ?? [];
       const onboardingPromptInput = {
         agentName: agentName.trim(),
         useCase: useCase.trim() || "Custom voice agent",
@@ -1467,6 +1490,7 @@ export default function AgentOnboardingPage() {
       setCreatedWorkflow(response.data);
       toast.success("Your agent is ready to shape");
     } catch (err) {
+      submitting.current = false;
       setError(
         err instanceof Error ? err.message : "The agent could not be created.",
       );
@@ -1607,15 +1631,15 @@ export default function AgentOnboardingPage() {
                       id="agent-purpose"
                       value={activityDescription}
                       onChange={(event) =>
-                        setActivityDescription(event.target.value)
+                        editBrief(event.target.value)
                       }
                       placeholder="For example: qualify inbound leads, answer questions about our services, and book a demo when there’s a good fit."
                       rows={5}
                       className="h-36 resize-none overflow-y-auto bg-background/35 text-base leading-7 transition-colors duration-200"
                     />
                     <p className="text-xs text-muted-foreground">
-                      A clear description gives your first draft a strong
-                      starting point.
+                      This description defines the agent&apos;s job. Editing a template
+                      switches to Custom so its old stage suggestions do not override your brief.
                     </p>
                   </div>
                   <div className="space-y-3">
@@ -1627,6 +1651,16 @@ export default function AgentOnboardingPage() {
                         You can change everything in the editor later.
                       </p>
                     </div>
+                    {pendingTemplate && (
+                      <div className="space-y-3 rounded-lg border border-amber-500/40 p-4" role="region" aria-label="Review replacement template">
+                        <p className="font-medium">Replace your brief with {pendingTemplate.label}?</p>
+                        <p className="whitespace-pre-wrap text-sm text-muted-foreground">{pendingTemplate.activityDescription}</p>
+                        <div className="flex gap-2">
+                          <Button type="button" onClick={() => applyTemplate(pendingTemplate)}>Replace brief</Button>
+                          <Button type="button" variant="outline" onClick={() => setPendingTemplate(null)}>Keep my brief</Button>
+                        </div>
+                      </div>
+                    )}
                     <div className="grid auto-rows-fr gap-3 sm:grid-cols-2 xl:grid-cols-4">
                       {TEMPLATE_OPTIONS.map((template) => (
                         <TemplateOptionCard
@@ -2429,11 +2463,14 @@ export default function AgentOnboardingPage() {
                             key={server.toolUuid}
                             className={`flex items-center gap-3 rounded-xl border p-4 ${server.discoveryStatus === "ready" ? "border-cta/30 bg-cta/5" : "border-amber-500/30 bg-amber-500/5"}`}
                           >
-                            <div
-                              className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${server.discoveryStatus === "ready" ? "bg-cta/15 text-cta" : "bg-amber-500/15 text-amber-300"}`}
-                            >
-                              <Puzzle className="h-4 w-4" />
-                            </div>
+                            <ToolLogo
+                              tool={{
+                                category: "mcp",
+                                name: server.name,
+                                definition: { type: "mcp", config: { url: server.url } },
+                                icon_color: null,
+                              }}
+                            />
                             <div className="min-w-0 flex-1">
                               <p className="truncate text-sm font-medium">
                                 {server.name}
@@ -2501,6 +2538,14 @@ export default function AgentOnboardingPage() {
 
               {step === 5 && (
                 <div className="space-y-5">
+                  <section aria-label="Job brief to create" className="rounded-xl border border-cta/40 bg-cta/5 p-5">
+                    <div className="mb-3 flex items-center justify-between gap-3">
+                      <h2 className="font-semibold">Job brief used to create your agent</h2>
+                      <Button type="button" variant="outline" size="sm" disabled={isCreating} onClick={() => setStep(0)}>Edit brief</Button>
+                    </div>
+                    <p className="whitespace-pre-wrap break-words text-sm leading-7">{activityDescription.trim()}</p>
+                    <p className="mt-3 text-xs text-muted-foreground">This exact brief is submitted with your settings below. Suggested stages come from {selectedTemplateOption?.label ?? "Custom"}; Custom lets the brief determine its own stages.</p>
+                  </section>
                   <div className="grid gap-3 lg:grid-cols-2">
                     <div className="rounded-xl border border-border/70 bg-background/25 p-4 sm:p-5">
                       <div className="mb-4 flex items-start gap-3">
@@ -2685,7 +2730,7 @@ export default function AgentOnboardingPage() {
                 Back
               </Button>
               <div className="flex items-center justify-end gap-3">
-                {step < 5 && step !== 3 && (
+                {step > 0 && step < 5 && step !== 3 && (
                   <Button
                     type="button"
                     variant="ghost"
@@ -2704,7 +2749,7 @@ export default function AgentOnboardingPage() {
                     onClick={() =>
                       setStep((current) => (current + 1) as StepIndex)
                     }
-                    disabled={!canContinue || isCreating}
+                    disabled={!canContinue || isCreating || Boolean(pendingTemplate)}
                     className="h-11 px-5"
                   >
                     Continue <ArrowRight className="h-4 w-4" />

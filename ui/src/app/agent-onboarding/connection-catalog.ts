@@ -314,7 +314,7 @@ export function normalizeMcpUrl(value: string): string | null {
   }
 }
 
-export function getMcpUrl(tool: ToolResponse): string | null {
+export function getMcpUrl(tool: Pick<ToolResponse, "definition">): string | null {
   const definition = tool.definition;
   if (!definition || typeof definition !== "object") return null;
   const config = definition.config;
@@ -324,12 +324,12 @@ export function getMcpUrl(tool: ToolResponse): string | null {
     : null;
 }
 
-export function getMcpPresetForTool(tool: ToolResponse): McpPreset | null {
+export function getMcpPresetForTool(tool: Pick<ToolResponse, "category" | "name" | "definition">): McpPreset | null {
   if (tool.category !== "mcp") return null;
 
-  const toolUrl = getMcpUrl(tool);
+  const toolUrl = normalizeMcpUrl(getMcpUrl(tool) ?? "");
   const byUrl = toolUrl
-    ? MCP_PRESETS.find((preset) => normalizeMcpUrl(preset.url) === toolUrl)
+    ? MCP_PRESETS.find((preset) => new URL(preset.url).hostname === new URL(toolUrl).hostname)
     : undefined;
   if (byUrl) return byUrl;
 
@@ -346,7 +346,7 @@ export function getMcpPresetForTool(tool: ToolResponse): McpPreset | null {
   );
 }
 
-export function getHttpTemplateForTool(tool: ToolResponse): HttpTemplate | null {
+export function getHttpTemplateForTool(tool: Pick<ToolResponse, "category" | "name" | "definition">): HttpTemplate | null {
   if (tool.category !== "http_api") return null;
 
   const normalizedName = tool.name.trim().toLowerCase();

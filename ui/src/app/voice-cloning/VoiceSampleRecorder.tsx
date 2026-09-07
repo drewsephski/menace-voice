@@ -55,8 +55,10 @@ export function VoiceSampleRecorder({ disabled, onChange }: Props) {
 
   function selectSample(file: File | null) {
     setError(undefined);
-    if (file && file.size > 20 * 1024 * 1024) {
-      setError("Choose an audio file smaller than 20 MB.");
+    if (file && (file.size === 0 || file.size > 20 * 1024 * 1024)) {
+      setSample(null);
+      onChange(null);
+      setError("Choose a non-empty audio file smaller than 20 MB.");
       return;
     }
     setSample(file);
@@ -93,6 +95,7 @@ export function VoiceSampleRecorder({ disabled, onChange }: Props) {
       );
       recorder.current = next;
       const chunks: Blob[] = [];
+      let failed = false;
       next.ondataavailable = (event) => {
         if (event.data.size) chunks.push(event.data);
       };
@@ -100,6 +103,7 @@ export function VoiceSampleRecorder({ disabled, onChange }: Props) {
         media.getTracks().forEach((track) => track.stop());
         if (!mounted.current) return;
         setRecording(false);
+        if (failed) return;
         const type = next.mimeType || "audio/webm";
         selectSample(
           new File(
@@ -110,8 +114,12 @@ export function VoiceSampleRecorder({ disabled, onChange }: Props) {
         );
       };
       next.onerror = () => {
+        failed = true;
         media.getTracks().forEach((track) => track.stop());
+        if (next.state === "recording") next.stop();
         if (mounted.current) {
+          setSample(null);
+          onChange(null);
           setError("Recording failed. Please try again or upload a file.");
           setRecording(false);
         }

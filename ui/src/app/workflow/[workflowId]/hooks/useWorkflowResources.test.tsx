@@ -5,7 +5,7 @@ import { useWorkflowResources } from './useWorkflowResources';
 
 const mocks = vi.hoisted(() => ({
     documents: vi.fn(), tools: vi.fn(), recordings: vi.fn(),
-    auth: { user: { id: 'test' }, loading: false },
+    auth: { user: { id: 'test' } as { id: string } | null, loading: false },
 }));
 vi.mock('@/client', () => ({
     listDocumentsApiV1KnowledgeBaseDocumentsGet: mocks.documents,
@@ -17,6 +17,7 @@ vi.mock('@/lib/auth', () => ({ useAuth: () => mocks.auth }));
 beforeEach(() => {
     vi.clearAllMocks();
     mocks.auth.loading = false;
+    mocks.auth.user = { id: 'test' };
     mocks.documents.mockResolvedValue({ data: { documents: [] } });
     mocks.tools.mockResolvedValue({ data: [] });
     mocks.recordings.mockResolvedValue({ data: { recordings: [] } });
@@ -35,6 +36,39 @@ describe('workflow resource loading', () => {
         expect(result.current.documents).toEqual([]);
         expect(result.current.tools).toEqual([]);
         expect(result.current.errors).toEqual([]);
+    });
+
+    it('ends loading with a session error when auth resolves without a user and recovers on sign-in', async () => {
+        mocks.auth.loading = true;
+        mocks.auth.user = null;
+        const { result, rerender } = renderHook(() => useWorkflowResources(1));
+        expect(result.current.loading).toBe(true);
+        mocks.auth.loading = false;
+        rerender();
+        expect(result.current.loading).toBe(false);
+        expect(result.current.errors).toEqual(['Your session has ended. Sign in again to load workflow resources.']);
+        expect(mocks.documents).not.toHaveBeenCalled();
+        expect(mocks.tools).not.toHaveBeenCalled();
+        expect(mocks.recordings).not.toHaveBeenCalled();
+        mocks.auth.user = { id: 'test' };
+        rerender();
+        await waitFor(() => expect(result.current.loading).toBe(false));
+        expect(result.current.errors).toEqual([]);
+        expect(result.current.documents).toEqual([]);
+    });
+
+    it('ignores an in-flight resource response after the session ends', async () => {
+        let finish!: (value: unknown) => void;
+        mocks.documents.mockReturnValueOnce(new Promise(resolve => { finish = resolve; }));
+        const { result, rerender } = renderHook(() => useWorkflowResources(1));
+        mocks.auth.user = null;
+        rerender();
+        await act(async () => finish({ data: { documents: [{ id: 'stale' }] } }));
+        expect(result.current.loading).toBe(false);
+        expect(result.current.errors[0]).toContain('Sign in again');
+        expect(result.current.documents).toBeUndefined();
+        expect(result.current.tools).toBeUndefined();
+        expect(result.current.recordings).toEqual([]);
     });
 
     it('surfaces resolved errors without discarding other successful resources and retries', async () => {

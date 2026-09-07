@@ -35,6 +35,7 @@ export function QuickAgentComposer() {
   const [callType, setCallType] = useState<"inbound" | "outbound">("inbound");
   const [isCreating, setIsCreating] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [pendingExample, setPendingExample] = useState<(typeof EXAMPLES)[number] | null>(null);
   const submitting = useRef(false);
   const descriptionId = useId();
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -43,10 +44,17 @@ export function QuickAgentComposer() {
     if (!loading && !user) redirectToLogin();
   }, [loading, redirectToLogin, user]);
 
+  const applyExample = (example: (typeof EXAMPLES)[number]) => {
+    setDescription(example.brief);
+    setCallType(example.callType);
+    setPendingExample(null);
+    textareaRef.current?.focus();
+  };
+
   const createAgent = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const brief = description.trim();
-    if (submitting.current || loading || !user || !brief) return;
+    if (submitting.current || loading || !user || !brief || pendingExample) return;
     submitting.current = true;
     setIsCreating(true);
     setError(null);
@@ -76,11 +84,7 @@ export function QuickAgentComposer() {
         voiceProvider: getVoiceProviderLabel(voice.provider),
         voiceName: voice.voice,
         behaviorNotes: "Follow the identity, spoken language, and behavior requested in the brief. Only use capabilities actually connected to this agent; collect details for follow-up when a required tool is unavailable.",
-        workflowStages: [
-          "Establish the caller's intent and collect the initial context needed for the job described in the brief.",
-          "Carry out the core job in the brief, gathering missing details and using only available knowledge and connected tools.",
-          "Confirm the actual outcome and agreed next steps, then close the conversation naturally.",
-        ],
+        workflowStages: [],
       } as const;
       const response = await createWorkflowFromTemplateApiV1WorkflowCreateTemplatePost({
         headers,
@@ -120,7 +124,10 @@ export function QuickAgentComposer() {
               id={descriptionId}
               ref={textareaRef}
               value={description}
-              onChange={(event) => setDescription(event.target.value)}
+              onChange={(event) => {
+                setDescription(event.target.value);
+                setPendingExample(null);
+              }}
               onKeyDown={(event) => {
                 if (event.key === "Enter" && (event.metaKey || event.ctrlKey) && !event.nativeEvent.isComposing) {
                   event.preventDefault();
@@ -154,7 +161,7 @@ export function QuickAgentComposer() {
                   </label>
                 ))}
               </fieldset>
-              <Button type="submit" size="icon" title={isCreating ? "Creating agent" : "Create agent"} disabled={isCreating || !description.trim()} className="size-11 rounded-xl bg-cta text-cta-foreground shadow-sm shadow-cta/15 hover:bg-cta/90 disabled:bg-muted disabled:text-muted-foreground disabled:opacity-100 sm:w-auto sm:px-4">
+              <Button type="submit" size="icon" title={isCreating ? "Creating agent" : "Create agent"} disabled={isCreating || !description.trim() || Boolean(pendingExample)} className="size-11 rounded-xl bg-cta text-cta-foreground shadow-sm shadow-cta/15 hover:bg-cta/90 disabled:bg-muted disabled:text-muted-foreground disabled:opacity-100 sm:w-auto sm:px-4">
                 <span className="sr-only sm:not-sr-only">{isCreating ? "Creating…" : "Create agent"}</span>
                 {isCreating ? <Loader2 className="size-4 animate-spin" aria-hidden="true" /> : <ArrowUp className="size-4" aria-hidden="true" />}
               </Button>
@@ -163,15 +170,27 @@ export function QuickAgentComposer() {
           <div className="mt-3 flex flex-wrap gap-2" aria-label="Example agent descriptions">
             {EXAMPLES.map((example) => (
               <button key={example.label} type="button" disabled={isCreating} onClick={() => {
-                setDescription(example.brief);
-                setCallType(example.callType);
-                textareaRef.current?.focus();
+                if (description.trim() && description !== example.brief) {
+                  setPendingExample(example);
+                } else {
+                  applyExample(example);
+                }
               }} className="inline-flex min-h-9 items-center gap-1.5 rounded-lg border border-border/70 bg-background/40 px-2.5 py-1.5 text-xs text-muted-foreground transition-colors hover:border-foreground/20 hover:bg-background hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50">
                 <example.icon className="size-3.5 shrink-0" aria-hidden="true" />
                 {example.label}
               </button>
             ))}
           </div>
+          {pendingExample && (
+            <section aria-label="Review replacement example" className="mt-3 space-y-3 rounded-lg border border-amber-500/40 p-4">
+              <p className="text-sm font-medium">Replace your brief with the {pendingExample.label} example?</p>
+              <p className="whitespace-pre-wrap text-sm text-muted-foreground">{pendingExample.brief}</p>
+              <div className="flex gap-2">
+                <Button type="button" onClick={() => applyExample(pendingExample)}>Replace brief</Button>
+                <Button type="button" variant="outline" onClick={() => setPendingExample(null)}>Keep my brief</Button>
+              </div>
+            </section>
+          )}
           {error && <p role="alert" className="mt-3 text-sm text-destructive">{error}</p>}
           <p id={`${descriptionId}-defaults`} role="status" className="mt-4 text-xs leading-5 text-muted-foreground">
             {isCreating

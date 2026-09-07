@@ -47,7 +47,7 @@ describe("Quick agent setup", () => {
     expect(mocks.create.mock.calls[0][0].body.call_type).toBe("outbound");
   });
 
-  it("creates directly with the brief, workspace voice, and enforced three-stage context", async () => {
+  it("creates directly with the brief, workspace voice, and brief-driven stage context", async () => {
     render(<QuickAgentSetupPage />);
     expect((screen.getByRole("button", { name: "Create agent" }) as HTMLButtonElement).disabled).toBe(true);
     fillBrief();
@@ -62,9 +62,34 @@ describe("Quick agent setup", () => {
     expect(request.body.workflow_configurations).toBeUndefined();
     expect(request.body.onboarding_context.agent_brief).toBe("A friendly HVAC receptionist who collects callback details.");
     expect(request.body.onboarding_context.voice_name).toBe("ember");
-    expect(request.body.onboarding_context.workflow_stages).toHaveLength(3);
+    expect(request.body.onboarding_context.workflow_stages).toEqual([]);
     expect(request.body.activity_description).toContain("exactly one Global node");
-    expect(request.body.activity_description).toContain("exactly three Agent nodes");
+    expect(request.body.activity_description).toContain("one to eight task-specific Agent nodes");
+  });
+
+  it("does not let a Bookings example silently replace a typed technical documentation job", async () => {
+    render(<QuickAgentSetupPage />);
+    const brief = "Explain current TypeScript documentation and help resolve compiler errors.";
+    fireEvent.change(screen.getByLabelText("Describe your agent"), { target: { value: brief } });
+    fireEvent.click(screen.getByRole("button", { name: "Bookings" }));
+    expect((screen.getByLabelText("Describe your agent") as HTMLTextAreaElement).value).toBe(brief);
+    expect((screen.getByRole("button", { name: "Create agent" }) as HTMLButtonElement).disabled).toBe(true);
+    fireEvent.submit(screen.getByRole("form", { name: "Quick agent setup" }));
+    expect(mocks.create).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole("button", { name: "Keep my brief" }));
+    fireEvent.click(screen.getByRole("button", { name: "Create agent" }));
+    await waitFor(() => expect(mocks.create).toHaveBeenCalledOnce());
+    expect(mocks.create.mock.calls[0][0].body.onboarding_context.agent_brief).toBe(brief);
+  });
+
+  it("only replaces the brief and direction after accepting the reviewed example", () => {
+    render(<QuickAgentSetupPage />);
+    fillBrief();
+    fireEvent.click(screen.getByRole("button", { name: "Qualify leads" }));
+    expect((screen.getByRole("radio", { name: "inbound" }) as HTMLInputElement).checked).toBe(true);
+    fireEvent.click(screen.getByRole("button", { name: "Replace brief" }));
+    expect((screen.getByLabelText("Describe your agent") as HTMLTextAreaElement).value).toContain("A helpful sales assistant");
+    expect((screen.getByRole("radio", { name: "outbound" }) as HTMLInputElement).checked).toBe(true);
   });
 
   it("blocks repeated submits while generation is pending", async () => {

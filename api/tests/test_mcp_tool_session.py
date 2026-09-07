@@ -239,7 +239,9 @@ async def test_discover_mcp_tools_success():
     assert names == ["add", "echo"]
     by_name = {t["name"]: t for t in tools}
     assert by_name["echo"]["description"]  # non-empty description
-    assert set(by_name["echo"]) == {"name", "description"}
+    assert set(by_name["echo"]) == {"name", "description", "inputSchema"}
+    assert by_name["echo"]["inputSchema"]["type"] == "object"
+    assert by_name["echo"]["inputSchema"]["properties"]
 
 
 @pytest.mark.asyncio

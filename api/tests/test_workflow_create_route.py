@@ -323,7 +323,7 @@ def test_create_workflow_from_template_attaches_selected_resources_atomically():
     assert create_kwargs["workflow_definition"]["nodes"][2]["data"] == {}
 
 
-@pytest.mark.parametrize("agent_count", [0, 1, 2, 3, 4])
+@pytest.mark.parametrize("agent_count", [1, 2, 3, 4, 8])
 def test_create_workflow_from_template_hardens_onboarding_prompts_and_layout(
     agent_count,
 ):
@@ -336,14 +336,30 @@ def test_create_workflow_from_template_hardens_onboarding_prompts_and_layout(
                 "id": "start",
                 "type": "startCall",
                 "position": {"x": 0, "y": 0},
-                "data": {"prompt": "Describe an attention-getting opening."},
+                "data": {
+                    "name": "Welcome",
+                    "prompt": "Describe an attention-getting opening.",
+                },
             },
             *[
                 {
                     "id": f"agent-{index}",
                     "type": "agentNode",
                     "position": {"x": (index + 1) * 400, "y": 0},
-                    "data": {"name": f"Stage {index}", "prompt": "Continue."},
+                    "data": {
+                        "name": f"Investigate mystery {index}",
+                        "prompt": f"Ask playful sock question {index}.",
+                        "execution": {
+                            "objective": f"Investigate sock mystery {index}",
+                            "requirement_ids": ["brief-1"],
+                            "inputs": [],
+                            "actions": [f"Ask playful sock question {index}."],
+                            "completion_criteria": ["The caller answered the sock question."],
+                            "failure_behavior": "Stop when the caller requests it.",
+                        },
+                        "tool_uuids": ["mcp-1"] if index == 0 else [],
+                        "document_uuids": ["doc-1"] if index == 0 else [],
+                    },
                 }
                 for index in range(agent_count)
             ],
@@ -351,14 +367,26 @@ def test_create_workflow_from_template_hardens_onboarding_prompts_and_layout(
                 "id": "end",
                 "type": "endCall",
                 "position": {"x": 1600, "y": 0},
-                "data": {"prompt": "End."},
+                "data": {"name": "Goodbye", "prompt": "End."},
             },
         ],
         "edges": [
-            {"id": "e-0", "source": "start", "target": "agent-0"},
-            {"id": "e-1", "source": "agent-0", "target": "agent-1"},
-            {"id": "e-2", "source": "agent-1", "target": "agent-2"},
-            {"id": "e-3", "source": "agent-2", "target": "end"},
+            {
+                "id": f"e-{index}",
+                "source": source,
+                "target": target,
+                "data": {
+                    "label": f"complete_{index}",
+                    "condition": "The current question has been answered.",
+                },
+            }
+            for index, (source, target) in enumerate(
+                zip(
+                    ["start", *[f"agent-{index}" for index in range(agent_count)]],
+                    [*[f"agent-{index}" for index in range(agent_count)], "end"],
+                    strict=True,
+                )
+            )
         ],
     }
     workflow = SimpleNamespace(
@@ -379,7 +407,7 @@ def test_create_workflow_from_template_hardens_onboarding_prompts_and_layout(
             AsyncMock(return_value=[]),
         ),
         patch(
-            "api.routes.workflow.mps_service_key_client.call_workflow_api",
+            "api.routes.workflow.plan_onboarding_workflow",
             AsyncMock(return_value={"workflow_definition": generated_definition}),
         ) as mock_generator,
     ):
@@ -387,6 +415,8 @@ def test_create_workflow_from_template_hardens_onboarding_prompts_and_layout(
             return_value=[
                 SimpleNamespace(
                     tool_uuid="mcp-1",
+                    organization_id=11,
+                    description="Reference documentation",
                     category="mcp",
                     name="Documentation",
                     definition={
@@ -397,7 +427,11 @@ def test_create_workflow_from_template_hardens_onboarding_prompts_and_layout(
             ]
         )
         mock_db.get_documents_by_uuids = AsyncMock(
-            return_value=[SimpleNamespace(document_uuid="doc-1")]
+            return_value=[
+                SimpleNamespace(
+                    document_uuid="doc-1", organization_id=11, filename="Reference"
+                )
+            ]
         )
         mock_db.create_workflow = AsyncMock(return_value=workflow)
 
@@ -429,18 +463,23 @@ def test_create_workflow_from_template_hardens_onboarding_prompts_and_layout(
         )
 
     assert response.status_code == 200
-    generator_prompt = mock_generator.await_args.kwargs["activity_description"]
+    generator_prompt = mock_generator.await_args.args[0]
     assert "Call me about my organized sock drawer." in generator_prompt
     assert "Stop when I say the test is over." in generator_prompt
     assert "Ask two playful questions." in generator_prompt
-    assert "Selected tools: Documentation" in generator_prompt
-    assert "Knowledge documents attached: True" in generator_prompt
+    assert '"name": "Documentation"' in generator_prompt
+    assert '"document_uuid": "doc-1"' in generator_prompt
     assert "Pre-call record lookup configured: True" in generator_prompt
     assert "Post-call webhook configured: True" in generator_prompt
     assert "Structured generator brief" not in generator_prompt
+    saved_setup = mock_db.create_workflow.await_args.kwargs["workflow_configurations"]["agent_setup"]
+    assert saved_setup["agent_brief"] == "Call me about my organized sock drawer."
+    assert saved_setup["behavior_notes"] == "Stop when I say the test is over."
+    assert saved_setup["call_type"] == "outbound"
     definition = mock_db.create_workflow.await_args.kwargs["workflow_definition"]
     assert (
-        len([node for node in definition["nodes"] if node["type"] == "agentNode"]) == 3
+        len([node for node in definition["nodes"] if node["type"] == "agentNode"])
+        == agent_count
     )
     assert (
         len([node for node in definition["nodes"] if node["type"] == "globalNode"]) == 1
@@ -452,9 +491,14 @@ def test_create_workflow_from_template_hardens_onboarding_prompts_and_layout(
     assert webhook["data"]["endpoint_url"] == "https://hooks.example.com/calls"
     for node in definition["nodes"]:
         if node["type"] in {"startCall", "agentNode"}:
-            assert node["data"]["tool_uuids"] == ["mcp-1"]
-            assert node["data"]["document_uuids"] == ["doc-1"]
-            assert "MCP tool guidance:" in node["data"]["prompt"]
+            if node["id"] == "agent-0":
+                assert node["data"]["tool_uuids"] == ["mcp-1"]
+                assert node["data"]["document_uuids"] == ["doc-1"]
+                assert "MCP tool guidance:" in node["data"]["prompt"]
+            else:
+                assert not node["data"].get("tool_uuids")
+                assert not node["data"].get("document_uuids")
+                assert "MCP tool guidance:" not in node["data"]["prompt"]
     assert all(
         node["data"].get("add_global_prompt") is True
         for node in definition["nodes"]
@@ -772,3 +816,35 @@ def test_create_workflow_webrtc_run_can_simulate_outbound_from_template_context(
     create_kwargs = mock_db.create_workflow_run.await_args.kwargs
     assert create_kwargs["call_type"] == CallType.OUTBOUND
     assert create_kwargs["initial_context"]["direction"] == "outbound"
+
+
+def test_onboarding_invalid_drafts_never_reach_persistence():
+    client = TestClient(_make_test_app())
+    with (
+        patch("api.routes.workflow.db_client") as mock_db,
+        patch(
+            "api.routes.workflow.plan_onboarding_workflow",
+            AsyncMock(return_value={"workflow_definition": {"nodes": [], "edges": []}}),
+        ) as generate,
+    ):
+        mock_db.create_workflow = AsyncMock()
+        response = client.post(
+            "/workflow/create/template",
+            json={
+                "call_type": "inbound",
+                "use_case": "Spanish tutor",
+                "activity_description": "Practice vocabulary",
+                "name": "Tutor QA",
+                "onboarding_context": {
+                    "agent_brief": "Practice Spanish vocabulary and gently correct mistakes.",
+                    "tone": "friendly",
+                    "language": "Spanish",
+                    "voice_provider": "Menace Voice",
+                    "voice_name": "ember",
+                },
+            },
+        )
+    assert response.status_code == 502
+    assert "No agent was saved" in response.json()["detail"]
+    assert generate.await_count == 2
+    mock_db.create_workflow.assert_not_awaited()

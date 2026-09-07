@@ -108,7 +108,7 @@ export function VoiceCloneCard({
       <CardContent className="space-y-4">
         {clone.status === "verification_required" && (
           <p className="text-sm text-muted-foreground">
-            Complete voice verification in your{" "}
+            Complete voice verification in the{" "}
             <a
               className="underline"
               href="https://elevenlabs.io/app/voice-lab"
@@ -117,7 +117,9 @@ export function VoiceCloneCard({
             >
               ElevenLabs account
             </a>
-            , then generate a preview to confirm your voice is ready.
+            {" "}used to create this clone, then generate a preview to confirm
+            your voice is ready. If your administrator provides voice cloning,
+            contact them to arrange verification in the connected account.
           </p>
         )}
         <div className="space-y-2">

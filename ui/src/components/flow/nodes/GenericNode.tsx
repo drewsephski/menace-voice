@@ -20,6 +20,7 @@ import { cn } from "@/lib/utils";
 import { createUuid } from "@/lib/uuid";
 import { resolveWebhookBaseUrl } from "@/lib/webhookUrl";
 
+import { EffectivePromptPreview } from "./common/EffectivePromptPreview";
 import { NodeContent } from "./common/NodeContent";
 import { NodeEditDialog } from "./common/NodeEditDialog";
 import { useNodeHandlers } from "./common/useNodeHandlers";
@@ -709,6 +710,9 @@ export const GenericNode = memo(({ data, selected, id, type }: GenericNodeProps)
                                     })),
                             }}
                         />
+                        {["startCall", "agentNode", "endCall"].includes(type) && (
+                            <EffectivePromptPreview values={values} />
+                        )}
                         {type === "trigger" && (
                             <TriggerWebhookUrls
                                 endpoints={buildTriggerEndpoints(data.trigger_path, webhookBaseUrl)}

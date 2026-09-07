@@ -9,6 +9,7 @@ import type { VersionHistoryPanel } from "./components/VersionHistoryPanel";
 import type { WorkflowEditorHeader } from "./components/WorkflowEditorHeader";
 import type { WorkflowTesterPanel } from "./components/WorkflowTesterPanel";
 import RenderWorkflow from "./RenderWorkflow";
+import { useWorkflowStore } from "./stores/workflowStore";
 
 const mocks = vi.hoisted(() => ({
     createDraft: vi.fn(), getVersions: vi.fn(), setNodes: vi.fn(), setEdges: vi.fn(), setIsDirty: vi.fn(),
@@ -49,8 +50,12 @@ vi.mock("./components/WorkflowEditorHeader", () => ({
     </header>,
 }));
 vi.mock("./components/VersionHistoryPanel", () => ({
-    VersionHistoryPanel: ({ versions, isOpen, onSelectVersion }: ComponentProps<typeof VersionHistoryPanel>) => isOpen ? <div>
-        {versions.map(version => <button key={version.id} onClick={() => onSelectVersion(version)}>Select v{version.version_number}</button>)}
+    VersionHistoryPanel: ({ versions, isOpen, onSelectVersion, onLoadMore, onCompareVersion }: ComponentProps<typeof VersionHistoryPanel>) => isOpen ? <div>
+        {versions.map(version => <div key={version.id}>
+            <button onClick={() => onSelectVersion(version)}>Select v{version.version_number}</button>
+            <button onClick={() => onCompareVersion(version)}>Compare v{version.version_number}</button>
+        </div>)}
+        <button onClick={onLoadMore}>Load more</button>
     </div> : null,
 }));
 vi.mock("./hooks/useWorkflowResources", () => ({ useWorkflowResources: () => ({
@@ -89,6 +94,7 @@ async function viewHistory() {
 describe("returning from historical workflow versions", () => {
     beforeEach(() => {
         vi.clearAllMocks();
+        useWorkflowStore.getState().clearStore();
         mocks.resourcesLoading = false; mocks.resourceErrors = [];
         mocks.getVersions.mockResolvedValue({ data: [published, archived] });
     });
@@ -100,6 +106,7 @@ describe("returning from historical workflow versions", () => {
         await waitFor(() => expect(toast.error).toHaveBeenCalledWith("Published version unavailable"));
         expect(mocks.setNodes).not.toHaveBeenCalled(); expect(mocks.setEdges).not.toHaveBeenCalled();
         expect(mocks.setIsDirty).not.toHaveBeenCalled();
+        expect(useWorkflowStore.getState().nodes).toEqual(archived.workflow_json.nodes);
         expect(screen.getByTestId("version").textContent).toBe("v1");
         expect(screen.getByTestId("has-draft").textContent).toBe("false");
         expect(screen.getByTestId("canvas").getAttribute("data-editable")).toBe("false");
@@ -112,6 +119,7 @@ describe("returning from historical workflow versions", () => {
         fireEvent.click(screen.getByRole("button", { name: "Back to Draft" }));
         await waitFor(() => expect(toast.error).toHaveBeenCalledWith("The server did not return a draft. Please try again."));
         expect(mocks.setNodes).not.toHaveBeenCalled(); expect(mocks.setEdges).not.toHaveBeenCalled();
+        expect(useWorkflowStore.getState().nodes).toEqual(archived.workflow_json.nodes);
         expect(screen.getByTestId("version").textContent).toBe("v1");
     });
 
@@ -122,9 +130,9 @@ describe("returning from historical workflow versions", () => {
         fireEvent.click(screen.getByRole("button", { name: "Back to Draft" }));
         await waitFor(() => expect(screen.getByTestId("version").textContent).toBe("v3 (Draft)"));
         expect(mocks.createDraft).toHaveBeenCalledWith({ path: { workflow_id: 7 } });
-        expect(mocks.setNodes).toHaveBeenCalledExactlyOnceWith(draft.workflow_json.nodes);
-        expect(mocks.setEdges).toHaveBeenCalledExactlyOnceWith(draft.workflow_json.edges);
-        expect(mocks.setIsDirty).toHaveBeenCalledExactlyOnceWith(false);
+        expect(useWorkflowStore.getState().nodes).toEqual(draft.workflow_json.nodes);
+        expect(useWorkflowStore.getState().edges).toEqual(draft.workflow_json.edges);
+        expect(useWorkflowStore.getState().isDirty).toBe(false);
         expect(screen.getByTestId("canvas").getAttribute("data-editable")).toBe("true");
     });
 
@@ -149,8 +157,56 @@ describe("returning from historical workflow versions", () => {
         await viewHistory();
         fireEvent.click(screen.getByRole("button", { name: "Back to Draft" }));
         expect(mocks.createDraft).not.toHaveBeenCalled();
-        expect(mocks.setNodes).toHaveBeenCalledExactlyOnceWith(draft.workflow_json.nodes);
+        expect(useWorkflowStore.getState().nodes).toEqual(draft.workflow_json.nodes);
         expect(screen.getByTestId("version").textContent).toBe("v3 (Draft)");
+    });
+
+    it("preserves the oldest selected graph, label, and read-only state when a comparison refresh drops it from the first page", async () => {
+        const history = Array.from({ length: 12 }, (_, index) => ({
+            ...archived, id: 12 - index, version_number: 12 - index,
+            status: index === 0 ? "draft" : "archived",
+        }));
+        mocks.getVersions
+            .mockResolvedValueOnce({ data: history.slice(0, 11) })
+            .mockResolvedValueOnce({ data: history.slice(10) })
+            .mockResolvedValueOnce({ data: [history[9], history[10]] })
+            .mockResolvedValueOnce({ data: history.slice(0, 11) });
+        setup();
+        fireEvent.click(screen.getByRole("button", { name: "History" }));
+        await screen.findByRole("button", { name: "Select v12" });
+        fireEvent.click(screen.getByRole("button", { name: "Load more" }));
+        fireEvent.click(await screen.findByRole("button", { name: "Select v1" }));
+        const graph = useWorkflowStore.getState().nodes;
+        fireEvent.click(screen.getByRole("button", { name: "History" }));
+        fireEvent.click(screen.getByRole("button", { name: "Compare v2" }));
+        await waitFor(() => expect(toast.error).toHaveBeenCalledWith("Version history changed. Please try the comparison again."));
+        expect(screen.queryByRole("button", { name: "Select v1" })).toBeNull();
+        expect(screen.getByTestId("canvas").getAttribute("data-editable")).toBe("false");
+        expect(screen.getByTestId("version").textContent).toBe("v1");
+        expect(useWorkflowStore.getState().nodes).toBe(graph);
+    });
+
+    it("defaults an unrecognized selected version to read-only", async () => {
+        mocks.getVersions.mockResolvedValue({ data: [published, { ...archived, status: "unknown" }] });
+        await viewHistory();
+    });
+
+    it("resets undo and redo when switching graphs so draft undo cannot restore history", async () => {
+        mocks.getVersions.mockResolvedValue({ data: [draft, published, archived] });
+        await viewHistory();
+        act(() => useWorkflowStore.getState().setWorkflowName("Historical mutation"));
+        expect(useWorkflowStore.getState().canUndo()).toBe(true);
+        fireEvent.click(screen.getByRole("button", { name: "Back to Draft" }));
+        const state = useWorkflowStore.getState();
+        expect(state.history).toHaveLength(1);
+        expect(state.canUndo()).toBe(false);
+        expect(state.canRedo()).toBe(false);
+        act(() => { state.undo(); state.redo(); });
+        expect(useWorkflowStore.getState().nodes).toEqual(draft.workflow_json.nodes);
+        act(() => useWorkflowStore.getState().setWorkflowName("Draft edit"));
+        act(() => useWorkflowStore.getState().undo());
+        expect(useWorkflowStore.getState().nodes).toEqual(draft.workflow_json.nodes);
+        expect(useWorkflowStore.getState().edges).toEqual(draft.workflow_json.edges);
     });
 
     it("distinguishes initial resource loading from an actionable local error", () => {

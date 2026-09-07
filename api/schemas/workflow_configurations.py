@@ -14,6 +14,7 @@ from api.constants import (
     MIN_TEXT_CHAT_INACTIVITY_TIMEOUT_SECONDS,
     TEXT_CHAT_INACTIVITY_TIMEOUT_SECONDS,
 )
+from api.schemas.agent_setup import OnboardingSetup
 
 DEFAULT_MAX_CALL_DURATION_SECONDS = 300
 # Hard ceiling on configurable call duration. Must stay <= the concurrency
@@ -124,6 +125,9 @@ class AmbientNoiseConfigurationDefaults(BaseModel):
 
 class WorkflowConfigurationDefaults(BaseModel):
     model_config = ConfigDict(extra="allow")
+
+    agent_setup: OnboardingSetup | None = None
+    voice_clone_id: str | None = Field(default=None, min_length=1, max_length=36)
 
     @model_validator(mode="before")
     @classmethod

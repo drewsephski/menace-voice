@@ -52,6 +52,8 @@ interface WorkflowActions {
     dictionary?: string
   ) => void;
 
+  loadVersionGraph: (nodes: FlowNode[], edges: FlowEdge[]) => void;
+
   // History management
   commitDeletion: () => void;
   undo: () => void;
@@ -155,6 +157,17 @@ export const useWorkflowStore = create<WorkflowStore>((set, get) => ({
       history: [initialHistory],
       historyIndex: 0,
     });
+  },
+
+  loadVersionGraph: (nodes, edges) => {
+    set((state) => ({
+      nodes,
+      edges,
+      history: [{ nodes, edges, workflowName: state.workflowName }],
+      historyIndex: 0,
+      isDirty: false,
+      workflowValidationErrors: [],
+    }));
   },
 
   commitDeletion: () => {
