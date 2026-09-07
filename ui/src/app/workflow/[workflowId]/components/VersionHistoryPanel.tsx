@@ -58,8 +58,10 @@ export const VersionHistoryPanel = ({
 
     return (
         <div
-            className={`fixed z-51 right-0 top-0 h-full w-80 bg-[#1a1a1a] border-l border-[#2a2a2a] shadow-lg transform transition-transform duration-300 ease-in-out ${
-                isOpen ? "translate-x-0" : "translate-x-full"
+            inert={!isOpen}
+            aria-hidden={!isOpen}
+            className={`fixed z-51 right-0 top-0 h-full w-80 max-w-full bg-[#1a1a1a] border-l border-[#2a2a2a] shadow-lg transform transition-transform duration-300 ease-in-out ${
+                isOpen ? "translate-x-0" : "translate-x-full invisible"
             }`}
         >
             <div className="p-4 h-full overflow-y-auto">

@@ -491,7 +491,7 @@ export const GenericNode = memo(({ data, selected, id, type }: GenericNodeProps)
         id,
         additionalData,
     });
-    const { saveWorkflow, tools, documents, recordings } = useWorkflow();
+    const { saveWorkflow, tools, documents, recordings, readOnly } = useWorkflow();
     const { bySpecName } = useNodeSpecs();
     const { config: appConfig } = useAppConfig();
     const spec = bySpecName.get(type);
@@ -658,12 +658,14 @@ export const GenericNode = memo(({ data, selected, id, type }: GenericNodeProps)
 
             <NodeToolbar isVisible={selected} position={Position.Right}>
                 <div className="flex flex-col gap-1">
-                    <Button onClick={() => setOpen(true)} variant="outline" size="icon">
+                    <Button aria-label="Edit node" onClick={() => setOpen(true)} variant="outline" size="icon">
                         <Edit />
                     </Button>
                     {/* Start nodes can't be deleted (workflow always needs one). */}
                     {type !== "startCall" && (
                         <Button
+                            aria-label="Delete node"
+                            disabled={readOnly}
                             onClick={handleDeleteNode}
                             variant="outline"
                             size="icon"

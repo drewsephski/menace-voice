@@ -247,7 +247,12 @@ export const useWorkflowStore = create<WorkflowStore>((set, get) => ({
 
   addNode: (node) => {
     set((state) => {
-      const nodes = [...state.nodes, node];
+      const nodes = [
+        ...state.nodes.map((existing) =>
+          node.selected && existing.selected ? { ...existing, selected: false } : existing
+        ),
+        node,
+      ];
       return commitHistory(state, {
         nodes,
         edges: state.edges,

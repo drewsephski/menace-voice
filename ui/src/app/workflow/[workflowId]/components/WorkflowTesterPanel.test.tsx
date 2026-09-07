@@ -1,8 +1,9 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { createRunMock, markActionCompletedMock } = vi.hoisted(() => ({
+const { createRunMock, markActionCompletedMock, toastErrorMock } = vi.hoisted(() => ({
     createRunMock: vi.fn(),
+    toastErrorMock: vi.fn(),
     markActionCompletedMock: vi.fn(),
 }));
 
@@ -23,7 +24,7 @@ vi.mock("@/context/OnboardingContext", () => ({
 }));
 
 vi.mock("posthog-js", () => ({ default: { capture: vi.fn() } }));
-vi.mock("sonner", () => ({ toast: { error: vi.fn() } }));
+vi.mock("sonner", () => ({ toast: { error: toastErrorMock } }));
 
 vi.mock("@/components/onboarding/OnboardingTooltip", () => ({
     OnboardingTooltip: () => null,
@@ -71,6 +72,8 @@ describe("WorkflowTesterPanel voice run lifecycle", () => {
     beforeEach(() => {
         let nextRunId = 630140;
         createRunMock.mockReset();
+        toastErrorMock.mockReset();
+        markActionCompletedMock.mockReset();
         createRunMock.mockImplementation(async () => ({
             data: { id: nextRunId++ },
             error: undefined,
@@ -113,5 +116,61 @@ describe("WorkflowTesterPanel voice run lifecycle", () => {
 
         expect(await startVoiceRun()).toBe("run:630141");
         expect(createRunMock).toHaveBeenCalledTimes(2);
+    });
+});
+
+
+describe("WorkflowTesterPanel pending browser run", () => {
+    it("keeps Chat selected when a pending Audio request resolves and requires a fresh Audio run", async () => {
+        let finish!: (value: { data: { id: number } }) => void;
+        createRunMock.mockReset().mockImplementationOnce(() => new Promise(resolve => { finish = resolve; }))
+            .mockResolvedValueOnce({ data: { id: 222 } });
+        markActionCompletedMock.mockReset();
+        renderPanel();
+        fireEvent.click(await screen.findByRole("button", { name: /run test/i }));
+        switchTo(/test chat/i);
+        await act(async () => { finish({ data: { id: 111 } }); });
+        expect(screen.getByTestId("chat-panel")).toBeTruthy();
+        expect(screen.queryByTestId("voice-tester")).toBeNull();
+        expect(markActionCompletedMock).not.toHaveBeenCalled();
+        switchTo(/test audio/i);
+        expect(await startVoiceRun()).toBe("run:222");
+        expect(createRunMock).toHaveBeenCalledTimes(2);
+    });
+
+    it("does not let an older response replace a newer run after Audio to Chat to Audio", async () => {
+        let finish!: (value: { data: { id: number } }) => void;
+        createRunMock.mockReset().mockImplementationOnce(() => new Promise(resolve => { finish = resolve; }))
+            .mockResolvedValueOnce({ data: { id: 222 } });
+        renderPanel();
+        fireEvent.click(await screen.findByRole("button", { name: /run test/i }));
+        switchTo(/test chat/i);
+        switchTo(/test audio/i);
+        expect(await startVoiceRun()).toBe("run:222");
+        await act(async () => { finish({ data: { id: 111 } }); });
+        expect(screen.getByTestId("voice-tester").textContent).toBe("run:222");
+    });
+
+    it("surfaces resolved HTTP errors and allows retry without false onboarding success", async () => {
+        createRunMock.mockReset().mockResolvedValueOnce({ error: { detail: "Save the draft first" } })
+            .mockResolvedValueOnce({ data: { id: 333 } });
+        markActionCompletedMock.mockReset();
+        toastErrorMock.mockReset();
+        renderPanel();
+        fireEvent.click(await screen.findByRole("button", { name: /run test/i }));
+        await waitFor(() => expect(toastErrorMock).toHaveBeenCalledWith("Save the draft first"));
+        expect(markActionCompletedMock).not.toHaveBeenCalled();
+        expect(screen.queryByTestId("voice-tester")).toBeNull();
+        expect(await startVoiceRun()).toBe("run:333");
+    });
+
+    it("does not create a second run on repeated clicks", async () => {
+        let finish!: (value: { data: { id: number } }) => void;
+        createRunMock.mockReset().mockImplementationOnce(() => new Promise(resolve => { finish = resolve; }));
+        renderPanel();
+        const button = await screen.findByRole("button", { name: /run test/i });
+        act(() => { button.click(); button.click(); });
+        expect(createRunMock).toHaveBeenCalledOnce();
+        await act(async () => { finish({ data: { id: 444 } }); });
     });
 });

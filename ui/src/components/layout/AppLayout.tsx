@@ -103,9 +103,9 @@ const AppLayout: React.FC<AppLayoutProps> = ({
     <SidebarProvider defaultOpen>
       {shouldShowSidebar ? (
         <LeadFormsProvider>
-          <div className="flex min-h-screen w-full">
+          <div className="flex min-h-screen w-full min-w-0">
             <AppSidebar />
-            <SidebarInset className="flex-1">
+            <SidebarInset className="min-w-0 flex-1">
               <BackendStatusBanner />
               {!isWorkflowEditor && <AppHeader />}
               {/* Optional header area for specific pages */}
@@ -131,7 +131,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({
               )}
 
               {/* Main content area */}
-              <main className="app-surface flex-1">
+              <main className="app-surface min-w-0 flex-1">
                 {children}
               </main>
             </SidebarInset>

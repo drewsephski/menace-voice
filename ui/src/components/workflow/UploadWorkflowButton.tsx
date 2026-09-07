@@ -2,11 +2,12 @@
 
 import { Upload } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { useCallback, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 
 import { createWorkflowApiV1WorkflowCreateDefinitionPost } from '@/client/sdk.gen';
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { detailFromError } from '@/lib/apiError';
 import { useAuth } from '@/lib/auth';
 import logger from '@/lib/logger';
 import { getRandomId } from '@/lib/utils';
@@ -19,8 +20,15 @@ export function UploadWorkflowButton() {
     const [isDragging, setIsDragging] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const { user, getAccessToken } = useAuth();
+    const [uploading, setUploading] = useState(false);
+    const uploadingRef = useRef(false);
+    const fileInputRef = useRef<HTMLInputElement>(null);
 
     const handleFileUpload = useCallback(async (file: File) => {
+        if (uploadingRef.current) return;
+        uploadingRef.current = true;
+        setUploading(true);
+        setError(null);
         try {
             const text = await file.text();
             const workflowData: WorkflowData = JSON.parse(text);
@@ -31,8 +39,9 @@ export function UploadWorkflowButton() {
                 throw new Error('Invalid workflow data structure');
             }
 
-            if (!user) return;
+            if (!user) throw new Error('Sign in to upload an agent definition.');
             const accessToken = await getAccessToken();
+            if (!accessToken) throw new Error('Your session has expired. Sign in and try again.');
             const response = await createWorkflowApiV1WorkflowCreateDefinitionPost({
                 body: {
                     name: workflowData.name || `WF-${getRandomId()}`,
@@ -43,13 +52,24 @@ export function UploadWorkflowButton() {
                 },
             });
 
-            if (response.data?.id) {
-                router.push(`/workflow/${response.data.id}`);
-                setIsOpen(false);
+            if (response.error) {
+                throw new Error(detailFromError(response.error, 'Failed to upload workflow. Please try again.'));
             }
+            const id = response.data?.id;
+            if (typeof id !== 'number' || !Number.isSafeInteger(id) || id <= 0) {
+                throw new Error('The server did not return a valid workflow. Please try again.');
+            }
+            router.push(`/workflow/${id}`);
+            setIsOpen(false);
         } catch (err) {
-            setError('Failed to upload workflow. Please check if the file is valid.');
+            setError(err instanceof SyntaxError
+                ? 'Please select a valid workflow JSON file.'
+                : err instanceof Error ? err.message : 'Failed to upload workflow. Please try again.');
             logger.error(`Error uploading workflow: ${err}`);
+        } finally {
+            uploadingRef.current = false;
+            setUploading(false);
+            if (fileInputRef.current) fileInputRef.current.value = '';
         }
     }, [router, user, getAccessToken]);
 
@@ -59,7 +79,7 @@ export function UploadWorkflowButton() {
         setError(null);
 
         const file = e.dataTransfer.files[0];
-        if (file && file.type === 'application/json') {
+        if (file && (file.type === 'application/json' || file.name.toLowerCase().endsWith('.json'))) {
             handleFileUpload(file);
         } else {
             setError('Please upload a valid JSON file');
@@ -86,14 +106,14 @@ export function UploadWorkflowButton() {
     return (
         <>
             <Button
-                onClick={() => setIsOpen(true)}
+                onClick={() => { setError(null); setIsOpen(true); }}
                 variant="outline"
             >
                 <Upload className="w-4 h-4 mr-2" />
                 Upload Agent Definition
             </Button>
 
-            <Dialog open={isOpen} onOpenChange={setIsOpen}>
+            <Dialog open={isOpen} onOpenChange={(open) => { if (!uploadingRef.current) setIsOpen(open); }}>
                 <DialogContent className="sm:max-w-md">
                     <DialogHeader>
                         <DialogTitle>Upload Agent Definition</DialogTitle>
@@ -110,20 +130,23 @@ export function UploadWorkflowButton() {
                             Drag and drop your Workflow JSON File here, or Click to Select
                         </p>
                         <input
+                            ref={fileInputRef}
+                            aria-label="Workflow JSON file"
+                            disabled={uploading}
                             type="file"
                             accept=".json"
                             onChange={handleFileInput}
                             className="hidden"
-                            id="workflow-upload"
                         />
                         <Button
                             variant="outline"
-                            onClick={() => document.getElementById('workflow-upload')?.click()}
+                            disabled={uploading}
+                            onClick={() => fileInputRef.current?.click()}
                         >
-                            Select File
+                            {uploading ? 'Uploading...' : 'Select File'}
                         </Button>
                         {error && (
-                            <p className="mt-4 text-sm text-red-600">{error}</p>
+                            <p role="alert" className="mt-4 text-sm text-red-600 break-words">{error}</p>
                         )}
                     </div>
                 </DialogContent>

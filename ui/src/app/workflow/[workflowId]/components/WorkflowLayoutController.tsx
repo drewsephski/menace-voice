@@ -9,7 +9,7 @@ interface Props {
     nodes: FlowNode[];
     edges: FlowEdge[];
     layoutRequest: number;
-    onLayout: (nodes: FlowNode[]) => void;
+    onLayout: (nodes: FlowNode[], requested: boolean) => void;
 }
 
 /** Run inside ReactFlow so layout waits for its ResizeObserver measurements. */
@@ -24,7 +24,7 @@ export function WorkflowLayoutController({ nodes, edges, layoutRequest, onLayout
         const requested = lastRequest.current !== layoutRequest;
         lastRequest.current = layoutRequest;
         if (requested || hasNodeOverlaps(nodes)) {
-            onLayout(layoutNodes(nodes, edges));
+            onLayout(layoutNodes(nodes, edges), requested);
             setNeedsFit(true);
         }
     }, [initialized, nodes, edges, layoutRequest, onLayout]);

@@ -13,6 +13,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PostHogEvent } from "@/constants/posthog-events";
 import { WORKFLOW_RUN_MODES } from "@/constants/workflowRunModes";
 import { useOnboarding } from "@/context/OnboardingContext";
+import { detailFromError } from "@/lib/apiError";
 import { useAuth } from "@/lib/auth";
 import { cn, getRandomId } from "@/lib/utils";
 
@@ -21,7 +22,7 @@ import { EmbeddedVoiceTester } from "./workflow-tester/EmbeddedVoiceTester";
 import { ManualTextChatPanel } from "./workflow-tester/ManualTextChatPanel";
 import { ChatModeToggle, DisabledNotice, EmptyState } from "./workflow-tester/shared";
 import type { WorkflowRuntimeNodeTransition } from "./workflow-tester/types";
-import { extractSdkErrorMessage, getErrorMessage } from "./workflow-tester/utils";
+import { getErrorMessage } from "./workflow-tester/utils";
 
 interface WorkflowTesterPanelProps {
     workflowId: number;
@@ -58,6 +59,17 @@ export function WorkflowTesterPanel({
     const [creatingVoiceRun, setCreatingVoiceRun] = useState(false);
     const [tokenReady, setTokenReady] = useState(false);
     const runTestButtonRef = useRef<HTMLButtonElement>(null);
+    const voiceRequestRef = useRef(0);
+    const creatingVoiceRunRef = useRef(false);
+
+    useEffect(() => {
+        setVoiceRunId(null);
+        setCreatingVoiceRun(false);
+        return () => {
+            voiceRequestRef.current += 1;
+            creatingVoiceRunRef.current = false;
+        };
+    }, [workflowId, accessToken, isVisible]);
 
     useEffect(() => {
         let ignore = false;
@@ -97,7 +109,9 @@ export function WorkflowTesterPanel({
     }, [authLoading, getAccessToken, isAuthenticated]);
 
     const createVoiceRun = useCallback(async () => {
-        if (!accessToken || disabled) return;
+        if (!accessToken || disabled || !isVisible || creatingVoiceRunRef.current) return;
+        creatingVoiceRunRef.current = true;
+        const request = ++voiceRequestRef.current;
         setCreatingVoiceRun(true);
         try {
             const response = await createWorkflowRunApiV1WorkflowWorkflowIdRunsPost({
@@ -108,8 +122,9 @@ export function WorkflowTesterPanel({
                 },
             });
 
-            if (response.error || !response.data?.id) {
-                throw new Error(extractSdkErrorMessage(response.error, "Failed to create browser test run"));
+            if (request !== voiceRequestRef.current) return;
+            if (response.error || !Number.isSafeInteger(response.data?.id) || !response.data?.id || response.data.id < 1) {
+                throw new Error(detailFromError(response.error, "Failed to create browser test run"));
             }
 
             markActionCompleted("web_call_started");
@@ -119,13 +134,15 @@ export function WorkflowTesterPanel({
                 source: "workflow_editor",
             });
             setVoiceRunId(response.data.id);
-            setActiveMode("audio");
         } catch (error) {
-            toast.error(getErrorMessage(error));
+            if (request === voiceRequestRef.current) toast.error(getErrorMessage(error));
         } finally {
-            setCreatingVoiceRun(false);
+            if (request === voiceRequestRef.current) {
+                creatingVoiceRunRef.current = false;
+                setCreatingVoiceRun(false);
+            }
         }
-    }, [accessToken, disabled, markActionCompleted, workflowId]);
+    }, [accessToken, disabled, isVisible, markActionCompleted, workflowId]);
 
     const authUnavailableReason = tokenReady && !accessToken
         ? "Authentication is required before testing can start."
@@ -145,6 +162,9 @@ export function WorkflowTesterPanel({
         const mode = value as "audio" | "text";
         setActiveMode(mode);
         if (mode !== "audio") {
+            voiceRequestRef.current += 1;
+            creatingVoiceRunRef.current = false;
+            setCreatingVoiceRun(false);
             // Leaving this tab unmounts EmbeddedVoiceTester, whose cleanup closes
             // the socket and peer connection — the call is over at that point and
             // the backend completes the run. A run may only be called once, so

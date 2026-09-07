@@ -2,10 +2,12 @@
 
 import { Bot, ChevronDown, LayoutTemplate, PlusIcon, Sparkles } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { toast } from 'sonner';
 
-import { createWorkflowApiV1WorkflowCreateDefinitionPost } from '@/client/sdk.gen';
+import { createWorkflowApiV1WorkflowCreateDefinitionPost, listNodeTypesApiV1NodeTypesGet } from '@/client/sdk.gen';
+import { buildNewNode } from '@/components/flow/renderer/buildNewNode';
+import { NodeType } from '@/components/flow/types';
 import { Button } from "@/components/ui/button";
 import {
     DropdownMenu,
@@ -13,40 +15,15 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { detailFromError } from '@/lib/apiError';
 import { useAuth } from '@/lib/auth';
 import logger from '@/lib/logger';
 import { getRandomId } from '@/lib/utils';
 
-const BLANK_WORKFLOW_DEFINITION = {
-    nodes: [
-        {
-            id: "1",
-            type: "startCall",
-            position: { x: 175, y: 60 },
-            data: {
-                prompt: "# Goal\nYou are a helpful agent who is handing a conversation over voice with a human. This is a voice conversation, so transcripts can be error prone.\n\n## Rules\n- Language: UK English but does not have to be correct english\n- Keep responses short and 2-3 sentences max\n- If you have to repeat something that you said in your previous two turns, then rephrase a bit while keeping the same meaning. Never repeat the exact same words as in your previous 2 responses.\n\n## Speech Handling\n- There could be multiple transcription errors. \n- Accept variations: yes/yeah/yep/aye, no/nah/nope\n- If user says \"sorry?\" or \"pardon me\" or \"can you repeat\"  or \"what?\", they might not have heard you- so just repeat what you just said.\n\n### Flow\nStart by saying \"Hi\". Be polite and courteous. ",
-                name: "start call",
-                allow_interrupt: false,
-                invalid: false,
-                validationMessage: null,
-                add_global_prompt: false,
-                delayed_start: false,
-                is_start: true,
-                selected_through_edge: false,
-                hovered_through_edge: false,
-                extraction_enabled: false,
-                selected: false,
-                dragging: false,
-            },
-        },
-    ],
-    edges: [],
-    viewport: { x: 808, y: 269, zoom: 0.75 },
-};
-
 export function CreateWorkflowButton() {
     const router = useRouter();
-    const { user, getAccessToken } = useAuth();
+    const { user, loading: authLoading, getAccessToken } = useAuth();
+    const creatingRef = useRef(false);
     const [isCreating, setIsCreating] = useState(false);
 
     const handleAgentBuilder = () => {
@@ -54,29 +31,54 @@ export function CreateWorkflowButton() {
     };
 
     const handleBlankCanvas = async () => {
-        if (isCreating || !user) return;
+        if (creatingRef.current) return;
+        if (authLoading || !user) {
+            toast.error('Please sign in before creating an agent.');
+            return;
+        }
+        creatingRef.current = true;
         setIsCreating(true);
 
         try {
             const accessToken = await getAccessToken();
+            if (!accessToken) {
+                throw new Error('Your session has expired. Please sign in and try again.');
+            }
+            const headers = { Authorization: `Bearer ${accessToken}` };
+            const catalog = await listNodeTypesApiV1NodeTypesGet({ headers });
+            if (catalog.error) {
+                throw new Error(detailFromError(catalog.error, 'Unable to load agent defaults. Please try again.'));
+            }
+            const startSpec = catalog.data?.node_types.find((spec) => spec.name === NodeType.START_CALL);
+            if (!startSpec) {
+                throw new Error('Agent defaults are unavailable. Please try again.');
+            }
             const name = `Workflow-${getRandomId()}`;
             const response = await createWorkflowApiV1WorkflowCreateDefinitionPost({
                 body: {
                     name,
-                    workflow_definition: BLANK_WORKFLOW_DEFINITION as unknown as { [key: string]: unknown },
+                    workflow_definition: {
+                        nodes: [buildNewNode(NodeType.START_CALL, { x: 175, y: 60 }, [], startSpec)],
+                        edges: [],
+                        viewport: { x: 0, y: 0, zoom: 1 },
+                    },
                 },
-                headers: {
-                    'Authorization': `Bearer ${accessToken}`,
-                },
+                headers,
             });
 
-            if (response.data?.id) {
-                router.push(`/workflow/${response.data.id}`);
+            if (response.error) {
+                throw new Error(detailFromError(response.error, 'Failed to create agent. Please try again.'));
             }
+            const workflowId = response.data?.id;
+            if (typeof workflowId !== 'number' || !Number.isSafeInteger(workflowId) || workflowId <= 0) {
+                throw new Error('The server did not return a valid agent ID. Please refresh your agents before trying again.');
+            }
+            router.push(`/workflow/${workflowId}`);
         } catch (err) {
             logger.error(`Error creating blank workflow: ${err}`);
-            toast.error('Failed to create workflow');
+            toast.error(err instanceof Error ? err.message : 'Failed to create agent. Please try again.');
         } finally {
+            creatingRef.current = false;
             setIsCreating(false);
         }
     };
@@ -84,7 +86,7 @@ export function CreateWorkflowButton() {
     return (
         <DropdownMenu>
             <DropdownMenuTrigger asChild>
-                <Button disabled={isCreating}>
+                <Button disabled={isCreating || authLoading}>
                     <PlusIcon className="w-4 h-4" />
                     {isCreating ? 'Creating...' : 'Create Agent'}
                     <ChevronDown className="w-4 h-4" />

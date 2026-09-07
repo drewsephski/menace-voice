@@ -12,13 +12,13 @@ import { useRouter } from 'next/navigation';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
-import { createWorkflowDraftApiV1WorkflowWorkflowIdCreateDraftPost, getWorkflowVersionsApiV1WorkflowWorkflowIdVersionsGet, listDocumentsApiV1KnowledgeBaseDocumentsGet, listRecordingsApiV1WorkflowRecordingsGet, listToolsApiV1ToolsGet } from '@/client';
-import type { DocumentResponseSchema, RecordingResponseSchema, ToolResponse, WorkflowVersionResponse } from '@/client/types.gen';
+import { createWorkflowDraftApiV1WorkflowWorkflowIdCreateDraftPost, getWorkflowVersionsApiV1WorkflowWorkflowIdVersionsGet } from '@/client';
+import type { ToolResponse, WorkflowVersionResponse } from '@/client/types.gen';
 import { useNodeSpecs } from "@/components/flow/renderer";
 import { FlowEdge, FlowNode, NodeType } from "@/components/flow/types";
 import { HireExpertNudge } from "@/components/lead-forms/HireExpertNudge";
 import { Button } from '@/components/ui/button';
-import { Sheet, SheetContent } from '@/components/ui/sheet';
+import { Sheet, SheetContent, SheetTitle } from '@/components/ui/sheet';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useOnboarding } from '@/context/OnboardingContext';
 import { detailFromError } from '@/lib/apiError';
@@ -35,6 +35,7 @@ import { WorkflowLayoutController } from './components/WorkflowLayoutController'
 import { WorkflowTesterPanel } from './components/WorkflowTesterPanel';
 import { WorkflowVersionDiffDialog } from './components/WorkflowVersionDiffDialog';
 import { WorkflowProvider } from "./contexts/WorkflowContext";
+import { useWorkflowResources } from "./hooks/useWorkflowResources";
 import { useWorkflowState } from "./hooks/useWorkflowState";
 
 const edgeTypes = {
@@ -101,11 +102,24 @@ function RenderWorkflow({
     const [currentVersionNumber, setCurrentVersionNumber] = useState<number | null>(initialVersionNumber ?? null);
     const [currentVersionStatus, setCurrentVersionStatus] = useState<string | null>(initialVersionStatus ?? null);
     const versionsFetched = useRef(false);
-    const [documents, setDocuments] = useState<DocumentResponseSchema[] | undefined>(undefined);
-    const [tools, setTools] = useState<ToolResponse[] | undefined>(undefined);
-    const [recordings, setRecordings] = useState<RecordingResponseSchema[]>([]);
+    const { documents, tools, recordings, setTools, loading: resourcesLoading, errors: resourceErrors, retry: retryResources } = useWorkflowResources(workflowId);
+    const creatingDraft = useRef(false);
     const [layoutRequest, setLayoutRequest] = useState(0);
     const [activeRuntimeNodeId, setActiveRuntimeNodeId] = useState<string | null>(null);
+
+    const hasDraft = currentVersionStatus === "draft";
+
+    // Determine if we are viewing a historical (non-current) version.
+    // The "current" version is the draft if one exists, otherwise the published version.
+    // Anything else (archived, or published while a draft exists) is historical.
+    const isViewingHistoricalVersion = useMemo(() => {
+        if (!activeVersionId || versions.length === 0) return false;
+        const activeVersion = versions.find((v) => v.id === activeVersionId);
+        if (!activeVersion) return false;
+        if (activeVersion.status === "draft") return false;
+        if (activeVersion.status === "published" && !hasDraft) return false;
+        return true;
+    }, [activeVersionId, versions, hasDraft]);
 
     const {
         rfInstance,
@@ -135,6 +149,7 @@ function RenderWorkflow({
         initialTemplateContextVariables,
         initialWorkflowConfigurations,
         user,
+        readOnly: isViewingHistoricalVersion,
     });
 
     // Single generic component for every node type. Seed with core node types
@@ -153,8 +168,6 @@ function RenderWorkflow({
         );
     }, [initialFlow?.nodes, nodes, specs]);
 
-    // Derive hasDraft from the current version status
-    const hasDraft = currentVersionStatus === "draft";
 
     // Fetch the first page of workflow versions, optionally forcing a refresh.
     // Pagination keeps the panel snappy when a workflow has accumulated a long
@@ -196,6 +209,8 @@ function RenderWorkflow({
                 }
                 versionsFetched.current = true;
             }
+        } catch {
+            toast.error("Failed to load version history. Please try again.");
         } finally {
             setVersionsLoading(false);
         }
@@ -218,6 +233,8 @@ function RenderWorkflow({
                 setVersions((prev) => [...prev, ...data.slice(0, VERSIONS_PAGE_SIZE)]);
                 setVersionsHasMore(data.length > VERSIONS_PAGE_SIZE);
             }
+        } catch {
+            toast.error("Failed to load more versions. Please try again.");
         } finally {
             setVersionsLoadingMore(false);
         }
@@ -308,17 +325,6 @@ function RenderWorkflow({
         setIsVersionPanelOpen(false);
     }, [setNodes, setEdges, setIsDirty]);
 
-    // Determine if we are viewing a historical (non-current) version.
-    // The "current" version is the draft if one exists, otherwise the published version.
-    // Anything else (archived, or published while a draft exists) is historical.
-    const isViewingHistoricalVersion = useMemo(() => {
-        if (!activeVersionId || versions.length === 0) return false;
-        const activeVersion = versions.find((v) => v.id === activeVersionId);
-        if (!activeVersion) return false;
-        if (activeVersion.status === "draft") return false;
-        if (activeVersion.status === "published" && !hasDraft) return false;
-        return true;
-    }, [activeVersionId, versions, hasDraft]);
 
     useEffect(() => {
         if (!isViewingHistoricalVersion) {
@@ -335,25 +341,27 @@ function RenderWorkflow({
             return;
         }
 
-        // No draft exists — ask the backend to create one from published
-        const response = await createWorkflowDraftApiV1WorkflowWorkflowIdCreateDraftPost({
-            path: { workflow_id: workflowId },
-        });
-        const draft = response.data;
-        if (draft) {
+        if (creatingDraft.current) return;
+        creatingDraft.current = true;
+        try {
+            const response = await createWorkflowDraftApiV1WorkflowWorkflowIdCreateDraftPost({
+                path: { workflow_id: workflowId },
+            });
+            if (response.error) throw new Error(detailFromError(response.error, "Could not return to draft"));
+            const draft = response.data;
+            if (!draft || !Number.isInteger(draft.id) || draft.id <= 0) {
+                throw new Error("The server did not return a draft. Please try again.");
+            }
             setCurrentVersionNumber(draft.version_number);
             setCurrentVersionStatus(draft.status);
-            // Load draft nodes/edges via the Zustand store (same approach as handleSelectVersion)
-            const flowNodes = (draft.workflow_json?.nodes ?? []) as FlowNode[];
-            const flowEdges = (draft.workflow_json?.edges ?? []) as FlowEdge[];
-            setNodes(flowNodes);
-            setEdges(flowEdges);
-            setActiveVersionId(draft.id);
-            setIsDirty(false);
-            // Refresh the version list so the new draft appears
-            fetchVersions(true);
+            handleSelectVersion(draft);
+            await fetchVersions(true);
+        } catch (error) {
+            toast.error(error instanceof Error ? error.message : "Could not return to draft. Please try again.");
+        } finally {
+            creatingDraft.current = false;
         }
-    }, [versions, handleSelectVersion, workflowId, setNodes, setEdges, setIsDirty, fetchVersions]);
+    }, [versions, handleSelectVersion, workflowId, fetchVersions]);
 
     // After a successful publish, refresh the version list and update status
     const handlePublished = useCallback(() => {
@@ -425,43 +433,6 @@ function RenderWorkflow({
         hasAutoOpenedTester.current = true;
     }, [handleOpenTester, openTesterOnLoad, shouldShowWebCallOnboarding, testerDisabledReason]);
 
-    // Fetch documents, tools, and recordings once for the entire workflow
-    useEffect(() => {
-        const fetchData = async () => {
-            try {
-                // Fetch documents
-                const documentsResponse = await listDocumentsApiV1KnowledgeBaseDocumentsGet({
-                    query: { limit: 100 },
-                });
-                if (documentsResponse.data) {
-                    setDocuments(documentsResponse.data.documents);
-                }
-
-                // Fetch tools
-                const toolsResponse = await listToolsApiV1ToolsGet({});
-                if (toolsResponse.data) {
-                    setTools(toolsResponse.data);
-                }
-
-                // Fetch org-level recordings
-                try {
-                    const recordingsResponse = await listRecordingsApiV1WorkflowRecordingsGet({
-                        query: {},
-                    });
-                    if (recordingsResponse.data) {
-                        setRecordings(recordingsResponse.data.recordings);
-                    }
-                } catch {
-                    // Recordings API may not be available yet; silently ignore
-                }
-            } catch (error) {
-                console.error('Failed to fetch documents and tools:', error);
-            }
-        };
-
-        fetchData();
-    }, [workflowId]);
-
     // Memoize defaultEdgeOptions to prevent unnecessary re-renders
     const defaultEdgeOptions = useMemo(() => ({
         animated: true,
@@ -508,18 +479,17 @@ function RenderWorkflow({
         [rfInstance],
     );
 
-    const handleLayout = useCallback((layoutedNodes: FlowNode[]) => {
-        setNodes(layoutedNodes, isViewingHistoricalVersion ? undefined : layoutedNodes.map(node => ({
+    const handleLayout = useCallback((layoutedNodes: FlowNode[], requested: boolean) => {
+        setNodes(layoutedNodes, isViewingHistoricalVersion || !requested ? undefined : layoutedNodes.map(node => ({
             id: node.id,
             type: 'position' as const,
             position: node.position,
             dragging: false,
         })));
-    }, [setNodes, isViewingHistoricalVersion]);
+        if (!isViewingHistoricalVersion) setIsDirty(true);
+    }, [setNodes, setIsDirty, isViewingHistoricalVersion]);
 
     // Guard saveWorkflow so it's a no-op when viewing a historical version.
-    // This is the single safety net that covers every save path: header button,
-    // Cmd+S, node edit dialogs, stale doc/tool cleanup, etc.
     // Uses the save response to immediately update version label and hasDraft.
     const guardedSaveWorkflow = useCallback(async (updateWorkflowDefinition?: boolean) => {
         if (isViewingHistoricalVersion) return;
@@ -559,7 +529,7 @@ function RenderWorkflow({
                 ),
             );
         },
-        [],
+        [setTools],
     );
 
     // Memoize the context value to prevent unnecessary re-renders
@@ -581,7 +551,7 @@ function RenderWorkflow({
 
     return (
         <WorkflowProvider value={workflowContextValue}>
-            <div className="flex flex-col h-screen min-w-fit">
+            <div className="flex h-dvh w-full min-w-0 flex-col overflow-hidden">
                 <HireExpertNudge workflowId={workflowId} />
                 {/* New Workflow Editor Header */}
                 <WorkflowEditorHeader
@@ -608,6 +578,15 @@ function RenderWorkflow({
                     <div className="flex flex-wrap items-center justify-between gap-2 border-b bg-muted/40 px-4 py-2 text-sm">
                         <span>This agent uses your cloned voice. Model voice settings are overridden.</span>
                         <Link className="font-medium underline" href="/voice-cloning">Manage cloned voice</Link>
+                    </div>
+                ) : null}
+
+                {resourcesLoading ? (
+                    <div role="status" className="shrink-0 px-3 py-1 text-xs text-muted-foreground">Loading workflow resources…</div>
+                ) : resourceErrors.length > 0 ? (
+                    <div role="alert" className="flex shrink-0 items-center gap-2 border-b px-3 py-1 text-xs">
+                        <span className="min-w-0 flex-1 break-words">Some workflow resources could not load. {resourceErrors.join(' ')}</span>
+                        <Button size="sm" variant="ghost" className="h-10 shrink-0" onClick={retryResources}>Retry</Button>
                     </div>
                 ) : null}
 
@@ -660,8 +639,9 @@ function RenderWorkflow({
                                                         <Button
                                                             variant="default"
                                                             size="icon"
+                                                            aria-label="Add node"
                                                             onClick={() => setIsAddNodePanelOpen(true)}
-                                                            className="shadow-md hover:shadow-lg"
+                                                            className="h-10 w-10 shadow-md hover:shadow-lg"
                                                         >
                                                             <Plus className="h-4 w-4" />
                                                         </Button>
@@ -676,8 +656,9 @@ function RenderWorkflow({
                                                         <Button
                                                             variant="outline"
                                                             size="icon"
+                                                            aria-label="Workflow settings"
                                                             onClick={() => router.push(`/workflow/${workflowId}/settings`)}
-                                                            className="bg-white shadow-sm hover:shadow-md"
+                                                            className="h-10 w-10 bg-white shadow-sm hover:shadow-md"
                                                         >
                                                             <Settings className="h-4 w-4" />
                                                         </Button>
@@ -693,15 +674,16 @@ function RenderWorkflow({
                             </ReactFlow>
 
                             {/* Bottom-left controls - horizontal layout with custom buttons */}
-                            <div className="absolute bottom-12 left-8 z-10 flex gap-2">
+                            <div className="absolute bottom-4 left-3 z-10 flex gap-2 sm:bottom-12 sm:left-8">
                                 <TooltipProvider>
                                     <Tooltip>
                                         <TooltipTrigger asChild>
                                             <Button
                                                 variant="outline"
                                                 size="icon"
+                                                aria-label="Zoom in"
                                                 onClick={() => rfInstance.current?.zoomIn()}
-                                                className="bg-white shadow-sm hover:shadow-md h-8 w-8"
+                                                className="bg-white shadow-sm hover:shadow-md h-10 w-10 sm:h-8 sm:w-8"
                                             >
                                                 <Plus className="h-4 w-4" />
                                             </Button>
@@ -716,8 +698,9 @@ function RenderWorkflow({
                                             <Button
                                                 variant="outline"
                                                 size="icon"
+                                                aria-label="Zoom out"
                                                 onClick={() => rfInstance.current?.zoomOut()}
-                                                className="bg-white shadow-sm hover:shadow-md h-8 w-8"
+                                                className="bg-white shadow-sm hover:shadow-md h-10 w-10 sm:h-8 sm:w-8"
                                             >
                                                 <Minus className="h-4 w-4" />
                                             </Button>
@@ -732,8 +715,9 @@ function RenderWorkflow({
                                             <Button
                                                 variant="outline"
                                                 size="icon"
+                                                aria-label="Fit view"
                                                 onClick={() => rfInstance.current?.fitView()}
-                                                className="bg-white shadow-sm hover:shadow-md h-8 w-8"
+                                                className="bg-white shadow-sm hover:shadow-md h-10 w-10 sm:h-8 sm:w-8"
                                             >
                                                 <Maximize2 className="h-4 w-4" />
                                             </Button>
@@ -751,7 +735,7 @@ function RenderWorkflow({
                                                     size="icon"
                                                     aria-label="Tidy up nodes"
                                                     onClick={() => setLayoutRequest(request => request + 1)}
-                                                    className="bg-white shadow-sm hover:shadow-md h-8 w-8"
+                                                    className="bg-white shadow-sm hover:shadow-md h-10 w-10 sm:h-8 sm:w-8"
                                                 >
                                                     <BrushCleaning className="h-4 w-4" />
                                                 </Button>
@@ -783,6 +767,7 @@ function RenderWorkflow({
 
                     <Sheet open={isTesterSheetOpen} onOpenChange={setIsTesterSheetOpen}>
                         <SheetContent side="right" className="w-full max-w-none p-0 sm:max-w-xl xl:hidden">
+                            <SheetTitle className="sr-only">Test agent</SheetTitle>
                             <WorkflowTesterPanel
                                 workflowId={workflowId}
                                 initialContextVariables={templateContextVariables}

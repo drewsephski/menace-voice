@@ -28,11 +28,12 @@ import {
     WorkflowError,
 } from "@/client/types.gen";
 import { useNodeSpecs } from "@/components/flow/renderer";
-import { FlowEdge, FlowNode, FlowNodeData, NodeType } from "@/components/flow/types";
+import { buildNewNode } from "@/components/flow/renderer/buildNewNode";
+import { FlowEdge, FlowNode, NodeType } from "@/components/flow/types";
 import { PostHogEvent } from "@/constants/posthog-events";
 import { detailFromError } from "@/lib/apiError";
 import logger from '@/lib/logger';
-import { getNextNodeId, getRandomId } from "@/lib/utils";
+import { getRandomId } from "@/lib/utils";
 import {
     resolveWorkflowConfigurations,
     type WorkflowConfigurationDefaults,
@@ -56,37 +57,6 @@ function extractWorkflowErrors(payload: unknown): WorkflowError[] {
     if (p.is_valid === false && p.errors) return p.errors;
     if (typeof p.detail === "object" && p.detail?.errors) return p.detail.errors;
     return [];
-}
-
-// Build initial node data from spec defaults. Replaces the per-type
-// hardcoded `getNewNode` switch — adding a new node type is now zero
-// frontend code: declare the spec on the backend and the defaults flow
-// through here.
-function buildDataFromSpec(spec: NodeSpec): Record<string, unknown> {
-    const data: Record<string, unknown> = {};
-    for (const prop of spec.properties) {
-        if (prop.default !== undefined && prop.default !== null) {
-            data[prop.name] = prop.default;
-        }
-    }
-    return data;
-}
-
-function buildNewNode(
-    type: string,
-    position: { x: number; y: number },
-    existingNodes: FlowNode[],
-    spec: NodeSpec,
-): FlowNode {
-    const data = buildDataFromSpec(spec) as Partial<FlowNodeData> & Record<string, unknown>;
-    if (type === NodeType.START_CALL) data.is_start = true;
-    if (type === NodeType.END_CALL) data.is_end = true;
-    return {
-        id: getNextNodeId(existingNodes),
-        type,
-        position,
-        data: data as unknown as FlowNode["data"],
-    };
 }
 
 // Look up the spec default for `allow_interrupt`. Used as a load-time
@@ -114,6 +84,7 @@ interface UseWorkflowStateProps {
     initialTemplateContextVariables?: Record<string, string>;
     initialWorkflowConfigurations?: WorkflowConfigurations;
     user: { id: string; email?: string } | null;
+    readOnly?: boolean;
 }
 
 export const useWorkflowState = ({
@@ -123,9 +94,14 @@ export const useWorkflowState = ({
     initialTemplateContextVariables,
     initialWorkflowConfigurations,
     user,
+    readOnly = false,
 }: UseWorkflowStateProps) => {
     const router = useRouter();
     const rfInstance = useRef<ReactFlowInstance<FlowNode, FlowEdge> | null>(null);
+    const readOnlyRef = useRef(readOnly);
+    readOnlyRef.current = readOnly;
+    const saveInFlight = useRef(false);
+    const runInFlight = useRef(false);
     const [workflowConfigurationDefaults, setWorkflowConfigurationDefaults] =
         useState<WorkflowConfigurationDefaults | null>(null);
     const [defaultCallDispositions, setDefaultCallDispositions] =
@@ -154,6 +130,8 @@ export const useWorkflowState = ({
         commitDeletion,
         setNodes,
         setEdges,
+        addNode,
+        addEdge,
         setWorkflowName,
         setIsDirty,
         setIsAddNodePanelOpen,
@@ -169,8 +147,12 @@ export const useWorkflowState = ({
     } = useWorkflowStore();
 
     // Get undo/redo functions from the store
-    const undo = useWorkflowStore((state) => state.undo);
-    const redo = useWorkflowStore((state) => state.redo);
+    const undo = useCallback(() => {
+        if (!readOnlyRef.current) useWorkflowStore.getState().undo();
+    }, []);
+    const redo = useCallback(() => {
+        if (!readOnlyRef.current) useWorkflowStore.getState().redo();
+    }, []);
     const canUndo = useWorkflowStore((state) => state.canUndo());
     const canRedo = useWorkflowStore((state) => state.canRedo());
 
@@ -297,7 +279,7 @@ export const useWorkflowState = ({
     }, [undo, redo, canUndo, canRedo]);
 
     const handleNodeSelect = useCallback((nodeType: string) => {
-        if (!rfInstance.current) return;
+        if (readOnlyRef.current || !rfInstance.current) return;
 
         const position = rfInstance.current.screenToFlowPosition({
             x: window.innerWidth / 2,
@@ -309,26 +291,21 @@ export const useWorkflowState = ({
             logger.warn({ nodeType }, "No spec registered for node type — cannot add");
             return;
         }
+        const currentNodes = useWorkflowStore.getState().nodes;
         const newNode = {
-            ...buildNewNode(nodeType, position, nodes, spec),
+            ...buildNewNode(nodeType, position, currentNodes, spec),
             selected: true, // Mark the new node as selected
         };
-
-        // Deselect all existing nodes before adding the new one
-        const currentNodes = rfInstance.current.getNodes();
-        const deselectedNodes = currentNodes.map(node => ({ ...node, selected: false }));
-        rfInstance.current.setNodes(deselectedNodes);
-
-        // Use addNodes from ReactFlow instance
-        rfInstance.current.addNodes([newNode]);
+        addNode(placeNodeWithoutOverlap(newNode, currentNodes));
         posthog.capture(PostHogEvent.WORKFLOW_NODE_ADDED, {
             node_type: nodeType,
             workflow_id: workflowId,
         });
         setIsAddNodePanelOpen(false);
-    }, [nodes, setIsAddNodePanelOpen, workflowId, bySpecName]);
+    }, [addNode, setIsAddNodePanelOpen, workflowId, bySpecName]);
 
     const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (readOnlyRef.current) return;
         setWorkflowName(e.target.value);
         setIsDirty(true);
     };
@@ -358,32 +335,46 @@ export const useWorkflowState = ({
 
     // Validate workflow function
     const validateWorkflow = useCallback(async () => {
-        if (!user?.id) return;
+        if (readOnlyRef.current || !user?.id) return;
         try {
             const response = await validateWorkflowApiV1WorkflowWorkflowIdValidatePost({
                 path: {
                     workflow_id: workflowId,
                 },
             });
-            // 422 surfaces under response.error, 200 with is_valid=true under
-            // response.data. extractWorkflowErrors normalises both — empty
-            // list means "valid" and clears any stale highlights.
-            applyWorkflowErrors(
-                extractWorkflowErrors(response.error ?? response.data),
-            );
+            if (readOnlyRef.current) return;
+            const errors = extractWorkflowErrors(response.error ?? response.data);
+            if (response.error && errors.length === 0) {
+                toast.error(detailFromError(response.error, "Unable to validate workflow. Reload the editor to retry."));
+                return;
+            }
+            if (!response.error && !response.data) {
+                toast.error("The server did not confirm workflow validation. Reload the editor to retry.");
+                return;
+            }
+            applyWorkflowErrors(errors);
         } catch (error: unknown) {
             logger.error(`Unexpected validation error: ${error}`);
+            toast.error("Unable to validate workflow. Check your connection and reload the editor to retry.");
         }
     }, [workflowId, user, applyWorkflowErrors]);
 
     // Save workflow function. Returns version info from the API response.
     const saveWorkflow = useCallback(async (updateWorkflowDefinition: boolean = true): Promise<{ versionNumber?: number; versionStatus?: string } | undefined> => {
-        if (!user?.id || !rfInstance.current) return;
+        if (readOnlyRef.current || saveInFlight.current) return;
+        if (!user?.id) {
+            toast.error("Sign in again to save your workflow.");
+            return;
+        }
+        if (!rfInstance.current) {
+            toast.error("The workflow editor is still loading. Try saving again shortly.");
+            return;
+        }
         // Read nodes/edges from the Zustand store (synchronously up-to-date)
         // and viewport from the ReactFlow instance to build the flow object.
         // This avoids a race condition where rfInstance.toObject() may return
         // stale node data if React hasn't re-rendered yet after a store update.
-        const { nodes: currentNodes, edges: currentEdges } = useWorkflowStore.getState();
+        const { nodes: currentNodes, edges: currentEdges, workflowName: currentName } = useWorkflowStore.getState();
         const nodeTypeCounts = new Map<string, number>();
         currentNodes.forEach((node) => {
             nodeTypeCounts.set(node.type, (nodeTypeCounts.get(node.type) ?? 0) + 1);
@@ -406,13 +397,14 @@ export const useWorkflowState = ({
         const flow = { nodes: currentNodes, edges: currentEdges, viewport };
         let result: { versionNumber?: number; versionStatus?: string } | undefined;
         let saveSucceeded = false;
+        saveInFlight.current = true;
         try {
             const response = await updateWorkflowApiV1WorkflowWorkflowIdPut({
                 path: {
                     workflow_id: workflowId,
                 },
                 body: {
-                    name: workflowName,
+                    name: currentName,
                     workflow_definition: updateWorkflowDefinition ? flow : null,
                 },
             });
@@ -428,9 +420,12 @@ export const useWorkflowState = ({
                     applyWorkflowErrors(workflowErrors);
                 }
                 logger.error(`Error saving workflow: ${JSON.stringify(response.error)}`);
+                toast.error(detailFromError(response.error, "Failed to save workflow. Please try again."));
+            } else if (!response.data) {
+                toast.error("The server did not confirm the save. Please try again.");
             } else {
-                setIsDirty(false);
-                if (response.data) {
+                const latestState = useWorkflowStore.getState();
+                if (!readOnlyRef.current && latestState.nodes === currentNodes && latestState.edges === currentEdges && latestState.workflowName === currentName) {
                     // Reload server state into the canvas — the backend may
                     // have mutated the definition (e.g. minted a missing
                     // trigger_path) and is the source of truth post-save.
@@ -440,15 +435,19 @@ export const useWorkflowState = ({
                         | undefined;
                     if (wf?.nodes) setNodes(wf.nodes);
                     if (wf?.edges) setEdges(wf.edges);
-                    result = {
-                        versionNumber: response.data.version_number ?? undefined,
-                        versionStatus: response.data.version_status ?? undefined,
-                    };
-                    saveSucceeded = true;
+                    setIsDirty(false);
                 }
+                result = {
+                    versionNumber: response.data.version_number ?? undefined,
+                    versionStatus: response.data.version_status ?? undefined,
+                };
+                saveSucceeded = true;
             }
         } catch (error) {
             logger.error(`Error saving workflow: ${error}`);
+            toast.error(error instanceof Error ? error.message : "Failed to save workflow. Please try again.");
+        } finally {
+            saveInFlight.current = false;
         }
 
         // Only run validate after a successful save — when save failed we've
@@ -461,7 +460,6 @@ export const useWorkflowState = ({
         return result;
     }, [
         workflowId,
-        workflowName,
         setIsDirty,
         setNodes,
         setEdges,
@@ -487,21 +485,26 @@ export const useWorkflowState = ({
     }, [saveWorkflow]);
 
     const onConnect: OnConnect = useCallback((connection) => {
-        if (!rfInstance.current) return;
-
-        // Use addEdges from ReactFlow instance
-        rfInstance.current.addEdges([{
+        if (readOnlyRef.current) return;
+        const currentEdges = useWorkflowStore.getState().edges;
+        const id = `${connection.source}-${connection.target}`;
+        if (currentEdges.some(edge => edge.id === id)) return;
+        addEdge({
             ...connection,
-            id: `${connection.source}-${connection.target}`,
+            id,
             data: {
                 label: '',
                 condition: ''
             }
-        }]);
-    }, []);
+        });
+    }, [addEdge]);
 
     const onEdgesChange: OnEdgesChange = useCallback(
         (changes) => {
+            if (readOnlyRef.current) {
+                changes = changes.filter(change => change.type === 'select');
+                if (changes.length === 0) return;
+            }
             const currentEdges = useWorkflowStore.getState().edges;
             const newEdges = applyEdgeChanges(changes, currentEdges) as FlowEdge[];
             // Cast changes to FlowEdge type - safe because setEdges only uses the type field
@@ -513,6 +516,10 @@ export const useWorkflowState = ({
 
     const onNodesChange: OnNodesChange = useCallback(
         (changes) => {
+            if (readOnlyRef.current) {
+                changes = changes.filter(change => change.type === 'select' || change.type === 'dimensions');
+                if (changes.length === 0) return;
+            }
             const currentNodes = useWorkflowStore.getState().nodes;
             let newNodes = applyNodeChanges(changes, currentNodes) as FlowNode[];
             // Resolve movement before committing so the canvas and undo history
@@ -537,26 +544,40 @@ export const useWorkflowState = ({
     );
 
     const onDelete = useCallback(() => {
+        if (readOnlyRef.current) return;
         commitDeletion();
     }, [commitDeletion]);
 
     const onRun = async (mode: string) => {
-        if (!user?.id) return;
-        const workflowRunName = `WR-${getRandomId()}`;
-        const response = await createWorkflowRunApiV1WorkflowWorkflowIdRunsPost({
-            path: {
-                workflow_id: workflowId,
-            },
-            body: {
-                mode,
-                name: workflowRunName
-            },
-        });
-        router.push(`/workflow/${workflowId}/run/${response.data?.id}`);
+        if (readOnlyRef.current || runInFlight.current) return;
+        if (!user?.id) {
+            toast.error("Sign in again to start a workflow run.");
+            return;
+        }
+        runInFlight.current = true;
+        try {
+            const response = await createWorkflowRunApiV1WorkflowWorkflowIdRunsPost({
+                path: { workflow_id: workflowId },
+                body: { mode, name: `WR-${getRandomId()}` },
+            });
+            if (response.error) {
+                throw new Error(detailFromError(response.error, "Failed to start workflow run. Please try again."));
+            }
+            const runId = response.data?.id;
+            if (!Number.isInteger(runId) || !runId || runId < 1) {
+                throw new Error("The server did not return a valid workflow run. Please try again.");
+            }
+            if (!readOnlyRef.current) router.push(`/workflow/${workflowId}/run/${runId}`);
+        } catch (error) {
+            toast.error(error instanceof Error ? error.message : "Failed to start workflow run. Please try again.");
+        } finally {
+            runInFlight.current = false;
+        }
     };
 
     // Save template context variables
     const saveTemplateContextVariables = useCallback(async (variables: Record<string, string>) => {
+        if (readOnlyRef.current) throw new Error("Return to the draft before editing this workflow.");
         if (!user?.id) return;
         try {
             const response = await updateWorkflowApiV1WorkflowWorkflowIdPut({
@@ -574,6 +595,7 @@ export const useWorkflowState = ({
                     detailFromError(response.error, "Failed to save template variables"),
                 );
             }
+            if (readOnlyRef.current) return;
             setTemplateContextVariables(variables);
             logger.info('Template context variables saved successfully');
         } catch (error) {
@@ -584,6 +606,7 @@ export const useWorkflowState = ({
 
     // Save workflow configurations
     const saveWorkflowConfigurations = useCallback(async (configurations: WorkflowConfigurations, newWorkflowName: string) => {
+        if (readOnlyRef.current) throw new Error("Return to the draft before editing this workflow.");
         if (!user?.id) return;
         // Preserve the current dictionary when saving other configurations
         const currentDictionary = useWorkflowStore.getState().dictionary;
@@ -615,6 +638,7 @@ export const useWorkflowState = ({
                 throw new Error(msg);
             }
 
+            if (readOnlyRef.current) return;
             const savedConfigurations = resolveWorkflowConfigurations(
                 response.data?.workflow_configurations
                     ? (response.data.workflow_configurations as Partial<WorkflowConfigurations>)
@@ -633,6 +657,7 @@ export const useWorkflowState = ({
 
     // Save dictionary
     const saveDictionary = useCallback(async (newDictionary: string) => {
+        if (readOnlyRef.current) throw new Error("Return to the draft before editing this workflow.");
         if (!user) return;
         const currentConfigurations =
             useWorkflowStore.getState().workflowConfigurations
@@ -652,6 +677,7 @@ export const useWorkflowState = ({
             if (response.error) {
                 throw new Error(detailFromError(response.error, "Failed to save dictionary"));
             }
+            if (readOnlyRef.current) return;
             setDictionary(newDictionary);
             setWorkflowConfigurations(updatedConfigurations);
         } catch (error) {
@@ -704,7 +730,7 @@ export const useWorkflowState = ({
         // Export undo/redo state
         undo,
         redo,
-        canUndo,
-        canRedo,
+        canUndo: !readOnly && canUndo,
+        canRedo: !readOnly && canRedo,
     };
 };

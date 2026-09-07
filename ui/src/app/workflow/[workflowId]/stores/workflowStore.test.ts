@@ -148,4 +148,54 @@ describe('workflow history', () => {
     expect(useWorkflowStore.getState().history).toHaveLength(1);
     expect(useWorkflowStore.getState().isDirty).toBe(false);
   });
+
+  it('selects an added node and deselects existing nodes in one undoable operation', () => {
+    const initial = { ...createNode('a'), selected: true };
+    useWorkflowStore.getState().initializeWorkflow(1, 'Initial', [initial], []);
+
+    useWorkflowStore.getState().addNode({ ...createNode('b'), selected: true });
+
+    expect(useWorkflowStore.getState().nodes.map(node => node.selected)).toEqual([false, true]);
+    expect(useWorkflowStore.getState().history).toHaveLength(2);
+    expect(useWorkflowStore.getState().isDirty).toBe(true);
+    useWorkflowStore.getState().undo();
+    expect(useWorkflowStore.getState().nodes).toEqual([initial]);
+    useWorkflowStore.getState().redo();
+    expect(nodeIds()).toEqual(['a', 'b']);
+  });
+
+  it('does not mark dimension or edge selection updates dirty or record history', () => {
+    const initial = createNode('a');
+    const edge = createEdge('a-b', 'a', 'b');
+    useWorkflowStore.getState().initializeWorkflow(1, 'Initial', [initial, createNode('b')], [edge]);
+
+    useWorkflowStore.getState().setNodes(
+      [{ ...initial, measured: { width: 400, height: 300 } }, createNode('b')],
+      [{ id: 'a', type: 'dimensions', dimensions: { width: 400, height: 300 } }]
+    );
+    const selectedEdge = { ...edge, selected: true };
+    useWorkflowStore.getState().setEdges(
+      [selectedEdge],
+      [{ id: edge.id, type: 'select', selected: true }]
+    );
+
+    expect(useWorkflowStore.getState().nodes[0].measured).toEqual({ width: 400, height: 300 });
+    expect(useWorkflowStore.getState().edges[0]).toMatchObject({ selected: true });
+    expect(useWorkflowStore.getState().history).toHaveLength(1);
+    expect(useWorkflowStore.getState().isDirty).toBe(false);
+  });
+
+  it('undoes direct node deletion with all attached edges together', () => {
+    const nodes = [createNode('a'), createNode('b'), createNode('c')];
+    const edges = [createEdge('a-b', 'a', 'b'), createEdge('b-c', 'b', 'c')];
+    useWorkflowStore.getState().initializeWorkflow(1, 'Initial', nodes, edges);
+
+    useWorkflowStore.getState().deleteNode('b');
+    expect(nodeIds()).toEqual(['a', 'c']);
+    expect(useWorkflowStore.getState().edges).toEqual([]);
+    expect(useWorkflowStore.getState().history).toHaveLength(2);
+    useWorkflowStore.getState().undo();
+    expect(useWorkflowStore.getState().nodes).toEqual(nodes);
+    expect(useWorkflowStore.getState().edges).toEqual(edges);
+  });
 });
