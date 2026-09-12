@@ -9,7 +9,7 @@ const provider: TelephonyProviderMetadata = {
   provider: "twilio",
   display_name: "Twilio",
   fields: [],
-  docs_url: "https://voice.menaceui.com/docs/integrations/telephony/twilio",
+  docs_url: "/docs/integrations/telephony/twilio",
   estimated_phone_number_price: "From $1.15/mo · US local",
   phone_number_url:
     "https://www.twilio.com/docs/numbers-and-senders/phone-number-senders",

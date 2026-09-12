@@ -344,6 +344,8 @@ class PipecatEngine:
         transition_speech_type: Optional[str] = None,
         transition_speech_recording_id: Optional[str] = None,
     ):
+        source_node = self._current_node
+
         async def transition_func(function_call_params: FunctionCallParams) -> None:
             """Inner function that handles the node change tool calls"""
             logger.info(f"LLM Function Call EXECUTED: {name}")
@@ -353,6 +355,29 @@ class PipecatEngine:
             logger.info(f"Arguments: {function_call_params.arguments}")
 
             try:
+                if source_node is not self._current_node:
+                    await function_call_params.result_callback(
+                        {
+                            "status": "stale_transition",
+                            "instruction": "This transition belongs to a previous stage. Use the current stage's instructions.",
+                        },
+                        properties=FunctionCallResultProperties(run_llm=False),
+                    )
+                    return
+                if self._transition_needs_caller_response():
+                    # Do not generate another answer after rejecting the tool: the
+                    # question is already being spoken. Keep the current stage and
+                    # let normal caller input trigger the next generation.
+                    await function_call_params.result_callback(
+                        {
+                            "status": "waiting_for_caller",
+                            "instruction": "Stay in this stage. If you have not spoken yet, deliver the opening and ask one relevant question. Otherwise wait for the caller's answer before transitioning.",
+                        },
+                        properties=FunctionCallResultProperties(
+                            run_llm=not bool(self._speech_since_caller())
+                        ),
+                    )
+                    return
                 # Perform variable extraction before transitioning to new node
                 await self._perform_variable_extraction_if_needed(
                     self._current_node,
@@ -437,6 +462,43 @@ class PipecatEngine:
                 await function_call_params.result_callback(error_result)
 
         return transition_func
+
+    def _transition_needs_caller_response(self) -> bool:
+        """Backstop premature transitions in generated conversational agents.
+
+        Prompt instructions cover semantic completion. This guard catches the
+        observable failure of opening without input or asking and transitioning
+        in the same generation, without imposing one turn per workflow node.
+        """
+        node = self._current_node
+        if not node or "ONBOARDING EXECUTION CONTRACT" not in (node.prompt or ""):
+            return False
+        messages = [
+            message
+            for message in (self.context.get_messages() if self.context else [])
+            if isinstance(message, dict)
+        ]
+        if node.is_start and not any(
+            message.get("role") == "user" and message.get("content")
+            for message in messages
+        ):
+            return True
+        return any(mark in self._speech_since_caller() for mark in ("?", "？", "؟"))
+
+    def _speech_since_caller(self) -> str:
+        # The callback processor captures streamed speech before TTS. Also check
+        # aggregated assistant content for text and realtime service paths.
+        speech = self._current_llm_generation_reference_text
+        for message in reversed(self.context.get_messages() if self.context else []):
+            if not isinstance(message, dict):
+                continue
+            if message.get("role") == "user":
+                break
+            if message.get("role") == "assistant":
+                content = message.get("content")
+                if isinstance(content, str):
+                    speech += content
+        return speech
 
     async def _register_transition_function_with_llm(
         self,
@@ -1310,9 +1372,7 @@ class PipecatEngine:
         """
         return self._gathered_context.copy()
 
-    async def record_guardrail_violation(
-        self, violation: GuardrailViolation
-    ) -> None:
+    async def record_guardrail_violation(self, violation: GuardrailViolation) -> None:
         violations = self._gathered_context.setdefault("guardrail_violations", [])
         violations.append(violation.to_dict())
 

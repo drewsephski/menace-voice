@@ -17,6 +17,7 @@ from pipecat.frames.frames import (
     LLMContextFrame,
     LLMFullResponseEndFrame,
     LLMFullResponseStartFrame,
+    LLMTextFrame,
     TTSSpeakFrame,
     TTSStoppedFrame,
 )
@@ -225,6 +226,7 @@ class _TextChatCaptureProcessor(FrameProcessor):
         self.events: list[dict[str, Any]] = []
         self._response_window = response_window
         self._context = context
+        self.engine: PipecatEngine | None = None
 
     def _touch(self) -> None:
         self.last_activity_at = time.monotonic()
@@ -242,6 +244,12 @@ class _TextChatCaptureProcessor(FrameProcessor):
     async def process_frame(self, frame, direction: FrameDirection):
         await super().process_frame(frame, direction)
         self._touch()
+
+        if self.engine and direction == FrameDirection.DOWNSTREAM:
+            if isinstance(frame, LLMFullResponseStartFrame):
+                await self.engine.create_generation_started_callback()()
+            elif isinstance(frame, (LLMTextFrame, TTSSpeakFrame)):
+                await self.engine.handle_llm_text_frame(frame.text)
 
         if isinstance(frame, TTSSpeakFrame):
             append_to_context = (
@@ -632,6 +640,7 @@ async def execute_text_chat_pending_turn(
         workflow_configurations=run_configs,
     )
     engine._gathered_context = dict(base_checkpoint["gathered_context"])
+    capture_processor.engine = engine
 
     assistant_params = LLMAssistantAggregatorParams()
     context_aggregator = LLMContextAggregatorPair(
@@ -662,6 +671,7 @@ async def execute_text_chat_pending_turn(
     trace_span_attributes = {
         "langfuse.trace.name": workflow_run.name or f"text-chat-{workflow_run_id}"
     }
+
     async def note_guardrail_bypass() -> None:
         if response_window.pending_context_requests > 0:
             response_window.pending_context_requests -= 1

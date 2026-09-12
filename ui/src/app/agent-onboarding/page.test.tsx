@@ -72,7 +72,7 @@ describe("guided agent brief provenance", () => {
     expect(body.template_id).toBeNull();
     expect(body.use_case).toBe("Custom voice agent");
     expect(body.onboarding_context.agent_brief).toBe(brief);
-    expect(body.onboarding_context.workflow_stages).toEqual([]);
+    expect(body.onboarding_context.workflow_stages).toHaveLength(3);
   });
 
   it("preserves typed text until a template replacement is explicitly chosen", () => {

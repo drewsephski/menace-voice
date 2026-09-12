@@ -8,7 +8,7 @@ import type { AuthUser, LocalUser } from '../types';
 import { AuthContext } from './AuthProvider';
 
 const PUBLIC_PATHS = ['/', '/auth/login', '/auth/signup', '/embed', '/docs', '/handler', '/after-sign-in'];
-const EXACT_PUBLIC_PATHS = ['/pilot'];
+const EXACT_PUBLIC_PATHS: string[] = [];
 
 export function isPublicAuthPath(pathname: string) {
   return EXACT_PUBLIC_PATHS.includes(pathname) || PUBLIC_PATHS.some(

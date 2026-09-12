@@ -33,7 +33,14 @@ export interface DocGroup {
 }
 
 const BUILDER_GROUPS: DocGroup[] = [
-  { title: "Start here", items: [{ slug: "overview", title: "Overview" }, { slug: "first-agent", title: "Your first agent" }] },
+  {
+    title: "Start here",
+    items: [
+      { slug: "overview", title: "Overview" },
+      { slug: "model-setup", title: "Models and costs" },
+      { slug: "first-agent", title: "Your first agent" },
+    ],
+  },
   { title: "Build the behavior", items: [{ slug: "tools", title: "Tools" }, { slug: "knowledge", title: "Knowledge & context" }] },
   { title: "Ship with confidence", items: [{ slug: "deploy", title: "Production checklist" }] },
 ];

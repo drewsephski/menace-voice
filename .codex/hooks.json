@@ -1,0 +1,14 @@
+{
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/Users/drewsepeczi/.local/share/uv/tools/omnigent/bin/python3 -I -m omnigent.harnesses.cursor_native.usage record-usage --bridge-dir /var/folders/qr/7ljk5thn44d88g6myzx1ns9c0000gn/T/omnigent-501/cursor-native/4471c1e4f6fed2de26b3563588f0f8e1"
+          }
+        ]
+      }
+    ]
+  }
+}

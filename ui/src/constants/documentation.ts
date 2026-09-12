@@ -1,4 +1,4 @@
-export const DOCS_BASE = "https://voice.menaceui.com/docs";
+export const DOCS_BASE = "/docs";
 
 export const NODE_DOCUMENTATION_URLS: Record<string, string> = {
     startCall: `${DOCS_BASE}/voice-agent/start-call`,

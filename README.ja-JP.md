@@ -29,20 +29,15 @@
 
 - **柔軟なデプロイ** -- チームに合った環境でプラットフォームを実行できます
 - **完全な制御と透明性** -- LLM / TTS / STT の統合を柔軟に設定できます
-- **YC 卒業生と事業売却を経験した創業者が保守**し、音声 AI を実用的にします
-
-<p align="center">
-  <a href="https://trendshift.io/repositories/31007" target="_blank"><img src="https://trendshift.io/api/badge/repositories/31007" alt="dograh-hq%2Fdograh | Trendshift" style="width: 250px; height: 55px;" width="250" height="55"/></a>
-</p>
 
 ## 🎥 メディア掲載
 
 <div align="center">
   <a href="https://www.youtube.com/watch?v=xD9JEvfCH9k">
-    <img src="https://img.youtube.com/vi/xD9JEvfCH9k/maxresdefault.jpg" alt="Better Stack による Menace Voice 紹介" width="80%" style="border-radius: 8px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+    <img src="https://img.youtube.com/vi/xD9JEvfCH9k/maxresdefault.jpg" alt="Better Stack による上流 Dograh プロジェクトの紹介" width="80%" style="border-radius: 8px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
   </a>
   <br>
-  <em><strong>Better Stack</strong> による実践レビュー -- Menace Voice を詳しく紹介</em>
+  <em><strong>Better Stack</strong> による上流 Dograh プロジェクトの紹介</em>
 </div>
 
 <details>
@@ -64,8 +59,8 @@
 |---|---|---|---|
 | **ライセンス** | BSD 2-Clause (オープンソース) | プロプライエタリ | プロプライエタリ |
 | **セルフホスト** | ✅ 可能 -- Docker コマンド 1 つ | ❌ SaaS のみ | ❌ SaaS のみ |
-| **料金** | 無料(セルフホスト)・従量課金(クラウド) | 分単位課金の SaaS | 分単位課金の SaaS |
-| **独自 LLM / STT / TTS の利用** | ✅ 任意のプロバイダー、または Menace Voice 標準スタック | 提供範囲内で設定可能 | 提供範囲内で設定可能 |
+| **料金** | セルフホストは無料 · 推論は Menace Voice クレジットまたは自社のプロバイダーアカウント · 電話はキャリアに課金 | 分単位課金の SaaS | 分単位課金の SaaS |
+| **独自 LLM / STT / TTS の利用** | ✅ 任意のプロバイダー、または Menace Voice 管理の推論（Service Key） | 提供範囲内で設定可能 | 提供範囲内で設定可能 |
 | **ソースコードレベルのカスタマイズ** | ✅ すべてのコードを自由に変更可能 | ❌ クローズドソース | ❌ クローズドソース |
 | **データレジデンシー** | 自社インフラ、自社ルール | ベンダーのクラウド | ベンダーのクラウド |
 | **ベンダーロックイン** | なし | あり | あり |
@@ -94,7 +89,11 @@ Menace から提供されたデプロイパッケージを使用し、デプロ�
 3. **Test Agent** をクリックします。
 4. **Test Audio** でブラウザからエージェントと会話するか、**Test Chat** でテキストベースに素早く反復します。Test Chat ではユーザー発話を編集または再実行でき、Menace Voice がその地点からエージェントの応答とノード遷移を再生成します。
 
-> 🔑 **API キーは不要です。** Menace Voice には自動生成されるキーと、組み込みの LLM / TTS / STT スタックが付属しています。必要に応じて、独自の LLM、TTS、STT、または Twilio、Vonage、Telnyx などの電話連携プロバイダーをいつでも接続できます。
+> 🔑 **モデルプロバイダーの設定**
+> - Docker イメージには第三者の LLM / TTS / STT API キーは同梱されません。
+> - **管理推論:** デプロイで利用可能な場合、サインイン時に [Menace Voice Service Key](https://voice.menaceui.com/docs/configurations/api-keys#service-keys) が作成されることがあります（利用量は Menace Voice クレジットで請求）。管理セットアップが完了しない場合は、[モデル設定](https://voice.menaceui.com/docs/configurations/inference-providers) を手動で構成してください。
+> - **BYOK:** [モデル設定](https://voice.menaceui.com/docs/configurations/inference-providers) で LLM / TTS / STT のプロバイダーキーを自分で追加できます。
+> - **電話通話:** 構成済みの電話連携（電話番号または SIP ルーティング）、該当する場合のサポート対象ホストプラン、および別途の利用料金が必要です。自社キャリア（Twilio、Vonage、Telnyx など）を使う場合は、そのプロバイダーの認証情報が必要です。
 
 ## MCP でエージェントを構築
 
@@ -138,7 +137,7 @@ Codex、Claude Code、Cursor、または任意の MCP クライアントを接�
 
 ### クラウド版
 
-マネージドクラウド版は [https://www.dograh.com](https://www.dograh.com/) から利用できます。
+マネージドクラウド版は [https://voice.menaceui.com](https://voice.menaceui.com) から利用できます。
 
 ## 📚 ドキュメント
 
@@ -155,8 +154,7 @@ Menace Voice は [BSD 2-Clause License](LICENSE) のもとで提供されてい�
 
 ## 🏢 私たちについて
 
-**Menace** (Zansat Technologies Private Limited) が ❤️ を込めて開発しています。
-創業チームは YC 卒業生と事業売却を経験した創業者で構成され、音声 AI を誰もが利用できるものにすることに取り組んでいます。
+Menace Voice はオープンソースの [Dograh](https://github.com/dograh-hq/dograh) プロジェクトを基盤にしています。[Product Hunt](https://www.producthunt.com/products/dograh) などのローンチ受賞・掲載は上流の Dograh に帰属し、Menace Voice の成果ではありません。
 
 <br><br><br>
 

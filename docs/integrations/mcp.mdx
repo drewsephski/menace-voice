@@ -31,7 +31,7 @@ This is only required for self-signed certificates. If you have set up a [custom
 Register Menace Voice as an MCP server with the Claude Code CLI:
 
 ```bash
-claude mcp add --transport http dograh https://voice.menaceui.com/api/v1/mcp/ \
+claude mcp add --transport http menace-voice https://voice.menaceui.com/api/v1/mcp/ \
   --header "X-API-Key: YOUR_API_KEY"
 ```
 
@@ -45,10 +45,10 @@ claude mcp list
 
 ## Codex
 
-Open Codex's config file (`~/.codex/config.toml`) and add a `dograh` MCP server:
+Open Codex's config file (`~/.codex/config.toml`) and add a `menace-voice` MCP server:
 
 ```toml
-[mcp_servers.dograh]
+[mcp_servers.menace-voice]
 url = "https://voice.menaceui.com/api/v1/mcp/"
 http_headers = { "X-API-Key" = "YOUR_API_KEY" }
 ```
@@ -58,15 +58,15 @@ Replace `YOUR_API_KEY` with the key you generated. For self-hosted deployments, 
 If you prefer to keep the API key out of `config.toml`, store it in an environment variable instead:
 
 ```toml
-[mcp_servers.dograh]
+[mcp_servers.menace-voice]
 url = "https://voice.menaceui.com/api/v1/mcp/"
-env_http_headers = { "X-API-Key" = "DOGRAH_API_KEY" }
+env_http_headers = { "X-API-Key" = "MENACE_VOICE_API_KEY" }
 ```
 
 Then set the API key before starting Codex:
 
 ```bash
-export DOGRAH_API_KEY="YOUR_API_KEY"
+export MENACE_VOICE_API_KEY="YOUR_API_KEY"
 codex
 ```
 
@@ -74,17 +74,17 @@ Verify the server is registered:
 
 ```bash
 codex mcp list
-codex mcp get dograh
+codex mcp get menace-voice
 ```
 
 ## Claude Desktop
 
-Open Claude Desktop's config file (`claude_desktop_config.json`) and add the `dograh` entry under `mcpServers`:
+Open Claude Desktop's config file (`claude_desktop_config.json`) and add the `menace-voice` entry under `mcpServers`:
 
 ```json
 {
   "mcpServers": {
-    "dograh": {
+    "menace-voice": {
       "url": "https://voice.menaceui.com/api/v1/mcp/",
       "headers": {
         "X-API-Key": "YOUR_API_KEY"

@@ -24,9 +24,9 @@ export function BackButton() {
       variant="ghost"
       size="sm"
       onClick={handleBack}
-      className="-ml-2 gap-2 text-muted-foreground hover:text-foreground"
+      className="-ml-2 h-8 gap-1.5 px-2 text-sm text-muted-foreground hover:text-foreground"
     >
-      <ArrowLeft className="h-4 w-4" />
+      <ArrowLeft className="h-3.5 w-3.5" />
       Go Back
     </Button>
   );

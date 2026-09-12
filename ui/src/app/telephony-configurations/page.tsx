@@ -183,7 +183,7 @@ export default function TelephonyConfigurationsPage() {
               Manage the carrier accounts behind your phone numbers. Most users can
               complete setup from the guided Phone numbers page.{" "}
               <a
-                href="https://voice.menaceui.com/docs/integrations/telephony/overview"
+                href="/docs/integrations/telephony/overview"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-0.5 underline"

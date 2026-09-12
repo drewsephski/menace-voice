@@ -1,6 +1,6 @@
 # API - Backend Service
 
-FastAPI backend for the Dograh voice AI platform.
+FastAPI backend for the Menace Voice platform.
 
 ## Project Structure
 
@@ -22,7 +22,7 @@ api/
 | Looking for...               | Go to...                                                                      |
 | ---------------------------- | ----------------------------------------------------------------------------- |
 | API endpoints                | `routes/` - domain routers mounted under `/api/v1`                            |
-| Workflow graph and node data | `services/workflow/`                                                          |
+| Workflow graph and node data | `services/workflow/` (agent onboarding: MPS + `onboarding_prompt.enhance_onboarding_workflow_prompts`) |
 | Live pipeline runtime        | `services/pipecat/`                                                           |
 | Telephony providers/call flow| `services/telephony/`                                                         |
 | Third-party integrations     | `services/integrations/`                                                      |

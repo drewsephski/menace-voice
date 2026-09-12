@@ -48,15 +48,15 @@ export function LoginForm({ signupEnabled }: { signupEnabled: boolean }) {
 
   return (
     <AuthShell enterpriseSlot={<AuthEnterpriseCTA />}>
-      <div className="space-y-1.5 text-center">
-        <h1 className="text-2xl font-semibold tracking-tight">Sign in</h1>
+      <div className="space-y-1 text-center">
+        <h1 className="text-xl font-semibold tracking-tight">Sign in</h1>
         <p className="text-sm text-muted-foreground">
           Enter your email and password to continue
         </p>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div className="space-y-2">
+      <form onSubmit={handleSubmit} className="space-y-3">
+        <div className="space-y-1.5">
           <Label htmlFor="email">Email</Label>
           <Input
             id="email"
@@ -67,7 +67,7 @@ export function LoginForm({ signupEnabled }: { signupEnabled: boolean }) {
             required
           />
         </div>
-        <div className="space-y-2">
+        <div className="space-y-1.5">
           <Label htmlFor="password">Password</Label>
           <Input
             id="password"

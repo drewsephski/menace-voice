@@ -4,6 +4,7 @@
 
 .expanding {
   overflow: clip;
+  transform-origin: top center;
 }
 
 .host .list {

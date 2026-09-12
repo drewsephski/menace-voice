@@ -157,24 +157,6 @@ export const TOOL_CATEGORIES: ToolCategoryConfig[] = [
         iconName: "puzzle",
         iconColor: "#8B5CF6",
     },
-    {
-        value: "native",
-        label: "Native (Coming Soon)",
-        description: "Built-in tools like call transfer, DTMF input",
-        icon: Cog,
-        iconName: "cog",
-        iconColor: "#6B7280",
-        disabled: true,
-    },
-    {
-        value: "integration",
-        label: "Integration (Coming Soon)",
-        description: "Third-party integrations like Google Calendar",
-        icon: Puzzle,
-        iconName: "puzzle",
-        iconColor: "#8B5CF6",
-        disabled: true,
-    },
 ];
 
 export function getCategoryConfig(category: ToolCategory): ToolCategoryConfig | undefined {

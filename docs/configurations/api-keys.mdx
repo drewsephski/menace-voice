@@ -13,7 +13,11 @@ API keys can be used to trigger a voice agent from an external system, like n8n 
 Please note that you must copy and keep the API key secretly, since this is the only time that you would be able to copy it. If you lose it, you can always delete that, if its not being used anywhere, and create a new API key. 
 
 ### Service Keys
-Service Keys are the keys which you generate to be used in [Model Configurations](inference-providers). In order to generate that, you can go to `/api-keys` and create a new key. 
+Service Keys are the keys which you generate to be used in [Model Configurations](inference-providers). In order to generate that, you can go to `/api-keys` and create a new key.
+
+<Note>
+When managed services are available for your deployment, Menace Voice may auto-provision a default Service Key and managed model configuration on sign-in. You can also create Service Keys manually from `/api-keys`. Automatic provisioning is not guaranteed.
+</Note>
 
 <Note>
 You can use a Service Key created in Menace Voice Cloud (`https://voice.menaceui.com/api-keys`) in your self-hosted Menace Voice deployment. Create the Service Key from your Menace Voice Cloud account, then paste it into **Model Configurations** in your self-hosted instance to use Menace Voice-managed inference providers. You can purchase Menace Voice credits in Menace Voice Cloud; billing happens on the Cloud account that owns the Service Key.

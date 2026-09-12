@@ -22,11 +22,11 @@ When you add an API Trigger node to your workflow, Menace Voice assigns it a uni
 You can copy either URL from the trigger node's settings dialog.
 
 ```
-POST https://your-dograh-instance/api/v1/public/agent/{uuid}        # Production
-POST https://your-dograh-instance/api/v1/public/agent/test/{uuid}   # Test
+POST https://your-menace-voice-instance/api/v1/public/agent/{uuid}        # Production
+POST https://your-menace-voice-instance/api/v1/public/agent/test/{uuid}   # Test
 ```
 
-If you are using the hosted version, replace `your-dograh-instance` with `api.dograh.com`.
+If you are using the hosted version, replace `your-menace-voice-instance` with `voice.menaceui.com`.
 
 ### Test vs production
 
@@ -53,7 +53,7 @@ Authenticate by passing your API key in the `X-API-Key` header. The request body
 
 <CodeGroup>
 ```bash Production URL
-curl -X POST https://your-dograh-instance/api/v1/public/agent/{uuid} \
+curl -X POST https://your-menace-voice-instance/api/v1/public/agent/{uuid} \
   -H "Content-Type: application/json" \
   -H "X-API-Key: dg_your_api_key" \
   -d '{
@@ -66,7 +66,7 @@ curl -X POST https://your-dograh-instance/api/v1/public/agent/{uuid} \
 ```
 
 ```bash Test URL
-curl -X POST https://your-dograh-instance/api/v1/public/agent/test/{uuid} \
+curl -X POST https://your-menace-voice-instance/api/v1/public/agent/test/{uuid} \
   -H "Content-Type: application/json" \
   -H "X-API-Key: dg_your_api_key" \
   -d '{

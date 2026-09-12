@@ -25,7 +25,7 @@ export function Hero({ navigation }: { navigation: LandingNavigation }) {
             See how it works
           </a>
         </div>
-        <p className={styles.note}>Start free with your own AI provider keys.</p>
+        <p className={styles.note}>Start free with your own AI provider keys. Provider usage is billed separately.</p>
       </div>
       <ul className={styles.capabilities} aria-label="Platform capabilities">
         <li><span className={styles.capabilityIcon}><GitBranch aria-hidden="true" /></span><div><strong>Visual call flows</strong><span>Shape every conversation</span></div></li>

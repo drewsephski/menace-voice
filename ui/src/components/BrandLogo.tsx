@@ -1,5 +1,7 @@
 import { cn } from "@/lib/utils";
 
+const BRAND_MARK_SRC = "/menace-mark.png";
+
 export function BrandLogo({
   className,
   inverse = false,
@@ -13,12 +15,9 @@ export function BrandLogo({
     return (
       // eslint-disable-next-line @next/next/no-img-element
       <img
-        src="/menace-mark.png"
+        src={BRAND_MARK_SRC}
         alt="Menace Voice"
-        className={cn(
-          "w-auto select-none dark:brightness-0 dark:invert",
-          className,
-        )}
+        className={cn("h-[1em] w-auto shrink-0 select-none", className)}
       />
     );
   }
@@ -35,12 +34,9 @@ export function BrandLogo({
     >
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
-        src="/menace-mark.png"
+        src={BRAND_MARK_SRC}
         alt=""
-        className={cn(
-          "h-full w-auto select-none",
-          inverse ? "brightness-0 invert" : "dark:brightness-0 dark:invert",
-        )}
+        className="h-full w-auto shrink-0 select-none"
       />
       <span className="text-[0.92em] font-semibold tracking-[-0.04em]">
         Menace Voice

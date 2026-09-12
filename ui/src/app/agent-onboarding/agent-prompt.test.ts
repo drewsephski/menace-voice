@@ -33,23 +33,22 @@ describe("agent onboarding prompt", () => {
     expect(prompt).toContain("Spoken language: English (US)");
     expect(prompt).toContain("Tone: warm and helpful");
     expect(prompt).toContain("Runtime voice: Menace Voice / ember");
-    expect(prompt).toContain("one to eight task-specific Agent nodes");
-    expect(prompt).toContain("Template suggestions are starting points");
+    expect(prompt).toContain("exactly three Agent nodes");
     expect(prompt).toContain("exactly one Global node");
     expect(prompt).toContain(baseInput.workflowStages[1]);
   });
 
-  it("lets a custom brief determine its own stages without generic defaults", () => {
+  it("fills custom briefs with the default three-stage canvas", () => {
     const input = { ...baseInput, workflowStages: [] };
-    expect(buildAgentOnboardingContext(input).workflow_stages).toEqual([]);
-    expect(buildAgentOnboardingPrompt(input)).toContain("Derive the stages");
-    expect(buildAgentOnboardingPrompt(input)).not.toContain("exactly three");
+    expect(buildAgentOnboardingContext(input).workflow_stages).toHaveLength(3);
+    expect(buildAgentOnboardingPrompt(input)).toContain("THE THREE AGENT STAGES");
+    expect(buildAgentOnboardingPrompt(input)).toContain("exactly three Agent nodes");
   });
 
-  it("preserves a variable number of nonempty template suggestions", () => {
+  it("keeps the first three nonempty template suggestions", () => {
     const workflowStages = [" Assess need ", "", "Check eligibility", "Find availability", "Confirm booking"];
     expect(buildAgentOnboardingContext({ ...baseInput, workflowStages }).workflow_stages)
-      .toEqual(["Assess need", "Check eligibility", "Find availability", "Confirm booking"]);
+      .toEqual(["Assess need", "Check eligibility", "Find availability"]);
   });
 
   it("prevents internal opening strategy from becoming spoken copy", () => {

@@ -22,12 +22,29 @@ export type AgentOnboardingContext = {
   workflow_stages: string[];
 };
 
+const DEFAULT_WORKFLOW_STAGES = [
+  "Understand why the caller is on the line and what they need.",
+  "Handle the main task from the user's brief using any connected capabilities.",
+  "Confirm next steps, recap key details, and close the conversation naturally.",
+] as const;
+
 const directionGuidance = {
   inbound:
     "The caller initiated the conversation. Welcome them, orient quickly, and respond to the reason they called.",
   outbound:
     "The agent initiated the call. Open with the configured identity and a truthful, brief reason for calling, confirm the right person when needed, and give them an easy chance to continue or decline.",
 } as const;
+
+export function resolveWorkflowStages(
+  workflowStages: readonly string[],
+): [string, string, string] {
+  const cleaned = workflowStages.map((stage) => stage.trim()).filter(Boolean);
+  const resolved: [string, string, string] = [...DEFAULT_WORKFLOW_STAGES];
+  for (let index = 0; index < Math.min(3, cleaned.length); index += 1) {
+    resolved[index] = cleaned[index]!;
+  }
+  return resolved;
+}
 
 export function buildAgentOnboardingPrompt(
   input: AgentOnboardingPromptInput,
@@ -36,6 +53,7 @@ export function buildAgentOnboardingPrompt(
     (instruction) => instruction.trim().length > 0,
   );
   const behaviorNotes = input.behaviorNotes?.trim();
+  const workflowStages = resolveWorkflowStages(input.workflowStages);
 
   return [
     "USER'S AGENT BRIEF — SOURCE OF TRUTH",
@@ -57,15 +75,12 @@ export function buildAgentOnboardingPrompt(
     ),
     "",
     "REQUIRED WORKFLOW SHAPE",
-    "Build exactly one Start Call node, exactly one Global node, one to eight task-specific Agent nodes, and appropriate End Call node(s). Derive the stages and any useful branches from the user's brief and available capabilities. Use the fewest stages that give each distinct task a clear purpose; do not force a three-stage path.",
+    "Keep the established onboarding canvas shape: exactly one Start Call node, exactly three Agent nodes in a single ordered conversation path, exactly one Global node, and appropriate End Call node(s). Do not add extra conversational Agent nodes.",
     "Put shared identity, language, tone, voice-conversation style, and non-negotiable boundaries only in the Global node. Put the actual opening only in Start Call. Put stage-specific work only in its matching Agent node.",
     "",
-    "SUGGESTED STAGE OBJECTIVES",
-    "Template suggestions are starting points, not a required count or sequence. Adapt, merge, replace, or add stages to match the brief.",
-    ...input.workflowStages.map(
-      (stage, index) => `${index + 1}. ${stage.trim()}`,
-    ),
-    "Give each Agent node a short, specific name and actionable instructions for its goal, required information, relevant capabilities, completion condition, and supported failure path. Reuse information already collected. Connect stages with concrete, distinct transition conditions; only add branches that serve the requested task.",
+    "THE THREE AGENT STAGES",
+    ...workflowStages.map((stage, index) => `${index + 1}. ${stage.trim()}`),
+    "Give each Agent node a short, specific name and a prompt that performs its stage naturally. Connect the stages in order with concrete transition conditions based on what the caller has said or what has been completed.",
     "",
     "PROMPT QUALITY AND BOUNDARIES",
     "- Write executable system prompts, not coaching commentary or an explanation of call strategy.",
@@ -90,6 +105,6 @@ export function buildAgentOnboardingContext(
     voice_provider: input.voiceProvider.trim(),
     voice_name: input.voiceName.trim(),
     behavior_notes: input.behaviorNotes?.trim() || null,
-    workflow_stages: input.workflowStages.map((stage) => stage.trim()).filter(Boolean),
+    workflow_stages: [...resolveWorkflowStages(input.workflowStages)],
   };
 }

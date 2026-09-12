@@ -57,9 +57,9 @@ export default function OverviewPage() {
                     <CardContent className="flex flex-col gap-5 p-6 sm:flex-row sm:items-center sm:justify-between sm:p-8">
                         <div className="max-w-2xl">
                             <p className="text-xs font-medium uppercase tracking-[0.18em] text-cta">New here?</p>
-                            <h2 className="mt-2 text-2xl font-semibold tracking-tight">Build your first agent in five focused steps</h2>
+                            <h2 className="mt-2 text-2xl font-semibold tracking-tight">Prefer a walkthrough?</h2>
                             <p className="mt-2 text-muted-foreground">
-                                Start from a template, add knowledge, shape its voice, and connect the tools it needs.
+                                Connect your AI models and voice in model settings, then use guided setup to shape an agent and try Test Agent in your browser. Phone numbers and telephony come later when you are ready for real calls.
                             </p>
                         </div>
                         <Button asChild className="shrink-0">
@@ -88,15 +88,15 @@ export default function OverviewPage() {
 
                     <Card>
                         <CardHeader>
-                            <CardTitle>Configure Services</CardTitle>
+                            <CardTitle>Connect AI models and voice</CardTitle>
                             <CardDescription>
-                                Set up your AI services like LLM, TTS, and STT providers
+                                Choose your LLM, speech-to-text, and text-to-speech providers. Quick setup above uses these settings for browser testing with Test Agent.
                             </CardDescription>
                         </CardHeader>
                         <CardContent>
                             <Button asChild variant="outline">
                                 <Link href="/model-configurations">
-                                    Configure Models
+                                    Configure models
                                 </Link>
                             </Button>
                         </CardContent>
@@ -115,7 +115,7 @@ export default function OverviewPage() {
                         <div className="flex flex-wrap gap-4">
                             <Button asChild variant="outline">
                                 <a
-                                    href="https://voice.menaceui.com/docs"
+                                    href="/docs"
                                     target="_blank"
                                     rel="noopener noreferrer"
                                 >

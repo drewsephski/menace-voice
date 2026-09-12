@@ -1,11 +1,5 @@
 # Menace Voice
 
-<p align="center">
-  <a href="https://www.producthunt.com/products/dograh">
-    <img src="https://img.shields.io/badge/Product%20Hunt-%231%20Product%20of%20the%20Day-DA552F?style=for-the-badge&logo=producthunt&logoColor=white" alt="Menace Voice: #1 Product of the Day on Product Hunt">
-  </a>
-</p>
-
 **The voice AI platform for building and deploying production agents** — use a visual workflow builder, test agents in minutes, and let AI coding assistants help design and edit them through MCP.
 
 <p align="center">
@@ -31,28 +25,15 @@
 
 - **Flexible deployment** — run the platform in the environment that fits your team
 - **Full control & transparency** — configure the LLM / TTS / STT integrations you need
-- **Maintained by YC alumni and exit founders**, committed to making voice AI practical
 
-<p align="center">
-  <a href="https://www.producthunt.com/products/dograh?embed=true&utm_source=badge-top-post-badge&utm_medium=badge&utm_campaign=badge-dograh-3" target="_blank"><img src="https://api.producthunt.com/widgets/embed-image/v1/top-post-badge.svg?post_id=1217382&theme=light&period=daily&t=1786607298379" alt="Menace Voice - #1 Product of the Day | Product Hunt" width="250" height="54"></a>
-  &nbsp;
-  <a href="https://www.producthunt.com/products/dograh?embed=true&utm_source=badge-top-post-badge&utm_medium=badge&utm_campaign=badge-dograh-3" target="_blank"><img src="https://api.producthunt.com/widgets/embed-image/v1/top-post-badge.svg?post_id=1217382&theme=light&period=weekly&t=1786966826740" alt="Menace Voice - #1 Product of the Week | Product Hunt" width="250" height="54"></a>
-  <br />
-  <a href="https://www.producthunt.com/products/dograh?embed=true&utm_source=badge-top-post-badge&utm_medium=badge&utm_campaign=badge-dograh-3" target="_blank"><img src="https://api.producthunt.com/widgets/embed-image/v1/top-post-badge.svg?post_id=1217382&theme=neutral&period=monthly&t=1788261987782" alt="Menace Voice - #1 Product of the Month | Product Hunt" width="250" height="54"></a>
-  &nbsp;
-  <a href="https://www.producthunt.com/products/dograh?embed=true&utm_source=badge-top-post-topic-badge&utm_medium=badge&utm_campaign=badge-dograh-3" target="_blank"><img src="https://api.producthunt.com/widgets/embed-image/v1/top-post-topic-badge.svg?post_id=1217382&theme=neutral&period=monthly&topic_id=267&t=1788261987782" alt="Menace Voice - #1 Product of the Month, Developer Tools | Product Hunt" width="250" height="54"></a>
-  <br />
-  <a href="https://trendshift.io/repositories/31007" target="_blank"><img src="https://trendshift.io/api/badge/repositories/31007" alt="dograh-hq%2Fdograh | Trendshift" style="width: 250px; height: 55px;" width="250" height="55"/></a>
-</p>
-
-## 🎥 Featured
+## 🎥 Upstream project walkthrough
 
 <div align="center">
   <a href="https://www.youtube.com/watch?v=xD9JEvfCH9k">
-    <img src="https://img.youtube.com/vi/xD9JEvfCH9k/maxresdefault.jpg" alt="Menace Voice featured by Better Stack" width="80%" style="border-radius: 8px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+    <img src="https://img.youtube.com/vi/xD9JEvfCH9k/maxresdefault.jpg" alt="Better Stack overview of upstream Dograh" width="80%" style="border-radius: 8px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
   </a>
   <br>
-  <em>Featured by <strong>Better Stack</strong> — a hands-on look at Menace Voice</em>
+  <em><strong>Better Stack</strong> walkthrough of the upstream Dograh project</em>
 </div>
 
 <details>
@@ -74,8 +55,8 @@ An honest comparison on the axes that matter most to teams evaluating voice AI p
 |---|---|---|---|
 | **License** | BSD 2-Clause | Proprietary | Proprietary |
 | **Self-hostable** | ✅ Yes — one Docker command | ❌ SaaS only | ❌ SaaS only |
-| **Pricing** | Free (self-host) · usage-based (cloud) | Per-minute SaaS | Per-minute SaaS |
-| **Bring your own LLM / STT / TTS** | ✅ Any provider, or use Menace Voice's stack | Configurable within their integrations | Configurable within their integrations |
+| **Pricing** | Free to self-host · inference via Menace Voice credits or your own provider accounts · telephony billed by carriers | Per-minute SaaS | Per-minute SaaS |
+| **Bring your own LLM / STT / TTS** | ✅ Any provider, or Menace Voice-managed inference (Service Key) | Configurable within their integrations | Configurable within their integrations |
 | **Source-level customization** | ✅ Every line is yours to modify | ❌ Closed source | ❌ Closed source |
 | **Data residency** | Your infra, your rules | Their cloud | Their cloud |
 | **Vendor lock-in** | None | Full | Full |
@@ -104,9 +85,12 @@ Use the deployment package provided by Menace, then follow the startup instructi
 3. Click **Test Agent**.
 4. Use **Test Audio** to talk to your agent in the browser, or **Test Chat** to iterate faster in text. In Test Chat, you can edit or replay user turns and Menace Voice will regenerate the agent's replies and node transitions from that point.
 
-> 🔑 **No API keys needed.** Menace Voice ships with auto-generated keys and its own LLM / TTS / STT stack. Connect your own keys for LLM, TTS, STT, or Telephony (e.g. Twilio, Vonage, Telnyx) anytime.
-
-> **Featured On & Community Validation:** Menace Voice was named **[#1 Product of the Day on Product Hunt](https://www.producthunt.com/products/dograh)**.
+> 🔑 **Model provider setup**
+>
+> - Menace Voice does not bundle third-party LLM, TTS, or STT API keys in the Docker image.
+> - **Managed inference:** When available for your deployment, sign-in may create a [Menace Voice Service Key](https://voice.menaceui.com/docs/configurations/api-keys#service-keys) (usage billed through Menace Voice credits). If managed setup does not complete, configure [Model Configurations](https://voice.menaceui.com/docs/configurations/inference-providers) manually.
+> - **BYOK:** Add your own LLM, TTS, and STT provider keys in [Model Configurations](https://voice.menaceui.com/docs/configurations/inference-providers).
+> - **Phone calls:** Require configured telephony connectivity (a phone number or SIP routing), a supported hosted plan where managed SIP applies, and separate usage charges. Using your own carrier (for example Twilio, Vonage, or Telnyx) requires that provider's credentials.
 
 ## Build Agents with MCP
 
@@ -153,7 +137,7 @@ For detailed deployment instructions including remote server setup with HTTPS, s
 
 ### Cloud Version
 
-Visit [https://www.dograh.com](https://www.dograh.com/) for our managed cloud offering.
+Visit [https://voice.menaceui.com](https://voice.menaceui.com) for the managed cloud offering.
 
 ## 📚Documentation
 
@@ -170,8 +154,7 @@ Menace Voice is licensed under the [BSD 2-Clause License](LICENSE).
 
 ## 🏢 About
 
-Built with ❤️ by **Menace** (Zansat Technologies Private Limited)
-Founded by YC alumni and exit founders committed to making voice AI accessible to everyone.
+Menace Voice builds on the open-source [Dograh](https://github.com/dograh-hq/dograh) project. [Product Hunt](https://www.producthunt.com/products/dograh) recognition and other launch accolades belong to the upstream Dograh launch, not to Menace Voice.
 
 <br><br><br>
 

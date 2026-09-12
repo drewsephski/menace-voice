@@ -11,6 +11,11 @@ export function Pricing({ navigation }: { navigation: LandingNavigation }) {
       <div className={styles.heading}>
         <SectionLabel>Pricing</SectionLabel>
         <h2>Start free. Scale when your voice agents go live.</h2>
+        <p className={styles.note}>
+          Plans cover the platform. AI provider usage, phone numbers, and carrier
+          charges are separate. Start with a browser test; the Free plan does not
+          include phone calls.
+        </p>
       </div>
       <SubscriptionPlanCards
         actionHref={navigation.startBuilding}

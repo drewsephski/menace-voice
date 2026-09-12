@@ -59,13 +59,13 @@ export function SignupForm() {
 
   return (
     <AuthShell enterpriseSlot={<AuthEnterpriseCTA />}>
-      <div className="space-y-1.5 text-center">
-        <h1 className="text-2xl font-semibold tracking-tight">Create an account</h1>
+      <div className="space-y-1 text-center">
+        <h1 className="text-xl font-semibold tracking-tight">Create an account</h1>
         <p className="text-sm text-muted-foreground">Enter your details to get started</p>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div className="space-y-2">
+      <form onSubmit={handleSubmit} className="space-y-3">
+        <div className="space-y-1.5">
           <Label htmlFor="email">Email</Label>
           <Input
             id="email"
@@ -76,7 +76,7 @@ export function SignupForm() {
             required
           />
         </div>
-        <div className="space-y-2">
+        <div className="space-y-1.5">
           <Label htmlFor="password">Password</Label>
           <Input
             id="password"
@@ -88,7 +88,7 @@ export function SignupForm() {
             minLength={8}
           />
         </div>
-        <div className="space-y-2">
+        <div className="space-y-1.5">
           <Label htmlFor="confirmPassword">Confirm password</Label>
           <Input
             id="confirmPassword"

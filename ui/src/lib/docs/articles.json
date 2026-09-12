@@ -6,7 +6,7 @@
       "title": "From first call to production",
       "description": "Understand how Menace Voice fits together, choose the right starting path, and move from a browser test to a monitored production agent.",
       "readTime": "8 min read",
-      "next": "first-agent",
+      "next": "model-setup",
       "blocks": [
         {
           "type": "paragraph",
@@ -84,6 +84,96 @@
       ]
     },
     {
+      "slug": "model-setup",
+      "section": "Start here",
+      "title": "Models and costs",
+      "description": "Configure Speech to Speech, Menace Voice-managed, or BYOK models, understand Service Keys and API keys, and know what Free and paid plans include before you test.",
+      "readTime": "4 min read",
+      "next": "first-agent",
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "Configure your AI models and voice before your first browser or phone conversation. Your workspace model settings provide the defaults for agents; you can also set per-agent overrides in agent settings."
+        },
+        {
+          "type": "heading",
+          "id": "open-models",
+          "text": "Open Model Configurations"
+        },
+        {
+          "type": "paragraph",
+          "text": "Open Models in the workspace sidebar, or choose Configure models on the overview page. Both open Model Configurations at /model-configurations."
+        },
+        {
+          "type": "list",
+          "items": [
+            "Speech to Speech: a realtime speech-to-speech model handles the live conversation; you still configure an LLM for extraction, QA, and other non-realtime tasks.",
+            "Menace Voice: one Menace Voice Service Key selects Menace Voice-managed LLM, voice, and transcriber models. Usage is billed through Menace Voice credits on the account that owns the Service Key.",
+            "BYOK: bring your own provider accounts and API keys for LLM, voice, transcriber, and embedding models. You pay those providers directly for inference usage."
+          ]
+        },
+        {
+          "type": "heading",
+          "id": "managed-inference",
+          "text": "Menace Voice-managed inference"
+        },
+        {
+          "type": "paragraph",
+          "text": "When managed services are available, sign-in may configure a default Service Key and managed models for your workspace. If no configuration appears, open Model Configurations and add a Service Key or your own provider keys."
+        },
+        {
+          "type": "callout",
+          "title": "Managed usage costs",
+          "text": "Managed inference uses Menace Voice credits on the account that owns the Service Key. Check your balance and available pricing in the workspace before testing."
+        },
+        {
+          "type": "heading",
+          "id": "service-keys-vs-api-keys",
+          "text": "Service Keys vs workspace API keys"
+        },
+        {
+          "type": "list",
+          "items": [
+            "Service Keys authenticate Menace Voice-managed inference in Model Configurations. Create them from Developers → API Keys, choose Service Key, and paste the value into the Menace Voice section. They are not interchangeable with workspace API keys.",
+            "Workspace API keys authenticate your organization to the Menace Voice API and MCP endpoint — for example triggering agents, listing workflows, or connecting Codex or Claude to /api/v1/mcp/. They do not replace a Service Key in model settings."
+          ]
+        },
+        {
+          "type": "heading",
+          "id": "byok",
+          "text": "Bring your own keys"
+        },
+        {
+          "type": "paragraph",
+          "text": "BYOK is available on every plan, including Free. Supply valid provider credentials for the model categories you enable. Your selected providers bill inference usage separately from the Menace Voice platform plan."
+        },
+        {
+          "type": "heading",
+          "id": "plans-and-telephony",
+          "text": "Browser testing vs hosted telephony"
+        },
+        {
+          "type": "list",
+          "items": [
+            "Free includes WebRTC browser testing (Web Call), one voice agent, and BYOK. It does not enable hosted telephony or outbound campaigns.",
+            "Starter and Pro enable hosted telephony (inbound and outbound). Pro also enables outbound campaigns. Telephony still requires a configured provider or SIP route, an active phone number or trunk where applicable, and provider-side charges separate from Menace Voice credits or subscription fees."
+          ]
+        },
+        {
+          "type": "callout",
+          "title": "Separate cost layers",
+          "text": "Budget for the platform subscription, your chosen inference service (managed credits or BYOK provider usage), and any carrier or SIP charges. Start with a browser test before connecting a phone line."
+        },
+        {
+          "type": "link",
+          "before": "With models configured, continue to ",
+          "label": "Build your first voice agent",
+          "slug": "first-agent",
+          "after": " and run your first Web Call before adding telephony."
+        }
+      ]
+    },
+    {
       "slug": "first-agent",
       "section": "Start here",
       "title": "Build your first voice agent",
@@ -94,6 +184,13 @@
         {
           "type": "paragraph",
           "text": "The fastest way to a useful first agent is to give Menace Voice a narrow brief and let the guided setup build the initial workflow around it. You do not need a phone number for this tutorial. You need a signed-in workspace, permission to use your microphone, and a working model configuration by the time you reach the Voice step."
+        },
+        {
+          "type": "link",
+          "before": "If you have not configured models yet, start with ",
+          "label": "Models and costs",
+          "slug": "model-setup",
+          "after": " — set up Speech to Speech, Menace Voice-managed inference, or BYOK before the Voice step."
         },
         {
           "type": "heading",
@@ -498,7 +595,7 @@
             "Documentation: list the docs tree, search by concept, and read a complete page or section before answering product-mechanics questions.",
             "Workspace catalog: list agents, reusable tools, credentials, knowledge documents, and recordings available to the API key's organization.",
             "Authoring schema: list node types, read a node type's fields, defaults, limits, examples, and graph constraints, and retrieve voice-prompting guidance.",
-            "Workflow source: project the latest working version to editable @dograh/sdk TypeScript, then parse and validate the complete source on save.",
+            "Workflow source: project the latest working version to editable Menace Voice workflow TypeScript, then parse and validate the complete source on save.",
             "Mutations: create a reusable tool, create a new workflow, or save an existing workflow as a new draft."
           ]
         },
@@ -576,16 +673,16 @@
         {
           "type": "code",
           "language": "~/.codex/config.toml",
-          "code": "[mcp_servers.dograh]\nurl = \"https://voice.menaceui.com/api/v1/mcp/\"\nenv_http_headers = { \"X-API-Key\" = \"DOGRAH_API_KEY\" }"
+          "code": "[mcp_servers.menace-voice]\nurl = \"https://voice.menaceui.com/api/v1/mcp/\"\nenv_http_headers = { \"X-API-Key\" = \"MENACE_VOICE_API_KEY\" }"
         },
         {
           "type": "code",
           "language": "Shell",
-          "code": "export DOGRAH_API_KEY=\"YOUR_API_KEY\"\ncodex mcp list\ncodex mcp get dograh"
+          "code": "export MENACE_VOICE_API_KEY=\"YOUR_API_KEY\"\ncodex mcp list\ncodex mcp get menace-voice"
         },
         {
           "type": "paragraph",
-          "text": "The server name dograh is only the local client identifier and matches the current SDK package. The product and workspace remain Menace Voice. For other MCP clients, use the same endpoint and X-API-Key header in that client's Streamable HTTP configuration."
+          "text": "The server name menace-voice is only the local client identifier in your MCP config. The product and workspace are Menace Voice. For other MCP clients, use the same endpoint and X-API-Key header in that client's Streamable HTTP configuration."
         },
         {
           "type": "heading",

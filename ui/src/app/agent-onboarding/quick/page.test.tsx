@@ -37,7 +37,7 @@ describe("Quick agent setup", () => {
   it("creates from the overview chatbox while retaining the existing overview sections", async () => {
     render(<OverviewPage />);
     expect(screen.getByText("What would you like your voice agent to do?")).toBeTruthy();
-    expect(screen.getByText("Configure Services")).toBeTruthy();
+    expect(screen.getByText("Connect AI models and voice")).toBeTruthy();
     expect(screen.getByText("Resources")).toBeTruthy();
     expect(screen.getByRole("link", { name: "Start guided setup" })).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: "Qualify leads" }));
@@ -62,9 +62,9 @@ describe("Quick agent setup", () => {
     expect(request.body.workflow_configurations).toBeUndefined();
     expect(request.body.onboarding_context.agent_brief).toBe("A friendly HVAC receptionist who collects callback details.");
     expect(request.body.onboarding_context.voice_name).toBe("ember");
-    expect(request.body.onboarding_context.workflow_stages).toEqual([]);
+    expect(request.body.onboarding_context.workflow_stages).toHaveLength(3);
     expect(request.body.activity_description).toContain("exactly one Global node");
-    expect(request.body.activity_description).toContain("one to eight task-specific Agent nodes");
+    expect(request.body.activity_description).toContain("exactly three Agent nodes");
   });
 
   it("does not let a Bookings example silently replace a typed technical documentation job", async () => {

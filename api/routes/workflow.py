@@ -66,18 +66,10 @@ from api.services.workflow.mcp_prompt import (
     append_mcp_usage_instructions,
     build_mcp_usage_instructions,
 )
-from api.services.workflow.onboarding_capabilities import (
-    build_onboarding_capability_catalog,
-)
-from api.services.workflow.onboarding_generation import (
-    AgentOnboardingContext,
-    OnboardingSetup,
-    generate_onboarding_workflow,
-)
-from api.services.workflow.onboarding_layout import InvalidOnboardingWorkflowLayout
-from api.services.workflow.onboarding_planner import (
-    OnboardingPlanningError,
-    plan_onboarding_workflow,
+from api.schemas.agent_setup import AgentOnboardingContext, OnboardingSetup
+from api.services.workflow.onboarding_prompt import (
+    InvalidOnboardingWorkflowLayout,
+    enhance_onboarding_workflow_prompts,
 )
 from api.services.workflow.onboarding_revision import (
     preserve_launch_configuration,
@@ -867,9 +859,9 @@ async def create_workflow_from_template(
     Create a new workflow from a natural language template request.
 
     This endpoint:
-    1. Plans onboarding graphs with the configured organization/workflow model
-    2. Validates prompts, graph connectivity, and authorized stage resources
-    3. Persists a validated draft; legacy template requests use the MPS API
+    1. Uses mps_service_key_client to call the MPS workflow API
+    2. Hardens onboarding drafts to the fixed three-stage canvas when setup context is present
+    3. Persists a validated draft in the database
 
     Args:
         request: The template creation request with call_type, use_case, and activity_description
@@ -959,84 +951,76 @@ async def create_workflow_from_template(
             user=user,
         )
 
-        async def generate(activity_description: str) -> dict[str, Any]:
-            if DEPLOYMENT_MODE == "oss":
-                return await mps_service_key_client.call_workflow_api(
-                    call_type=request.call_type.upper(),
-                    use_case=request.use_case,
-                    activity_description=activity_description,
-                    created_by=str(user.provider_id),
-                )
-            if not user.selected_organization_id:
-                raise HTTPException(status_code=400, detail="No organization selected")
-            return await mps_service_key_client.call_workflow_api(
+        if DEPLOYMENT_MODE == "oss":
+            workflow_data = await mps_service_key_client.call_workflow_api(
                 call_type=request.call_type.upper(),
                 use_case=request.use_case,
-                activity_description=activity_description,
+                activity_description=request.activity_description,
+                created_by=str(user.provider_id),
+            )
+        else:
+            if not user.selected_organization_id:
+                raise HTTPException(status_code=400, detail="No organization selected")
+            workflow_data = await mps_service_key_client.call_workflow_api(
+                call_type=request.call_type.upper(),
+                use_case=request.use_case,
+                activity_description=request.activity_description,
                 organization_id=user.selected_organization_id,
             )
 
+        workflow_def = (
+            regenerate_trigger_uuids(workflow_data.get("workflow_definition", {})) or {}
+        )
         if request.onboarding_context:
-            if not user.selected_organization_id:
-                raise HTTPException(status_code=400, detail="No organization selected")
-            capabilities = build_onboarding_capability_catalog(
-                selected_tools, documents, organization_id=user.selected_organization_id
-            )
-
-            async def plan(prompt: str) -> dict[str, Any]:
-                return await plan_onboarding_workflow(
-                    prompt, user=user, workflow_configurations=workflow_configurations
-                )
-
+            context = request.onboarding_context
             try:
-                workflow_data = await generate_onboarding_workflow(
-                    generate=plan,
-                    setup=OnboardingSetup(
-                        **request.onboarding_context.model_dump(),
-                        agent_name=(request.name or "").strip() or "the configured agent",
-                        use_case=request.use_case,
-                        call_type=request.call_type,
+                workflow_def = enhance_onboarding_workflow_prompts(
+                    workflow_def,
+                    agent_name=(
+                        request.name
+                        or workflow_data.get("name")
+                        or "the configured agent"
                     ),
-                    capabilities=capabilities,
-                    has_pre_call_fetch=bool(pre_call_fetch_url),
-                    has_post_call_webhook=bool(post_call_webhook_url),
-                    selected_tools=selected_tools,
+                    use_case=request.use_case,
+                    call_type=request.call_type,
+                    agent_brief=context.agent_brief,
+                    tone=context.tone,
+                    language=context.language,
+                    voice_provider=context.voice_provider,
+                    voice_name=context.voice_name,
+                    behavior_notes=context.behavior_notes,
+                    workflow_stages=context.workflow_stages,
                 )
-            except OnboardingPlanningError as exc:
-                raise HTTPException(status_code=502, detail=str(exc)) from exc
             except InvalidOnboardingWorkflowLayout as exc:
-                logger.warning("Onboarding generation failed validation after repair")
+                logger.warning("Rejected invalid onboarding workflow layout: {}", exc)
                 raise HTTPException(
                     status_code=502,
-                    detail="We could not generate a valid workflow from this setup. "
-                    "No agent was saved. Please try creating it again.",
+                    detail=(
+                        "The agent draft did not match the required three-stage "
+                        "layout. Please create it again."
+                    ),
                 ) from exc
-            workflow_def = workflow_data["workflow_definition"]
             workflow_configurations = {
                 **(workflow_configurations or {}),
                 "agent_setup": OnboardingSetup(
                     **request.onboarding_context.model_dump(),
-                    agent_name=(request.name or workflow_data.get("name") or request.use_case).strip(),
+                    agent_name=(
+                        request.name or workflow_data.get("name") or request.use_case
+                    ).strip(),
                     use_case=request.use_case,
                     call_type=request.call_type,
                 ).model_dump(),
                 "agent_setup_template_id": request.template_id,
             }
-        else:
-            workflow_data = await generate(request.activity_description)
-            workflow_def = (
-                regenerate_trigger_uuids(workflow_data.get("workflow_definition", {}))
-                or {}
-            )
-            workflow_def = _attach_template_resources(
-                workflow_def,
-                tool_uuids=tool_uuids,
-                document_uuids=document_uuids,
-            )
-            workflow_def = append_mcp_usage_instructions(
-                workflow_def,
-                build_mcp_usage_instructions(selected_tools),
-            )
+        workflow_def = _attach_template_resources(
+            workflow_def,
+            tool_uuids=tool_uuids,
+            document_uuids=document_uuids,
+        )
+        workflow_def = append_mcp_usage_instructions(
+            workflow_def,
+            build_mcp_usage_instructions(selected_tools),
+        )
         workflow_def = _attach_launch_integrations(
             workflow_def,
             call_type=request.call_type,
@@ -1328,25 +1312,50 @@ async def preview_agent(
         tool_uuids=tool_ids, document_uuids=document_ids,
         organization_id=user.selected_organization_id,
     )
-    capabilities = build_onboarding_capability_catalog(
-        selected_tools, documents, organization_id=user.selected_organization_id
-    )
-
-    async def plan(prompt: str) -> dict[str, Any]:
-        return await plan_onboarding_workflow(
-            prompt, user=user, workflow_configurations=version.workflow_configurations
-        )
-
     try:
-        result = await generate_onboarding_workflow(
-            generate=plan, setup=request, capabilities=capabilities,
-            has_pre_call_fetch=any(n.get("data", {}).get("pre_call_fetch_url") for n in original["nodes"]),
-            has_post_call_webhook=any(n["type"] == "webhook" for n in original["nodes"]),
-            selected_tools=selected_tools,
+        if DEPLOYMENT_MODE == "oss":
+            workflow_data = await mps_service_key_client.call_workflow_api(
+                call_type=request.call_type.upper(),
+                use_case=request.use_case,
+                activity_description=request.agent_brief,
+                created_by=str(user.provider_id),
+            )
+        else:
+            workflow_data = await mps_service_key_client.call_workflow_api(
+                call_type=request.call_type.upper(),
+                use_case=request.use_case,
+                activity_description=request.agent_brief,
+                organization_id=user.selected_organization_id,
+            )
+        workflow_def = (
+            regenerate_trigger_uuids(workflow_data.get("workflow_definition", {})) or {}
         )
-        definition = preserve_launch_configuration(original, result["workflow_definition"])
-    except OnboardingPlanningError as exc:
-        raise HTTPException(status_code=502, detail=str(exc)) from exc
+        workflow_def = enhance_onboarding_workflow_prompts(
+            workflow_def,
+            agent_name=request.agent_name,
+            use_case=request.use_case,
+            call_type=request.call_type,
+            agent_brief=request.agent_brief,
+            tone=request.tone,
+            language=request.language,
+            voice_provider=request.voice_provider,
+            voice_name=request.voice_name,
+            behavior_notes=request.behavior_notes,
+            workflow_stages=request.workflow_stages,
+        )
+        workflow_def = append_mcp_usage_instructions(
+            workflow_def,
+            build_mcp_usage_instructions(selected_tools),
+        )
+        definition = preserve_launch_configuration(original, workflow_def)
+    except InvalidOnboardingWorkflowLayout as exc:
+        raise HTTPException(
+            status_code=502,
+            detail=(
+                "The preview draft did not match the required three-stage layout. "
+                "Please try again."
+            ),
+        ) from exc
     except ValueError as exc:
         raise HTTPException(status_code=422, detail="We could not produce a complete conversation from this brief. Your current agent is unchanged. Please try again.") from exc
     return AgentPreviewResponse(

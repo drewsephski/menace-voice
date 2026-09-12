@@ -29,16 +29,15 @@
 
 - **灵活部署** —— 在适合团队的环境中运行平台
 - **完全可控且透明** —— 灵活配置 LLM / TTS / STT 集成
-- **由 YC 校友与连续创业者维护**,致力于让语音 AI 更实用
 
 ## 🎥 媒体推荐
 
 <div align="center">
   <a href="https://www.youtube.com/watch?v=xD9JEvfCH9k">
-    <img src="https://img.youtube.com/vi/xD9JEvfCH9k/maxresdefault.jpg" alt="Better Stack 介绍 Menace Voice" width="80%" style="border-radius: 8px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+    <img src="https://img.youtube.com/vi/xD9JEvfCH9k/maxresdefault.jpg" alt="Better Stack 上游 Dograh 项目介绍" width="80%" style="border-radius: 8px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
   </a>
   <br>
-  <em><strong>Better Stack</strong> 上手实测 —— 深入体验 Menace Voice</em>
+  <em><strong>Better Stack</strong> 对上游 Dograh 项目的介绍</em>
 </div>
 
 <details>
@@ -60,8 +59,8 @@
 |---|---|---|---|
 | **协议** | BSD 2-Clause(开源) | 闭源 | 闭源 |
 | **可自托管** | ✅ 可以 —— 一条 Docker 命令 | ❌ 仅 SaaS | ❌ 仅 SaaS |
-| **定价** | 免费(自托管)·按用量计费(云端) | 按分钟计费的 SaaS | 按分钟计费的 SaaS |
-| **自带 LLM / STT / TTS** | ✅ 任意厂商,也可使用 Menace Voice 自带方案 | 在其集成范围内可配置 | 在其集成范围内可配置 |
+| **定价** | 自托管免费 · 推理按 Menace Voice 积分或自备厂商账户计费 · 电信费用由运营商收取 | 按分钟计费的 SaaS | 按分钟计费的 SaaS |
+| **自带 LLM / STT / TTS** | ✅ 任意厂商，或使用 Menace Voice 托管推理（Service Key） | 在其集成范围内可配置 | 在其集成范围内可配置 |
 | **源码级定制** | ✅ 每行代码都可自由修改 | ❌ 闭源 | ❌ 闭源 |
 | **数据驻留** | 部署在自家基础设施,规则自己定 | 厂商云端 | 厂商云端 |
 | **厂商绑定** | 无 | 完全绑定 | 完全绑定 |
@@ -90,7 +89,11 @@
 3. 点击 **Test Agent**。
 4. 使用 **Test Audio** 在浏览器中和智能体语音对话,或使用 **Test Chat** 通过文本快速迭代。在 Test Chat 中,你可以编辑或重放用户消息,Menace Voice 会从该位置重新生成智能体回复和节点流转。
 
-> 🔑 **无需 API Key。** Menace Voice 自带一套自动生成的密钥,以及内置的 LLM / TTS / STT 栈。你可以随时接入自己的 LLM、TTS、STT 或电信服务商(如 Twilio、Vonage、Telnyx)。
+> 🔑 **模型提供方配置**
+> - Docker 镜像不会内置第三方 LLM、TTS 或 STT 的 API Key。
+> - **托管推理：** 若你的部署支持，登录后可能会创建 [Menace Voice Service Key](https://voice.menaceui.com/docs/configurations/api-keys#service-keys)（用量通过 Menace Voice 积分计费）。若托管设置未完成，请手动配置 [模型配置](https://voice.menaceui.com/docs/configurations/inference-providers)。
+> - **自备密钥 (BYOK)：** 在 [模型配置](https://voice.menaceui.com/docs/configurations/inference-providers) 中添加你自己的 LLM、TTS、STT 厂商密钥。
+> - **电话通话：** 需要已配置的电信连接（电话号码或 SIP 路由）、在适用时支持的托管套餐，以及单独的使用费用。使用自有运营商（如 Twilio、Vonage、Telnyx）需要该服务商的凭证。
 
 ## 使用 MCP 构建智能体
 
@@ -134,7 +137,7 @@ Menace Voice 内置 MCP 服务器,因此编码智能体可以直接在你的 Men
 
 ### 云端版本
 
-托管云版本请访问 [https://www.dograh.com](https://www.dograh.com/)。
+托管云版本请访问 [https://voice.menaceui.com](https://voice.menaceui.com)。
 
 ## 📚 文档
 
@@ -146,8 +149,7 @@ Menace Voice 基于 [BSD 2-Clause 协议](LICENSE)提供。
 
 ## 🏢 关于我们
 
-由 **Menace**(Zansat Technologies Private Limited)用 ❤️ 打造。
-创始团队由 YC 校友与连续创业者组成,致力于让语音 AI 人人可用。
+Menace Voice 基于开源项目 [Dograh](https://github.com/dograh-hq/dograh) 构建。[Product Hunt](https://www.producthunt.com/products/dograh) 等发布荣誉属于上游 Dograh 项目,不属于 Menace Voice。
 
 <br><br><br>
 

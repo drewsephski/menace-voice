@@ -30,9 +30,9 @@ export function AuthShell({
   return (
     <div className={`${styles.shell} grid min-h-screen w-full bg-background lg:grid-cols-[55%_45%]`}>
       {/* The fixed top inset keeps fields in place as the form grows. */}
-      <main className="auth-imprint flex min-h-screen flex-col overflow-y-auto">
-        <div className="flex min-h-full items-start justify-center px-6 pb-6 pt-[clamp(1.5rem,18svh,10rem)] sm:px-10 sm:pb-10">
-          <div className="w-full max-w-md space-y-6 rounded-2xl border border-border/60 bg-card p-6 shadow-lg sm:p-8">
+      <main className={`${styles.formColumn} auth-imprint flex min-h-screen flex-col overflow-y-auto lg:min-h-0`}>
+        <div className={`${styles.formWrap} flex min-h-0 flex-1 justify-center px-5 pb-5 sm:px-8 sm:pb-6`}>
+          <div className={`${styles.authCard} w-full max-w-md rounded-2xl border border-border/60 bg-card p-5 shadow-lg sm:p-6`}>
             {/* Mobile-only wordmark (brand panel is hidden) */}
             <div className="lg:hidden">
               <Link href="/" aria-label="Back to Menace Voice home">
@@ -45,7 +45,9 @@ export function AuthShell({
       </main>
 
       {/* Brand / value panel (RIGHT) — hidden on mobile */}
-      <aside className="relative hidden flex-col justify-between overflow-hidden border-l border-border/60 bg-zinc-950 p-10 lg:flex xl:p-14">
+      <aside
+        className={`${styles.brandPanel} relative hidden flex-col justify-between overflow-hidden border-l border-border/60 bg-zinc-950 p-10 lg:flex xl:p-14`}
+      >
         {/* Ambient depth: soft radial glow behind the content */}
         <div
           aria-hidden

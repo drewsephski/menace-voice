@@ -9,7 +9,12 @@ const questions = [
   {
     question: "Can Menace Voice use our existing models and providers?",
     answer:
-      "Yes. Start with the managed stack or connect your own LLM, speech-to-text, text-to-speech, telephony, and storage providers.",
+      "Yes. Connect your own AI provider keys in Model Configurations for language, speech recognition, and voice generation. Managed service is an option only when enabled for your deployment. AI usage and telephony charges are separate from your platform plan.",
+  },
+  {
+    question: "What do I need for my first test?",
+    answer:
+      "Create a workspace, configure your AI models and voice, then build an agent. Open Test Agent to try a browser conversation. You do not need a phone number for a browser test; connecting a phone line is a separate step. The Free plan supports browser testing with your own provider keys.",
   },
   {
     question: "Can we test an agent before putting it on a phone line?",
@@ -30,6 +35,11 @@ const questions = [
     question: "Can we self-host Menace Voice?",
     answer:
       "Yes. Menace Voice is BSD-licensed and can run in your own environment, so you control deployment, data residency, and source-level customization.",
+  },
+  {
+    question: "How is Menace Voice related to Dograh?",
+    answer:
+      "Menace Voice builds on the BSD-licensed, open-source Dograh project, with its own product experience and ongoing development. We credit Dograh as the upstream foundation.",
   },
 ] as const;
 

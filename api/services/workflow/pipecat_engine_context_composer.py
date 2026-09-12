@@ -90,6 +90,16 @@ def compose_system_prompt_for_node(
         guidance = [
             "CURRENT CALL CAPABILITIES — INTERNAL",
             (
+                "TURN TAKING: Ask one question at a time, then end your response "
+                "and wait for the caller's actual answer. Never answer for the caller, "
+                "treat silence as consent, or fill missing facts with placeholders. "
+                "Asking a question does not satisfy a transition condition. Do not "
+                "call a transition in the same response as a question awaiting an "
+                "answer. Route silently once the condition is supported by caller "
+                "answers, known context, or successful tool results; the destination "
+                "stage will speak next. Reuse established answers without asking again."
+            ),
+            (
                 "Only the tools exposed for this turn are callable. A workflow "
                 "transition changes the conversation stage; it does not itself "
                 "book, send, transfer, or complete an external action."
@@ -109,7 +119,12 @@ def compose_system_prompt_for_node(
                 "No lookup or external-action tools are available in this "
                 "stage. Do not claim to check live data or complete an action. "
                 "Use the configured path to a capable stage, or explain the "
-                "limitation and offer only a supported next step."
+                "limitation and offer only a supported next step. You may note "
+                "details in this call's transcript, but do not say you have sent "
+                "them, notified the owner, or booked an appointment. Never "
+                "guarantee that another person will review the request or call "
+                "back. A generated example promising follow-up is not evidence "
+                "that delivery or a human response is configured."
             )
         if "retrieve_from_knowledge_base" in action_names:
             guidance.append(
@@ -170,7 +185,12 @@ async def compose_functions_for_node(
     # Transition function schemas
     for outgoing_edge in node.out_edges:
         function_schema = get_function_schema(
-            outgoing_edge.get_function_name(), outgoing_edge.condition
+            outgoing_edge.get_function_name(),
+            outgoing_edge.condition
+            + " Only call when this condition is already supported by the actual "
+            "conversation or tool results. If you just asked for information or "
+            "confirmation needed by this condition, end your response and wait for "
+            "the caller; do not call this function yet.",
         )
         functions.append(function_schema)
 

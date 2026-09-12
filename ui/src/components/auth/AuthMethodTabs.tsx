@@ -66,26 +66,41 @@ export function AuthMethodTabs({ children }: { children: ReactNode }) {
       const panel = document.getElementById(selected.getAttribute("aria-controls") ?? "");
       const root = list.parentElement;
       if (!panel || !root || !host.contains(panel)) return;
+
       if (selected.id !== selectedId) {
         stopAnimations();
-        const nextHeight = root.getBoundingClientRect().height;
-        if (selectedId && !reducedMotion) {
+        const priorSelectedId = selectedId;
+        const startHeight = previousHeight || root.getBoundingClientRect().height;
+        const shouldAnimate = Boolean(priorSelectedId) && !reducedMotion;
+        if (shouldAnimate) {
+          root.style.height = `${startHeight}px`;
           root.classList.add(styles.expanding);
-          const heightAnimation = animate(root, { height: [previousHeight, nextHeight] }, {
-            type: "spring", stiffness: 300, damping: 32,
-            onComplete: () => {
-              root.style.height = "";
+        }
+        selectedId = selected.id;
+        // Measure after the new tab panel is active in the layout tree.
+        requestAnimationFrame(() => {
+          if (!root.isConnected) return;
+          const nextHeight = root.getBoundingClientRect().height;
+          if (shouldAnimate) {
+            const heightAnimation = animate(root, { height: [startHeight, nextHeight] }, {
+              type: "spring", stiffness: 300, damping: 32,
+              onComplete: () => {
+                root.style.height = "";
+                root.classList.remove(styles.expanding);
+                previousHeight = nextHeight;
+              },
+            });
+            stopAnimations = () => {
+              heightAnimation.stop();
+              root.style.removeProperty("height");
               root.classList.remove(styles.expanding);
-            },
-          });
-          stopAnimations = () => {
-            heightAnimation.stop();
+            };
+          } else {
             root.style.removeProperty("height");
             root.classList.remove(styles.expanding);
-          };
-        }
-        previousHeight = nextHeight;
-        selectedId = selected.id;
+            previousHeight = nextHeight;
+          }
+        });
       } else if (!root.style.height) {
         previousHeight = root.getBoundingClientRect().height;
       }

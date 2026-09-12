@@ -1,6 +1,7 @@
 "use client";
 
-import { ArrowUp, CalendarDays, Loader2, PhoneIncoming, Users } from "lucide-react";
+import { ArrowUp, CalendarDays, ExternalLink, Loader2, PhoneIncoming, Users } from "lucide-react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { type FormEvent, useEffect, useId, useRef, useState } from "react";
 
@@ -28,13 +29,20 @@ const EXAMPLES = [
   { label: "Bookings", icon: CalendarDays, callType: "inbound", brief: "A warm assistant who helps callers request an appointment. Collect their preferred date, service, and contact details, then explain that our team will confirm availability." },
 ] as const;
 
+type SetupError =
+  | { kind: "api"; message: string }
+  | { kind: "missing_voice"; message: string }
+  | { kind: "create"; message: string };
+
+const MODEL_CONFIGURATIONS_PATH = "/model-configurations";
+
 export function QuickAgentComposer() {
   const router = useRouter();
   const { user, loading, getAccessToken, redirectToLogin } = useAuth();
   const [description, setDescription] = useState("");
   const [callType, setCallType] = useState<"inbound" | "outbound">("inbound");
   const [isCreating, setIsCreating] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [setupError, setSetupError] = useState<SetupError | null>(null);
   const [pendingExample, setPendingExample] = useState<(typeof EXAMPLES)[number] | null>(null);
   const submitting = useRef(false);
   const descriptionId = useId();
@@ -51,13 +59,18 @@ export function QuickAgentComposer() {
     textareaRef.current?.focus();
   };
 
+  const releaseSubmitLock = () => {
+    submitting.current = false;
+    setIsCreating(false);
+  };
+
   const createAgent = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const brief = description.trim();
     if (submitting.current || loading || !user || !brief || pendingExample) return;
     submitting.current = true;
     setIsCreating(true);
-    setError(null);
+    setSetupError(null);
 
     try {
       const accessToken = await getAccessToken();
@@ -65,13 +78,26 @@ export function QuickAgentComposer() {
       const configurationResult =
         await getModelConfigurationV2ApiV1OrganizationsModelConfigurationsV2Get({ headers });
       if (configurationResult.error || !configurationResult.data) {
-        throw new Error(detailFromError(configurationResult.error, "Could not load your workspace voice. Please try again."));
+        setSetupError({
+          kind: "api",
+          message: detailFromError(
+            configurationResult.error,
+            "Could not load your workspace voice. Check your connection and try again.",
+          ),
+        });
+        releaseSubmitLock();
+        return;
       }
       const voice = getAgentVoiceSelection(
         configurationResult.data.configuration as OrganizationAiModelConfigurationV2 | null,
       );
       if (!voice) {
-        throw new Error("Your workspace needs a voice configuration. Choose one in guided setup, then create your agent.");
+        setSetupError({
+          kind: "missing_voice",
+          message: "Connect a voice provider in model settings before creating an agent.",
+        });
+        releaseSubmitLock();
+        return;
       }
 
       const input = {
@@ -96,14 +122,21 @@ export function QuickAgentComposer() {
         },
       });
       if (response.error || !response.data) {
-        throw new Error(detailFromError(response.error, "Your agent could not be created. Please try again."));
+        setSetupError({
+          kind: "create",
+          message: detailFromError(response.error, "Your agent could not be created. Please try again."),
+        });
+        releaseSubmitLock();
+        return;
       }
 
       router.push(`/workflow/${response.data.id}?onboarding=web_call`);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Your agent could not be created. Please try again.");
-      submitting.current = false;
-      setIsCreating(false);
+      setSetupError({
+        kind: "create",
+        message: err instanceof Error ? err.message : "Your agent could not be created. Please try again.",
+      });
+      releaseSubmitLock();
     }
   };
 
@@ -115,6 +148,14 @@ export function QuickAgentComposer() {
       </div>
     );
   }
+
+  const statusMessage = isCreating
+    ? "Building your agent and connecting its conversation. This may take a moment."
+    : setupError?.kind === "missing_voice"
+      ? "Your brief stays in this tab. Configure voice in model settings, then return to create your agent."
+      : setupError?.kind === "api"
+        ? "We could not reach your workspace voice settings. Try again once the connection is back."
+        : "Uses your workspace voice. You can edit everything.";
 
   return (
         <form onSubmit={createAgent} aria-label="Quick agent setup" aria-busy={isCreating}>
@@ -191,11 +232,35 @@ export function QuickAgentComposer() {
               </div>
             </section>
           )}
-          {error && <p role="alert" className="mt-3 text-sm text-destructive">{error}</p>}
+          {setupError && (
+            <div
+              role="alert"
+              className={`mt-3 rounded-lg border p-4 ${
+                setupError.kind === "missing_voice"
+                  ? "border-amber-500/40 bg-amber-500/5"
+                  : "border-destructive/40 bg-destructive/5"
+              }`}
+            >
+              <p className={`text-sm font-medium ${setupError.kind === "missing_voice" ? "text-foreground" : "text-destructive"}`}>
+                {setupError.message}
+              </p>
+              {setupError.kind === "missing_voice" ? (
+                <>
+                  <p className="mt-2 text-sm text-muted-foreground">
+                    Choose your LLM, speech, and voice providers in model settings. Your brief stays in this tab while you configure.
+                  </p>
+                  <Button asChild variant="outline" size="sm" className="mt-4">
+                    <Link href={MODEL_CONFIGURATIONS_PATH} target="_blank" rel="noopener noreferrer">
+                      Configure voice in new tab
+                      <ExternalLink className="size-3.5" aria-hidden="true" />
+                    </Link>
+                  </Button>
+                </>
+              ) : null}
+            </div>
+          )}
           <p id={`${descriptionId}-defaults`} role="status" className="mt-4 text-xs leading-5 text-muted-foreground">
-            {isCreating
-              ? "Building your agent and connecting its conversation. This may take a moment."
-              : "Uses your workspace voice. You can edit everything."}
+            {statusMessage}
           </p>
         </form>
 

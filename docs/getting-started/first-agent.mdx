@@ -3,7 +3,11 @@ title: "Your First Agent in 5 Minutes"
 description: "Build and talk to a working voice agent in five minutes using Web Calls — no telephony setup required."
 ---
 
-This is the fastest path to a working voice agent. You'll create an agent, get a generated conversation flow, and talk to it in your browser — no phone number, no telephony provider, no configuration.
+This is the fastest path to a working voice agent. You'll create an agent, get a generated conversation flow, and talk to it in your browser — no phone number or telephony provider required.
+
+<Note>
+If your organization has no model configuration yet, wait for managed setup to finish when your deployment supports it, or open [Model Configurations](/configurations/inference-providers) to add a Service Key or your own provider keys before testing voice. Automatic provisioning is not guaranteed.
+</Note>
 
 <iframe
   className="w-full aspect-video rounded-xl"
@@ -34,7 +38,7 @@ This description is sent to an LLM to generate a starting workflow. The more spe
 
 After generation, you're dropped into the [Voice Agent Builder](/voice-agent/introduction) with a graph already built for you — typically a **Start Call** node, one or more **Agent** nodes with prompts for your use case, and an **End Call** node, connected by pathways.
 
-You don't need to understand the full [graph model](/voice-agent/introduction#the-graph-model) yet — the generated agent works out of the box. You can come back and customize prompts once you've heard it talk.
+You don't need to understand the full [graph model](/voice-agent/introduction#the-graph-model) yet — the generated agent can run once model inference is configured. You can come back and customize prompts once you've heard it talk.
 
 ## Step 3: Talk to it with a Web Call
 

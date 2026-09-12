@@ -17,10 +17,9 @@ import { detailFromError } from "@/lib/apiError";
 import { useAuth } from "@/lib/auth";
 import { cn, getRandomId } from "@/lib/utils";
 
-import { AiSimulatorPlaceholder } from "./workflow-tester/AiSimulatorPlaceholder";
 import { EmbeddedVoiceTester } from "./workflow-tester/EmbeddedVoiceTester";
 import { ManualTextChatPanel } from "./workflow-tester/ManualTextChatPanel";
-import { ChatModeToggle, DisabledNotice, EmptyState } from "./workflow-tester/shared";
+import { DisabledNotice, EmptyState } from "./workflow-tester/shared";
 import type { WorkflowRuntimeNodeTransition } from "./workflow-tester/types";
 import { getErrorMessage } from "./workflow-tester/utils";
 
@@ -52,7 +51,6 @@ export function WorkflowTesterPanel({
     const { isAuthenticated, loading: authLoading, getAccessToken } = auth;
     const [accessToken, setAccessToken] = useState<string | null>(null);
     const [activeMode, setActiveMode] = useState<"audio" | "text">("audio");
-    const [chatMode, setChatMode] = useState<"manual" | "simulated">("manual");
     const [chatSessionKey, setChatSessionKey] = useState(0);
     const [chatActive, setChatActive] = useState(false);
     const [voiceRunId, setVoiceRunId] = useState<number | null>(null);
@@ -261,9 +259,8 @@ export function WorkflowTesterPanel({
 
                 <TabsContent value="text" className="min-h-0 flex-1 px-4 py-3">
                     <div className="flex h-full min-h-0 flex-col gap-3">
-                        <div className="flex items-center justify-between gap-2">
-                            <ChatModeToggle value={chatMode} onChange={setChatMode} />
-                            {chatMode === "manual" && chatActive ? (
+                        {chatActive ? (
+                            <div className="flex items-center justify-end gap-2">
                                 <Button
                                     variant="ghost"
                                     size="sm"
@@ -274,23 +271,19 @@ export function WorkflowTesterPanel({
                                     <RefreshCw className="h-3.5 w-3.5" />
                                     Reset
                                 </Button>
-                            ) : null}
-                        </div>
+                            </div>
+                        ) : null}
 
-                        {chatMode === "manual" ? (
-                            <ManualTextChatPanel
-                                key={chatSessionKey}
-                                workflowId={workflowId}
-                                ready={tokenReady && !!accessToken}
-                                initialContextVariables={initialContextVariables}
-                                disabled={testerBlocked}
-                                disabledReason={effectiveDisabledReason}
-                                onActiveChange={setChatActive}
-                                onNodeTransition={onRuntimeNodeTransition}
-                            />
-                        ) : (
-                            <AiSimulatorPlaceholder disabledReason={effectiveDisabledReason} />
-                        )}
+                        <ManualTextChatPanel
+                            key={chatSessionKey}
+                            workflowId={workflowId}
+                            ready={tokenReady && !!accessToken}
+                            initialContextVariables={initialContextVariables}
+                            disabled={testerBlocked}
+                            disabledReason={effectiveDisabledReason}
+                            onActiveChange={setChatActive}
+                            onNodeTransition={onRuntimeNodeTransition}
+                        />
                     </div>
                 </TabsContent>
             </Tabs>
