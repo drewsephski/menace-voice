@@ -4,11 +4,19 @@ from __future__ import annotations
 
 import secrets
 from datetime import UTC, datetime, timedelta
-from typing import Any
+from typing import Any, cast
 
 from fastapi import HTTPException
 from loguru import logger
 from stripe import SignatureVerificationError, StripeClient, Webhook
+from stripe.params import CustomerCreateParams
+from stripe.params.billing_portal import (
+    SessionCreateParams as PortalSessionCreateParams,
+)
+from stripe.params.checkout import SessionCreateParams
+from stripe.params.checkout._session_create_params import (
+    SessionCreateParamsSubscriptionData,
+)
 
 from api.constants import (
     STRIPE_PRO_PRICE_ID,
@@ -30,7 +38,12 @@ _WEBHOOK_EVENT_TTL_SECONDS = 8 * 24 * 60 * 60
 
 
 def stripe_billing_enabled() -> bool:
-    return bool(STRIPE_SECRET_KEY and STRIPE_STARTER_PRICE_ID and STRIPE_PRO_PRICE_ID)
+    return bool(
+        STRIPE_SECRET_KEY
+        and STRIPE_STARTER_PRICE_ID
+        and STRIPE_PRO_PRICE_ID
+        and STRIPE_WEBHOOK_SECRET
+    )
 
 
 def stripe_webhook_configured() -> bool:
@@ -46,7 +59,9 @@ def get_stripe_client() -> StripeClient:
 def price_id_for_plan(plan: str) -> str:
     if plan == "starter":
         if not STRIPE_STARTER_PRICE_ID:
-            raise HTTPException(status_code=503, detail="Starter plan is not configured")
+            raise HTTPException(
+                status_code=503, detail="Starter plan is not configured"
+            )
         return STRIPE_STARTER_PRICE_ID
     if plan == "pro":
         if not STRIPE_PRO_PRICE_ID:
@@ -78,20 +93,20 @@ async def ensure_stripe_customer(
     email: str | None = None,
 ) -> str:
     if organization.stripe_customer_id:
-        return organization.stripe_customer_id
+        return cast(str, organization.stripe_customer_id)
 
     client = get_stripe_client()
-    customer = client.customers.create(
-        params={
-            "metadata": {
-                "organization_id": str(organization.id),
-                "organization_provider_id": organization.provider_id,
-            },
-            **({"email": email} if email else {}),
-        }
-    )
+    params: CustomerCreateParams = {
+        "metadata": {
+            "organization_id": str(organization.id),
+            "organization_provider_id": str(organization.provider_id),
+        },
+    }
+    if email:
+        params["email"] = email
+    customer = client.customers.create(params=params)
     await db_client.update_organization_subscription_fields(
-        organization.id,
+        cast(int, organization.id),
         stripe_customer_id=customer.id,
     )
     return customer.id
@@ -106,11 +121,17 @@ async def create_checkout_session(
     if plan not in PAID_PLAN_IDS:
         raise HTTPException(status_code=400, detail="Invalid subscription plan")
 
+    if organization.stripe_subscription_id:
+        raise HTTPException(
+            status_code=409,
+            detail="Manage your existing subscription in the billing portal.",
+        )
+
     customer_id = await ensure_stripe_customer(organization, email=email)
     client = get_stripe_client()
     integration_suffix = secrets.token_hex(4)
 
-    subscription_data: dict[str, Any] = {
+    subscription_data: SessionCreateParamsSubscriptionData = {
         "metadata": {
             "organization_id": str(organization.id),
             "plan": plan,
@@ -119,25 +140,26 @@ async def create_checkout_session(
     if _eligible_for_stripe_trial(organization):
         subscription_data["trial_period_days"] = TRIAL_DAYS
 
-    session = client.checkout.sessions.create(
-        params={
-            "mode": "subscription",
-            "customer": customer_id,
-            "line_items": [{"price": price_id_for_plan(plan), "quantity": 1}],
-            "success_url": f"{UI_APP_URL.rstrip('/')}/billing?checkout=success",
-            "cancel_url": f"{UI_APP_URL.rstrip('/')}/billing?checkout=canceled",
-            "client_reference_id": str(organization.id),
-            "metadata": {
-                "organization_id": str(organization.id),
-                "plan": plan,
-            },
-            "subscription_data": subscription_data,
-            "allow_promotion_codes": True,
-            "integration_identifier": f"dograh_saas_checkout_{integration_suffix}",
-        }
-    )
+    params: SessionCreateParams = {
+        "mode": "subscription",
+        "customer": customer_id,
+        "line_items": [{"price": price_id_for_plan(plan), "quantity": 1}],
+        "success_url": f"{UI_APP_URL.rstrip('/')}/billing?checkout=success",
+        "cancel_url": f"{UI_APP_URL.rstrip('/')}/billing?checkout=canceled",
+        "client_reference_id": str(organization.id),
+        "metadata": {
+            "organization_id": str(organization.id),
+            "plan": plan,
+        },
+        "subscription_data": subscription_data,
+        "allow_promotion_codes": True,
+        "integration_identifier": f"dograh_saas_checkout_{integration_suffix}",
+    }
+    session = client.checkout.sessions.create(params=params)
     if not session.url:
-        raise HTTPException(status_code=502, detail="Stripe checkout session missing URL")
+        raise HTTPException(
+            status_code=502, detail="Stripe checkout session missing URL"
+        )
     return session.url
 
 
@@ -149,12 +171,11 @@ async def create_customer_portal_session(organization: OrganizationModel) -> str
         )
 
     client = get_stripe_client()
-    session = client.billing_portal.sessions.create(
-        params={
-            "customer": organization.stripe_customer_id,
-            "return_url": f"{UI_APP_URL.rstrip('/')}/billing",
-        }
-    )
+    params: PortalSessionCreateParams = {
+        "customer": cast(str, organization.stripe_customer_id),
+        "return_url": f"{UI_APP_URL.rstrip('/')}/billing",
+    }
+    session = client.billing_portal.sessions.create(params=params)
     if not session.url:
         raise HTTPException(status_code=502, detail="Stripe portal session missing URL")
     return session.url
@@ -200,21 +221,33 @@ async def apply_subscription_from_stripe(
         )
         return
 
+    if (
+        not organization.stripe_customer_id
+        or subscription.get("customer") != organization.stripe_customer_id
+    ):
+        raise HTTPException(
+            status_code=400, detail="Stripe customer does not match organization"
+        )
+
     status = subscription.get("status")
     plan = _resolve_plan_from_subscription(subscription)
+    resolved_plan: SubscriptionPlanId
     if status in ACTIVE_SUBSCRIPTION_STATUSES:
         resolved_plan = plan if plan != "free" else "starter"
     else:
         resolved_plan = "free"
+
+    items = subscription.get("items", {}).get("data", [])
+    period_end = subscription.get("current_period_end")
+    if period_end is None and items:
+        period_end = items[0].get("current_period_end")
 
     await db_client.update_organization_subscription_fields(
         organization_id,
         stripe_subscription_id=subscription.get("id"),
         subscription_plan=resolved_plan,
         subscription_status=status,
-        subscription_current_period_end=_parse_timestamp(
-            subscription.get("current_period_end")
-        ),
+        subscription_current_period_end=_parse_timestamp(period_end),
         trial_ends_at=_parse_timestamp(subscription.get("trial_end")),
     )
 
@@ -229,29 +262,6 @@ async def clear_subscription_for_organization(organization_id: int) -> None:
         trial_ends_at=None,
         clear_subscription=True,
     )
-
-
-async def _claim_webhook_event(event_id: str) -> bool:
-    """Return True when this event should be processed (first delivery)."""
-    try:
-        from api.tasks.arq import get_arq_redis
-
-        redis = await get_arq_redis()
-        return bool(
-            await redis.set(
-                f"stripe:webhook:{event_id}",
-                "1",
-                ex=_WEBHOOK_EVENT_TTL_SECONDS,
-                nx=True,
-            )
-        )
-    except Exception as exc:
-        logger.warning(
-            "Stripe webhook idempotency unavailable for {}: {}",
-            event_id,
-            exc,
-        )
-        return True
 
 
 async def _resolve_organization_id_from_subscription_event(
@@ -310,13 +320,35 @@ async def handle_stripe_webhook(payload: bytes, signature: str | None) -> None:
     event_type = event_payload.get("type")
     data_object = (event_payload.get("data") or {}).get("object") or {}
 
-    if event_type is None:
-        logger.warning("Stripe webhook event missing type: {}", event_id)
-        return
+    if not event_id or not event_type:
+        raise HTTPException(status_code=400, detail="Invalid Stripe event")
 
-    if event_id and not await _claim_webhook_event(event_id):
-        logger.info("Skipping duplicate Stripe webhook event {}", event_id)
-        return
+    live_mode = (STRIPE_SECRET_KEY or "").startswith(("sk_live_", "rk_live_"))
+    if event_payload.get("livemode") is not live_mode:
+        raise HTTPException(status_code=400, detail="Stripe event mode mismatch")
+
+    from api.tasks.arq import get_arq_redis
+
+    # Fail with a retryable response if Redis is unavailable. Only record completion
+    # after the DB update succeeds; a process crash must not discard Stripe retries.
+    redis = await get_arq_redis()
+    event_key = f"stripe:webhook:v2:{event_id}"
+    lock = redis.lock(f"{event_key}:lock", timeout=300, blocking=False)
+    if not await lock.acquire():
+        raise HTTPException(status_code=503, detail="Stripe event is being processed")
+    try:
+        if await redis.get(event_key):
+            logger.info("Skipping duplicate Stripe webhook event {}", event_id)
+            return
+        await _process_stripe_event(event_id, event_type, data_object)
+        await redis.set(event_key, "done", ex=_WEBHOOK_EVENT_TTL_SECONDS)
+    finally:
+        await lock.release()
+
+
+async def _process_stripe_event(
+    event_id: str, event_type: str, data_object: dict[str, Any]
+) -> None:
 
     logger.info("Processing Stripe webhook event {} ({})", event_id, event_type)
 
@@ -355,43 +387,47 @@ async def handle_stripe_webhook(payload: bytes, signature: str | None) -> None:
             )
             return
         if event_type == "customer.subscription.deleted":
+            organization = await db_client.get_organization_by_id(organization_id)
+            if (
+                organization is None
+                or organization.stripe_subscription_id != data_object.get("id")
+            ):
+                return
+            if organization.stripe_customer_id != data_object.get("customer"):
+                raise HTTPException(
+                    status_code=400,
+                    detail="Stripe customer does not match organization",
+                )
             await clear_subscription_for_organization(organization_id)
             return
+        # Events can arrive out of order. Fetch the authoritative subscription
+        # instead of restoring access from an old active/trialing snapshot.
+        subscription = client.subscriptions.retrieve(data_object["id"])
         await apply_subscription_from_stripe(
             organization_id,
-            _subscription_payload(data_object),
+            _subscription_payload(subscription),
         )
         return
 
-    if event_type == "invoice.payment_failed":
+    if event_type in {"invoice.paid", "invoice.payment_failed"}:
+        parent = data_object.get("parent") or {}
+        subscription_details = parent.get("subscription_details") or {}
+        subscription_id = subscription_details.get("subscription") or data_object.get(
+            "subscription"
+        )
+        # A one-off invoice must never grant or revoke subscription access.
+        if not subscription_id:
+            return
         organization_id = await db_client.get_organization_id_by_stripe_customer_id(
             data_object.get("customer")
         )
         if organization_id is None:
             return
-        await db_client.update_organization_subscription_fields(
+        # Retrieve current status so delayed invoice events cannot undo recovery.
+        subscription = client.subscriptions.retrieve(subscription_id)
+        await apply_subscription_from_stripe(
             organization_id,
-            subscription_status="past_due",
-        )
-        return
-
-    if event_type == "invoice.paid":
-        organization_id = await db_client.get_organization_id_by_stripe_customer_id(
-            data_object.get("customer")
-        )
-        if organization_id is None:
-            return
-        subscription_id = data_object.get("subscription")
-        if subscription_id:
-            subscription = client.subscriptions.retrieve(subscription_id)
-            await apply_subscription_from_stripe(
-                organization_id,
-                _subscription_payload(subscription),
-            )
-            return
-        await db_client.update_organization_subscription_fields(
-            organization_id,
-            subscription_status="active",
+            _subscription_payload(subscription),
         )
 
 
