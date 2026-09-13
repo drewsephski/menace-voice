@@ -6,7 +6,7 @@
     "light": "#FF6369",
     "dark": "#CD2B31"
   },
-  "favicon": "/favicon.ico",
+  "favicon": "/logo/menace-mark.png",
   "navigation": {
     "tabs": [
       {
@@ -653,7 +653,7 @@
     }
   },
   "search": {
-    "prompt": "Search agents, tools, calls, or API endpoints…"
+    "prompt": "Search agents, tools, calls, or API endpoints\u2026"
   },
   "contextual": {
     "options": [

@@ -36,7 +36,10 @@ function save(path, text) {
   if (check) {
     let current;
     try { current = readFileSync(path, 'utf8'); } catch { current = ''; }
-    if (current !== text) { console.error(`Out of date: ${path}`); stale = true; }
+    const matches = path === configPath && current
+      ? JSON.stringify(JSON.parse(current)) === JSON.stringify(JSON.parse(text))
+      : current === text;
+    if (!matches) { console.error(`Out of date: ${path}`); stale = true; }
   } else {
     mkdirSync(dirname(path), { recursive: true });
     writeFileSync(path, text);

@@ -186,7 +186,8 @@ Add the following content (replace paths as needed):
 # Copy renewed certificates to dograh certs directory
 cp /etc/letsencrypt/live/voice.yourcompany.com/fullchain.pem /home/ubuntu/dograh/certs/local.crt
 cp /etc/letsencrypt/live/voice.yourcompany.com/privkey.pem /home/ubuntu/dograh/certs/local.key
-chmod 644 /home/ubuntu/dograh/certs/local.crt /home/ubuntu/dograh/certs/local.key
+chmod 644 /home/ubuntu/dograh/certs/local.crt
+chmod 600 /home/ubuntu/dograh/certs/local.key
 
 # Restart nginx to load new certificates
 cd /home/ubuntu/dograh
