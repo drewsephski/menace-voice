@@ -1,0 +1,26 @@
+{
+  "$schema": "https://context7.com/schema/context7.json",
+  "projectTitle": "Menace Voice",
+  "description": "Official Menace Voice documentation: build, test, deploy, and operate conversational voice agents.",
+  "branch": "codex/menace-docs7",
+  "folders": [
+    "docs"
+  ],
+  "excludeFolders": [
+    "docs/images",
+    "docs/logo"
+  ],
+  "excludeFiles": [
+    "AGENTS.md",
+    "CLAUDE.md",
+    "README.md"
+  ],
+  "rules": [
+    "Use X-API-Key for authenticated Menace Voice API requests; API keys and managed-inference Service Keys serve different purposes.",
+    "Use draft definitions for editor tests; publish a reviewed draft before production calls.",
+    "Distinguish workspace-authoring MCP from remote MCP tools invoked by a live voice agent.",
+    "Use initial_context for prompt inputs and gathered_context for extracted run outputs.",
+    "Never treat saved definitions, call initiation, or HTTP health checks as proof of a completed call.",
+    "Read the deployment billing response for current entitlements; subscription, inference credits, and carrier charges are separate."
+  ]
+}

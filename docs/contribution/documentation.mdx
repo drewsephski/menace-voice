@@ -1,0 +1,43 @@
+---
+title: "Maintain the documentation"
+description: "Preview Docs7, synchronize shared guides, and publish verified documentation changes."
+---
+
+## Documentation sources
+
+The official Docs7 site lives in `docs/`. The custom in-app docs remain in `ui/src/components/docs/` and `ui/src/lib/docs/`. Shared handbook pages under `docs/handbook/` are generated from `ui/src/lib/docs/articles.json`; edit that source and regenerate instead of editing the generated pages.
+
+## Local workflow
+
+From the repository root:
+
+```bash
+node scripts/sync_docs_handbook.mjs
+node scripts/check_docs.mjs
+pnpm dlx @upstash/docs7@0.1.1 dev ./docs --port 3333
+```
+
+Open `http://localhost:3333`. Verify the affected navigation, links, code blocks, API schema, mobile layout, search, and Markdown output. The CLI previews locally; hosted publication runs from GitHub.
+
+## API reference
+
+`docs/api-reference/openapi.json` is generated from the FastAPI application. Refresh it using the repository-owned exporter with the backend environment loaded, as documented in [contributor setup](/contribution/setup). Never substitute the development database environment for the test environment when running tests.
+
+API endpoint pages point to exact method/path pairs in the spec. Regenerate the extended catalog after changing the schema:
+
+```bash
+node scripts/sync_docs_api.mjs
+node scripts/check_docs.mjs
+```
+
+## Publishing settings
+
+Connect `drewsephski/menace-voice` in the Context7 team's **Docs7** tab, set the production branch to the reviewed documentation branch, and set **Docs path** to `docs`. Enable **Add to Context7**. Use `main` after the documentation change is merged if that is the team's chosen release branch.
+
+After Publish, inspect the build's **Log** and **Health**, then check the live homepage, representative API pages, redirects, search, `/llms.txt`, and Context7 indexing. A build failure should leave the previous successful release available.
+
+## Keep changes reviewable
+
+Docs7 previews are created for eligible same-repository pull requests that change files inside `docs/`. Agent schedules and PR review settings are optional and should follow the team's chosen review process. Monthly Checkup is documented by Docs7 as planned, so do not depend on it for validation.
+
+See the [Docs7 quickstart](https://context7.com/docs/docs7/quickstart), [build behavior](https://context7.com/docs/docs7/builds), and [agent readiness](https://context7.com/docs/docs7/agent-readiness) for the platform contract.

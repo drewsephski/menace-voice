@@ -15,7 +15,7 @@ Menace Voice is a full-stack platform for building voice agents with a drag-and-
 - 🐛 **Report bugs** with reproduction steps and relevant logs
 - 💡 **Suggest features** with a clear use case and expected outcome
 - 🔧 **Submit pull requests**
-- 📖 **Improve documentation** The documentation is hosted via mintlify and the code is in `docs/` folder
+- 📖 **Improve documentation** The documentation is hosted with Docs7 in Context7 and the code is in `docs/` folder
 
 👉 A great place to start is with issues tagged **`good first issue`**.
 

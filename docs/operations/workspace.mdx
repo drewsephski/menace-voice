@@ -1,0 +1,30 @@
+---
+title: "Workspace settings and credentials"
+description: "Keep agents, providers, tools, and access aligned with the selected organization."
+---
+
+## Select the right workspace
+
+Agents, tools, credentials, phone configurations, knowledge documents, and usage are scoped to an organization. Confirm the selected workspace before creating or changing a resource. An API key resolves to its owning organization; changing the workspace in your browser does not retarget an existing key.
+
+## Configure defaults
+
+Use Models for organization-level inference defaults and agent settings for supported overrides. Set default outbound telephony configuration and caller numbers deliberately. Campaign defaults apply to campaign setup; inspect the actual campaign before starting a batch.
+
+## Keep credential types distinct
+
+| Credential | Purpose |
+| --- | --- |
+| API key | REST API and workspace-authoring MCP |
+| Service Key | Menace-managed model inference |
+| BYOK provider key | A specific model provider |
+| Telephony credentials | Your carrier account and calling resources |
+| Tool credential | Authentication from an HTTP or remote MCP tool to another system |
+
+Create credentials in the intended workspace, attach them to the relevant integration, and avoid copying them into prompts, context, source control, or browser embeds. Archive or rotate keys when their consumer changes.
+
+## Organize agents
+
+Use folders and descriptive agent names to keep experiments separate from production agents. Archive an unused agent only after checking its inbound routing, website embed, campaigns, and application callers. Naming and organization changes may take effect outside draft publication.
+
+See [security and data handling](/operations/security) and [drafts and publishing](/voice-agent/versions).

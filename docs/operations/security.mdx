@@ -1,0 +1,26 @@
+---
+title: "Security and data handling"
+description: "Protect credentials, conversation data, and the boundaries around external actions."
+---
+
+## Credentials
+
+Keep API keys on your server or in your coding assistant's secret environment. Use stored credentials for tools and provider connections. Never put a workspace API key in a website widget or public repository. For browser deployment, use the supported embed configuration and its allowed origins.
+
+## Conversation data
+
+Prompts, initial context, transcripts, recordings, extracted fields, tool payloads, and webhook bodies may contain customer data. Send only the fields needed for the task. Choose model and storage providers according to your organization's requirements and review their handling of the data you send.
+
+The presence of a feature or a self-hosted deployment is not a certification or a retention guarantee. Establish and verify your own storage, access, backup, and deletion procedures.
+
+## External actions
+
+A tool schema controls the arguments the model can supply. Your tool endpoint must still authenticate, authorize, validate input, and handle repeated requests safely. Require the conversation to confirm consequential actions where appropriate and implement that requirement in the server workflow as well as the prompt.
+
+## Public networking
+
+Use valid HTTPS for hosted APIs, MCP, webhooks, and embeds. Self-hosted operators should configure a trusted certificate using the [custom-domain guide](/deployment/custom-domain). Keep databases, Redis, and internal object-storage administration interfaces off the public internet.
+
+## Access review
+
+Check the intended organization before edits, revoke unused keys, restrict tool permissions, and review who can fetch exported artifacts. Separate developer test data from production records. See [workspace settings](/operations/workspace) and the [production checklist](/operations/production).

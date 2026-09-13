@@ -1,0 +1,28 @@
+---
+title: "Choose your starting path"
+description: "Choose the deployment and delivery channel that match your first use case."
+---
+
+## Prerequisites
+
+You need an account in the hosted app or a running self-hosted installation. You also need working model credentials or managed inference provisioned for your workspace.
+
+| Your goal | Start here | Add later |
+| --- | --- | --- |
+| Evaluate an agent | [First browser call](/getting-started/first-agent) | Tools and real customer data |
+| Answer incoming phone calls | [Inbound routing](/integrations/telephony/inbound) | Transfers and post-call webhooks |
+| Place calls from your application | [Outbound API calls](/getting-started/trigger-calls-from-your-backend) | Status handling and duplicate protection |
+| Call a contact list | [Campaign operations](/operations/campaigns) | Schedules, retry policy, and measured concurrency |
+| Talk to website visitors | [Website deployment](/voice-agent/add-to-website) | Origin restrictions and production monitoring |
+| Author with an AI coding assistant | [Agent quickstart](/handbook/agents/agent-quickstart) | Workspace MCP and a review process |
+| Operate your own infrastructure | [Deployment](/deployment/introduction) | Backups, public HTTPS, TURN, and upgrades |
+
+## Hosted and self-hosted
+
+The hosted application is available at [voice.menaceui.com](https://voice.menaceui.com). Feature access depends on the workspace's current subscription and configuration. Model usage and carrier charges are separate; see [billing and credits](/operations/billing).
+
+Self-hosting puts the API, UI, database, queue, and storage under your control. You provide infrastructure, secrets, supported model connections, public networking, backups, and upgrades. See [Docker deployment](/deployment/docker) for a packaged installation or [contributor setup](/contribution/setup) to develop from source.
+
+## Pick one delivery channel
+
+A Web Call is the shortest way to test the speech pipeline. It does not require a phone number and it does not prove that inbound routing or outbound dialing works. Add one production channel after the conversation succeeds, then test that channel with a completed run.

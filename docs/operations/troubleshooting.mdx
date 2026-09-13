@@ -1,0 +1,29 @@
+---
+title: "Troubleshoot by failure stage"
+description: "Find the responsible boundary before changing prompts, providers, or infrastructure."
+---
+
+## Identify the failing stage
+
+Record the workspace, agent ID, run ID when available, time, call direction, channel, and exact error. Remove secrets before sharing logs.
+
+| Symptom | Check first | Reference |
+| --- | --- | --- |
+| API returns 401 | API key, header, and owning organization | [Authentication](/api-reference/authentication) |
+| API returns 402 | Feature entitlement, workflow limit, or inference balance named in the error | [Billing](/operations/billing) |
+| Draft will not publish | Validation errors, complete graph, and conflicting triggers | [Versions](/voice-agent/versions) |
+| Call starts without audio | Microphone, model validation, WebRTC/ICE, and TURN | [Setup troubleshooting](/getting-started/troubleshooting) |
+| Inbound number reaches the wrong agent | Number mapping, provider webhook, and published trigger | [Inbound routing](/integrations/telephony/inbound) |
+| Outbound initiation succeeds but no conversation occurs | Carrier events, destination restrictions, caller ID, and media | [Telephony](/integrations/telephony/overview) |
+| Tool is never called | Node attachment, prompt instruction, schema, and required values | [Tools](/voice-agent/tools/introduction) |
+| Knowledge produces no answer | Document processing state, embedding configuration, and query relevance | [Knowledge base](/voice-agent/knowledge-base) |
+| Webhook did not update your system | Completed run, template values, credentials, receiver logs, and retry policy | [Webhook payloads](/developer/webhooks) |
+| Production differs from an editor test | Published definition, runtime context, and model overrides | [Testing](/voice-agent/testing) |
+
+## Change one responsible part
+
+A healthy homepage does not establish that model calls, media, storage, or a queue worker work. Reproduce the smallest failing operation, inspect its evidence, fix that boundary, and run the same check again.
+
+## Escalate with useful evidence
+
+Provide the exact failing step, expected and actual result, timestamp, relevant IDs, and redacted error text. Include whether text chat, Web Call, telephony, and downstream delivery passed independently. For self-hosting, include the deployed image or commit and the affected service logs.

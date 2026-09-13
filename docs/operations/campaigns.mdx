@@ -1,0 +1,32 @@
+---
+title: "Operate outbound campaigns"
+description: "Prepare contacts, configure scheduling and retries, and review a controlled outbound batch."
+---
+
+## Prerequisites
+
+Publish a tested outbound agent, configure an outbound telephony provider and caller numbers, and verify that your deployment enables campaigns. Start with one completed outbound test call before uploading a list.
+
+## Prepare contacts
+
+The current campaign source is CSV. Include a `phone_number` column using international phone-number formatting and the columns needed by your workflow's context variables. Validate and deduplicate the list, then upload it through campaign creation. Use only contacts your team is permitted to call.
+
+## Configure the batch
+
+Choose the agent, uploaded source, retry policy, concurrency, and any schedule. Scheduled windows use the configured time zone; verify it explicitly before starting. Review retries for busy, no-answer, and voicemail outcomes so a failed attempt does not produce unwanted repeated calls.
+
+Concurrency is bounded by your organization and provider configuration. Some providers also limit it by the number of configured caller numbers. An accepted configuration is not proof that the carrier can sustain the requested throughput.
+
+## Run a pilot
+
+1. Create a small campaign with test contacts.
+2. Verify the selected agent version, context columns, caller number, and schedule.
+3. Start the campaign and watch its progress and run list.
+4. Inspect failed calls and any circuit-breaker pause before increasing volume.
+5. Review the report and external outcomes before resuming or redialing.
+
+## Pause, resume, and redial
+
+Pause when the agent, provider, or downstream system needs attention. Do not assume pausing cancels calls already in flight. Resume after resolving the cause and checking the remaining schedule. Inspect the selected redial outcomes before submitting another batch.
+
+See [campaign concepts](/core-concepts/campaigns), [campaign API](/api-reference/campaigns), and [reports](/operations/reports).

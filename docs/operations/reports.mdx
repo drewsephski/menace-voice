@@ -1,0 +1,30 @@
+---
+title: "Reports and usage"
+description: "Use workspace, agent, campaign, and daily reports to investigate outcomes and consumption."
+---
+
+## Choose the scope
+
+Use workspace usage for aggregate consumption, agent runs for conversation-level investigation, and campaign reports for an outbound batch. Daily and workflow reports provide broader comparisons across time and agents. The API catalog includes CSV exports where the endpoint supports them.
+
+## Review a reporting period
+
+1. Choose the workspace, date range, and relevant workflow or campaign.
+2. Check completed and failed activity alongside total volume.
+3. Inspect unusual cost or duration values by opening individual runs.
+4. Compare reported outcomes with the transcript and downstream records.
+5. Export the report when you need reconciliation outside Menace Voice.
+
+## Interpret cost carefully
+
+Subscription charges, managed inference credits, BYOK provider charges, and carrier invoices represent different costs. A run's recorded usage is not a replacement for a provider invoice. Missing cost data should be investigated rather than treated as zero.
+
+## Useful API families
+
+- `/api/v1/organizations/usage/current-period` and `/daily-breakdown` provide usage summaries.
+- `/api/v1/organizations/usage/runs` and `/runs/report` expose usage by run.
+- `/api/v1/organizations/reports/daily` and `/workflows` expose workspace reports.
+- `/api/v1/workflow/{workflow_id}/report` and `/pilot-review` support agent review.
+- `/api/v1/campaign/{campaign_id}/report` exports campaign results.
+
+Read the [API catalog](/api-reference/catalog) for exact parameters and response formats, then use [run review](/operations/run-review) to investigate an outlier.

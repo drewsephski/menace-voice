@@ -12,8 +12,8 @@ You need Git, a local Docker engine (such as Docker Desktop), and VS Code with t
 1. Obtain the Menace Voice source package and clone it locally:
 
 ```bash
-git clone <SOURCE_URL>
-cd dograh
+git clone --recurse-submodules https://github.com/drewsephski/menace-voice.git
+cd menace-voice
 ```
 
 2. Open the folder in VS Code and run **Dev Containers: Reopen in Container**. The first build takes several minutes — it starts Postgres, Redis, and MinIO, seeds the Python venv, creates the `.env` files, and installs UI dependencies. Later opens are fast.
@@ -82,7 +82,7 @@ All configurations load `api/.env` (test configs use `api/.env.test`) and set `j
 | `ui/` | Next.js frontend — the workflow builder, dashboard, and agent editor |
 | `api/` | FastAPI backend — REST API, campaign orchestration, telephony, ARQ background workers |
 | `pipecat/` | Git submodule for the voice pipeline (STT → LLM → TTS) |
-| `docs/` | This documentation site, written in MDX, previewed with `mint dev` |
+| `docs/` | This documentation site, written in MDX, previewed with `pnpm dlx @upstash/docs7@0.1.1 dev ./docs` |
 | `sdk/` | Python/TypeScript SDKs for driving Menace Voice programmatically |
 | `scripts/` | Setup, deployment, and update scripts |
 | `deploy/` | nginx and coturn config templates used by remote deployment |

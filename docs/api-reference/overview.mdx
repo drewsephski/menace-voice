@@ -7,7 +7,7 @@ description: "Interact with Menace Voice programmatically via the REST API"
 
 All API requests are made to:
 
-```
+```text
 https://your-menace-voice-instance/api/v1
 ```
 
@@ -22,15 +22,13 @@ The current API version is `v1`. The version is included in the URL path.
 All request bodies must be sent as JSON with the `Content-Type: application/json` header.
 
 ```bash
-curl -X POST https://your-menace-voice-instance/api/v1/workflow/create/definition \
-  -H "Content-Type: application/json" \
-  -H "X-API-Key: dg_your_api_key" \
-  -d '{"name": "My Agent", "workflow_definition": {}}'
+curl https://voice.menaceui.com/api/v1/workflow/fetch \
+  -H "X-API-Key: $MENACE_VOICE_API_KEY"
 ```
 
 ## Response format
 
-All responses are JSON. Successful responses return the relevant resource object. Error responses follow a consistent shape:
+Most resource responses are JSON. Download, report, streaming, and audio endpoints use the response content type specified in the API reference. Successful resource responses return the relevant object. Error responses follow a consistent shape:
 
 ```json
 {
@@ -60,12 +58,4 @@ Verify your instance is reachable before making API calls.
 curl https://your-menace-voice-instance/api/v1/health
 ```
 
-```json
-{
-  "status": "ok",
-  "version": "1.0.0",
-  "backend_api_endpoint": "https://your-menace-voice-instance",
-  "deployment_mode": "oss",
-  "auth_provider": "local"
-}
-```
+A successful response establishes API reachability. It does not verify model credentials, call media, queue processing, or a completed conversation.

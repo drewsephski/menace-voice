@@ -1,50 +1,62 @@
 {
-  "$schema": "https://mintlify.com/docs.json",
   "theme": "mint",
   "name": "Menace Voice",
   "colors": {
-    "primary": "#16A34A",
-    "light": "#07C983",
-    "dark": "#15803D"
+    "primary": "#E5484D",
+    "light": "#FF6369",
+    "dark": "#CD2B31"
   },
   "favicon": "/favicon.ico",
   "navigation": {
     "tabs": [
       {
-        "tab": "Guides",
-        "icon": "book-open",
+        "tab": "Start",
         "groups": [
           {
-            "group": "Getting started",
+            "group": "Get started",
             "pages": [
-              {
-                "group": "Introduction",
-                "pages": [
-                  "getting-started/index",
-                  "getting-started/prerequisites",
-                  "getting-started/troubleshooting"
-                ]
-              }
+              "index",
+              "getting-started/choose-your-path",
+              "handbook/builders/overview",
+              "handbook/builders/model-setup",
+              "getting-started/first-agent",
+              "getting-started/prerequisites",
+              "getting-started/troubleshooting"
             ]
           },
           {
-            "group": "Build your First Agent",
+            "group": "Understand the platform",
             "pages": [
-                  "getting-started/first-agent",
-                  "getting-started/trigger-calls-from-your-backend",
-                  "getting-started/send-call-data-with-webhooks",
-                  "getting-started/connect-telephony",
-                  "getting-started/add-tools-and-knowledge-base"
-            ]
-          },
-          {
-            "group": "Core Concepts",
-            "pages": [
-              "core-concepts/how-dograh-works",
+              "core-concepts/how-menace-voice-works",
               "core-concepts/workflows-and-agents",
               "core-concepts/calls-and-runs",
-              "core-concepts/context-and-variables",
-              "core-concepts/campaigns"
+              "core-concepts/context-and-variables"
+            ]
+          },
+          {
+            "group": "Next steps",
+            "pages": [
+              "handbook/builders/tools",
+              "handbook/builders/knowledge",
+              "handbook/builders/deploy"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Build",
+        "groups": [
+          {
+            "group": "Design and test",
+            "pages": [
+              "handbook/builders/first-agent",
+              "voice-agent/introduction",
+              "voice-agent/editing-a-workflow",
+              "voice-agent/versions",
+              "voice-agent/testing",
+              "voice-agent/template-variables",
+              "voice-agent/pre-call-data-fetch",
+              "voice-agent/pre-recorded-audio"
             ]
           },
           {
@@ -61,47 +73,47 @@
             ]
           },
           {
-            "group": "Voice Agent Builder",
+            "group": "Voice library",
             "pages": [
-              "voice-agent/introduction",
-              "voice-agent/editing-a-workflow",
-              "voice-agent/pre-recorded-audio",
-              "voice-agent/template-variables",
-              "voice-agent/pre-call-data-fetch",
-              {
-                "group": "Tools",
-                "pages": [
-                  "voice-agent/tools/introduction",
-                  {
-                    "group": "Built-in Tools",
-                    "pages": [
-                      "voice-agent/tools/call-transfer",
-                      "voice-agent/tools/end-call",
-                      "voice-agent/tools/current-time"
-                    ]
-                  },
-                  {
-                    "group": "Custom Tools",
-                    "pages": [
-                      "voice-agent/tools/http-api",
-                      "voice-agent/tools/mcp-tool"
-                    ]
-                  }
-                ]
-              },
+              "configurations/voice-cloning"
+            ]
+          },
+          {
+            "group": "Tools and knowledge",
+            "pages": [
+              "voice-agent/tools/introduction",
+              "voice-agent/tools/http-api",
+              "voice-agent/tools/mcp-tool",
+              "voice-agent/tools/call-transfer",
+              "voice-agent/tools/end-call",
+              "voice-agent/tools/current-time",
               "voice-agent/knowledge-base",
-              {
-                "group": "Nodes",
-                "pages": [
-                  "voice-agent/start-call",
-                  "voice-agent/end-call",
-                  "voice-agent/agent",
-                  "voice-agent/global",
-                  "voice-agent/qa",
-                  "voice-agent/api-trigger",
-                  "voice-agent/webhook"
-                ]
-              },
+              "getting-started/add-tools-and-knowledge-base"
+            ]
+          },
+          {
+            "group": "Node reference",
+            "pages": [
+              "voice-agent/start-call",
+              "voice-agent/agent",
+              "voice-agent/global",
+              "voice-agent/end-call",
+              "voice-agent/qa",
+              "voice-agent/api-trigger",
+              "voice-agent/webhook"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Connect",
+        "groups": [
+          {
+            "group": "Go live",
+            "pages": [
+              "getting-started/connect-telephony",
+              "getting-started/trigger-calls-from-your-backend",
+              "getting-started/send-call-data-with-webhooks",
               "voice-agent/add-to-website"
             ]
           },
@@ -110,7 +122,7 @@
             "pages": [
               "integrations/telephony/overview",
               "integrations/telephony/inbound",
-              "integrations/telephony/dograh-sip",
+              "integrations/telephony/menace-sip",
               "integrations/telephony/twilio",
               "integrations/telephony/vonage",
               "integrations/telephony/plivo",
@@ -125,9 +137,17 @@
             ]
           },
           {
+            "group": "Campaigns",
+            "pages": [
+              "core-concepts/campaigns",
+              "operations/campaigns"
+            ]
+          },
+          {
             "group": "Integrations",
             "tag": "NEW",
             "pages": [
+              "integrations/overview",
               "integrations/mcp",
               "integrations/tuner",
               "integrations/paygent",
@@ -137,19 +157,56 @@
         ]
       },
       {
-        "tab": "Developer",
-        "icon": "code",
+        "tab": "Operate",
         "groups": [
           {
-            "group": "Contribution",
+            "group": "Production",
             "pages": [
-              "contribution/setup",
-              "contribution/reference"
+              "operations/production",
+              "operations/run-review",
+              "operations/reports",
+              "operations/troubleshooting",
+              "operations/security"
             ]
           },
           {
-            "group": "Guides",
+            "group": "Workspace and costs",
             "pages": [
+              "operations/workspace",
+              "operations/billing"
+            ]
+          },
+          {
+            "group": "Self-hosting",
+            "pages": [
+              "deployment/introduction",
+              "deployment/docker",
+              "deployment/authentication",
+              "deployment/custom-domain",
+              "deployment/scaling",
+              "deployment/update",
+              "operations/usage-recovery"
+            ]
+          },
+          {
+            "group": "Development",
+            "pages": [
+              "contribution/setup",
+              "contribution/reference",
+              "contribution/documentation"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Developers",
+        "groups": [
+          {
+            "group": "API and data",
+            "pages": [
+              "api-reference/overview",
+              "api-reference/authentication",
+              "api-reference/errors",
               "developer/workflow-schema",
               "developer/call-dispositions",
               "developer/webhooks",
@@ -166,23 +223,31 @@
             ]
           },
           {
-            "group": "Deployment",
+            "group": "Coding agents",
             "pages": [
-              "deployment/introduction",
-              "deployment/docker",
-              "deployment/authentication",
-              "deployment/custom-domain",
-              "deployment/scaling",
-              "deployment/update",
-              "deployment/heroku"
+              "handbook/agents/agent-overview",
+              "handbook/agents/agent-quickstart",
+              "handbook/agents/tool-contracts",
+              "handbook/agents/memory-context",
+              "handbook/agents/mcp-bridge",
+              "handbook/agents/production-checklist",
+              "developer/context7"
             ]
           }
         ]
       },
       {
         "tab": "API Reference",
-        "icon": "square-terminal",
         "groups": [
+          {
+            "group": "Start here",
+            "pages": [
+              "api-reference/catalog",
+              "api-reference/overview",
+              "api-reference/authentication",
+              "api-reference/errors"
+            ]
+          },
           {
             "group": "Resources",
             "pages": [
@@ -273,11 +338,301 @@
             ]
           },
           {
-            "group": "Authentication & Errors",
+            "group": "Complete endpoint reference",
             "pages": [
-              "api-reference/overview",
-              "api-reference/authentication",
-              "api-reference/errors"
+              {
+                "group": "Agents and runs",
+                "pages": [
+                  "api-reference/endpoints/post-workflow-workflow-id-validate",
+                  "api-reference/endpoints/post-workflow-create-definition",
+                  "api-reference/endpoints/post-workflow-create-template",
+                  "api-reference/endpoints/get-workflow-count",
+                  "api-reference/endpoints/get-workflow-fetch",
+                  "api-reference/endpoints/get-workflow-fetch-workflow-id",
+                  "api-reference/endpoints/get-workflow-workflow-id-agent-setup",
+                  "api-reference/endpoints/post-workflow-workflow-id-agent-preview",
+                  "api-reference/endpoints/get-workflow-workflow-id-versions",
+                  "api-reference/endpoints/post-workflow-workflow-id-publish",
+                  "api-reference/endpoints/post-workflow-workflow-id-create-draft",
+                  "api-reference/endpoints/get-workflow-summary",
+                  "api-reference/endpoints/put-workflow-workflow-id-status",
+                  "api-reference/endpoints/put-workflow-workflow-id-folder",
+                  "api-reference/endpoints/put-workflow-workflow-id",
+                  "api-reference/endpoints/post-workflow-workflow-id-duplicate",
+                  "api-reference/endpoints/post-workflow-workflow-id-runs",
+                  "api-reference/endpoints/get-workflow-workflow-id-runs",
+                  "api-reference/endpoints/get-workflow-workflow-id-runs-run-id",
+                  "api-reference/endpoints/get-workflow-workflow-id-report",
+                  "api-reference/endpoints/get-workflow-templates",
+                  "api-reference/endpoints/post-workflow-templates-duplicate",
+                  "api-reference/endpoints/post-workflow-ambient-noise-upload-url",
+                  "api-reference/endpoints/get-workflow-workflow-id-pilot-review"
+                ]
+              },
+              {
+                "group": "API keys",
+                "pages": [
+                  "api-reference/endpoints/get-user-api-keys",
+                  "api-reference/endpoints/post-user-api-keys",
+                  "api-reference/endpoints/delete-user-api-keys-api-key-id",
+                  "api-reference/endpoints/put-user-api-keys-api-key-id-reactivate"
+                ]
+              },
+              {
+                "group": "Billing and usage",
+                "pages": [
+                  "api-reference/endpoints/get-organizations-billing-subscription",
+                  "api-reference/endpoints/post-organizations-billing-subscription-checkout",
+                  "api-reference/endpoints/post-organizations-billing-subscription-portal",
+                  "api-reference/endpoints/get-organizations-usage-current-period",
+                  "api-reference/endpoints/get-organizations-billing-credits",
+                  "api-reference/endpoints/post-organizations-usage-mps-credits-purchase-url",
+                  "api-reference/endpoints/get-organizations-usage-runs",
+                  "api-reference/endpoints/get-organizations-usage-runs-report",
+                  "api-reference/endpoints/get-organizations-usage-daily-breakdown"
+                ]
+              },
+              {
+                "group": "Campaigns",
+                "pages": [
+                  "api-reference/endpoints/post-campaign-create",
+                  "api-reference/endpoints/get-campaign",
+                  "api-reference/endpoints/get-campaign-campaign-id",
+                  "api-reference/endpoints/patch-campaign-campaign-id",
+                  "api-reference/endpoints/post-campaign-campaign-id-start",
+                  "api-reference/endpoints/post-campaign-campaign-id-pause",
+                  "api-reference/endpoints/get-campaign-campaign-id-runs",
+                  "api-reference/endpoints/post-campaign-campaign-id-redial",
+                  "api-reference/endpoints/post-campaign-campaign-id-resume",
+                  "api-reference/endpoints/get-campaign-campaign-id-progress",
+                  "api-reference/endpoints/get-campaign-campaign-id-source-download-url",
+                  "api-reference/endpoints/get-campaign-campaign-id-report"
+                ]
+              },
+              {
+                "group": "Credentials",
+                "pages": [
+                  "api-reference/endpoints/get-credentials",
+                  "api-reference/endpoints/post-credentials",
+                  "api-reference/endpoints/get-credentials-credential-uuid",
+                  "api-reference/endpoints/put-credentials-credential-uuid",
+                  "api-reference/endpoints/delete-credentials-credential-uuid"
+                ]
+              },
+              {
+                "group": "Documentation assistant",
+                "pages": [
+                  "api-reference/endpoints/post-docs-chat"
+                ]
+              },
+              {
+                "group": "Folders",
+                "pages": [
+                  "api-reference/endpoints/get-folder",
+                  "api-reference/endpoints/post-folder",
+                  "api-reference/endpoints/put-folder-folder-id",
+                  "api-reference/endpoints/delete-folder-folder-id"
+                ]
+              },
+              {
+                "group": "Health",
+                "pages": [
+                  "api-reference/endpoints/get-health",
+                  "api-reference/endpoints/get-health-active-calls",
+                  "api-reference/endpoints/get-health-autoscale-metric"
+                ]
+              },
+              {
+                "group": "Knowledge base",
+                "pages": [
+                  "api-reference/endpoints/post-knowledge-base-upload-url",
+                  "api-reference/endpoints/post-knowledge-base-process-document",
+                  "api-reference/endpoints/get-knowledge-base-documents",
+                  "api-reference/endpoints/get-knowledge-base-documents-document-uuid",
+                  "api-reference/endpoints/delete-knowledge-base-documents-document-uuid",
+                  "api-reference/endpoints/post-knowledge-base-search"
+                ]
+              },
+              {
+                "group": "Node schemas",
+                "pages": [
+                  "api-reference/endpoints/get-node-types",
+                  "api-reference/endpoints/get-node-types-name"
+                ]
+              },
+              {
+                "group": "Outbound calls",
+                "pages": [
+                  "api-reference/endpoints/post-telephony-initiate-call"
+                ]
+              },
+              {
+                "group": "Public calls and artifacts",
+                "pages": [
+                  "api-reference/endpoints/post-public-agent-uuid",
+                  "api-reference/endpoints/post-public-agent-test-uuid",
+                  "api-reference/endpoints/post-public-agent-workflow-workflow-uuid",
+                  "api-reference/endpoints/post-public-agent-test-workflow-workflow-uuid",
+                  "api-reference/endpoints/get-public-download-workflow-token-artifact-type"
+                ]
+              },
+              {
+                "group": "Recordings",
+                "pages": [
+                  "api-reference/endpoints/post-workflow-recordings-upload-url",
+                  "api-reference/endpoints/post-workflow-recordings",
+                  "api-reference/endpoints/get-workflow-recordings",
+                  "api-reference/endpoints/delete-workflow-recordings-recording-id",
+                  "api-reference/endpoints/patch-workflow-recordings-id",
+                  "api-reference/endpoints/post-workflow-recordings-transcribe"
+                ]
+              },
+              {
+                "group": "Reports",
+                "pages": [
+                  "api-reference/endpoints/get-organizations-reports-daily",
+                  "api-reference/endpoints/get-organizations-reports-workflows",
+                  "api-reference/endpoints/get-organizations-reports-daily-runs"
+                ]
+              },
+              {
+                "group": "Service Keys",
+                "pages": [
+                  "api-reference/endpoints/get-user-service-keys",
+                  "api-reference/endpoints/post-user-service-keys",
+                  "api-reference/endpoints/delete-user-service-keys-service-key-id",
+                  "api-reference/endpoints/put-user-service-keys-service-key-id-reactivate"
+                ]
+              },
+              {
+                "group": "Storage",
+                "pages": [
+                  "api-reference/endpoints/get-s3-signed-url",
+                  "api-reference/endpoints/get-s3-file-metadata",
+                  "api-reference/endpoints/post-s3-presigned-upload-url"
+                ]
+              },
+              {
+                "group": "Telephony configuration",
+                "pages": [
+                  "api-reference/endpoints/get-organizations-telephony-providers-metadata",
+                  "api-reference/endpoints/get-organizations-telephony-config-warnings",
+                  "api-reference/endpoints/get-organizations-telephony-configs",
+                  "api-reference/endpoints/post-organizations-telephony-configs",
+                  "api-reference/endpoints/get-organizations-telephony-configs-config-id",
+                  "api-reference/endpoints/put-organizations-telephony-configs-config-id",
+                  "api-reference/endpoints/delete-organizations-telephony-configs-config-id",
+                  "api-reference/endpoints/post-organizations-telephony-configs-config-id-set-default-outbound",
+                  "api-reference/endpoints/post-organizations-telephony-configs-config-id-reactivate",
+                  "api-reference/endpoints/get-organizations-telephony-configs-config-id-trunks",
+                  "api-reference/endpoints/post-organizations-telephony-configs-config-id-trunks",
+                  "api-reference/endpoints/put-organizations-telephony-configs-config-id-trunks-trunk-id",
+                  "api-reference/endpoints/delete-organizations-telephony-configs-config-id-trunks-trunk-id",
+                  "api-reference/endpoints/get-organizations-telephony-configs-config-id-phone-numbers",
+                  "api-reference/endpoints/post-organizations-telephony-configs-config-id-phone-numbers",
+                  "api-reference/endpoints/get-organizations-telephony-configs-config-id-phone-numbers-phone-number-id",
+                  "api-reference/endpoints/put-organizations-telephony-configs-config-id-phone-numbers-phone-number-id",
+                  "api-reference/endpoints/delete-organizations-telephony-configs-config-id-phone-numbers-phone-number-id",
+                  "api-reference/endpoints/post-organizations-telephony-configs-config-id-phone-numbers-phone-number-id-set-default-caller"
+                ]
+              },
+              {
+                "group": "Text chat and scenarios",
+                "pages": [
+                  "api-reference/endpoints/post-workflow-workflow-id-text-chat-sessions",
+                  "api-reference/endpoints/get-workflow-workflow-id-text-chat-sessions-run-id",
+                  "api-reference/endpoints/post-workflow-workflow-id-text-chat-sessions-run-id-messages",
+                  "api-reference/endpoints/post-workflow-workflow-id-text-chat-sessions-run-id-end",
+                  "api-reference/endpoints/post-workflow-workflow-id-text-chat-sessions-run-id-rewind",
+                  "api-reference/endpoints/get-workflow-workflow-id-text-chat-scenarios",
+                  "api-reference/endpoints/put-workflow-workflow-id-text-chat-scenarios-run-id",
+                  "api-reference/endpoints/delete-workflow-workflow-id-text-chat-scenarios-run-id",
+                  "api-reference/endpoints/post-workflow-workflow-id-text-chat-scenarios-run-id-replay"
+                ]
+              },
+              {
+                "group": "Tools",
+                "pages": [
+                  "api-reference/endpoints/get-tools",
+                  "api-reference/endpoints/post-tools",
+                  "api-reference/endpoints/get-tools-tool-uuid",
+                  "api-reference/endpoints/put-tools-tool-uuid",
+                  "api-reference/endpoints/delete-tools-tool-uuid",
+                  "api-reference/endpoints/post-tools-tool-uuid-mcp-refresh",
+                  "api-reference/endpoints/post-tools-tool-uuid-test",
+                  "api-reference/endpoints/post-tools-tool-uuid-unarchive"
+                ]
+              },
+              {
+                "group": "TURN",
+                "pages": [
+                  "api-reference/endpoints/get-turn-credentials"
+                ]
+              },
+              {
+                "group": "User configuration",
+                "pages": [
+                  "api-reference/endpoints/get-user-configurations-defaults",
+                  "api-reference/endpoints/get-user-auth-user",
+                  "api-reference/endpoints/get-user-configurations-user",
+                  "api-reference/endpoints/put-user-configurations-user",
+                  "api-reference/endpoints/get-user-onboarding-state",
+                  "api-reference/endpoints/put-user-onboarding-state",
+                  "api-reference/endpoints/get-user-configurations-user-validate",
+                  "api-reference/endpoints/get-user-configurations-voices-provider"
+                ]
+              },
+              {
+                "group": "Voice cloning",
+                "pages": [
+                  "api-reference/endpoints/get-voice-clones-capabilities",
+                  "api-reference/endpoints/get-voice-clones",
+                  "api-reference/endpoints/post-voice-clones",
+                  "api-reference/endpoints/get-voice-clones-agents",
+                  "api-reference/endpoints/put-voice-clones-agents-workflow-id",
+                  "api-reference/endpoints/post-voice-clones-clone-id-preview",
+                  "api-reference/endpoints/delete-voice-clones-clone-id"
+                ]
+              },
+              {
+                "group": "Website embeds",
+                "pages": [
+                  "api-reference/endpoints/post-public-embed-init",
+                  "api-reference/endpoints/options-public-embed-init",
+                  "api-reference/endpoints/options-public-embed-config-token",
+                  "api-reference/endpoints/get-public-embed-config-token",
+                  "api-reference/endpoints/get-public-embed-turn-credentials-session-token",
+                  "api-reference/endpoints/options-public-embed-turn-credentials-session-token",
+                  "api-reference/endpoints/get-public-embed-chat-session-token",
+                  "api-reference/endpoints/options-public-embed-chat-session-token",
+                  "api-reference/endpoints/post-public-embed-chat-session-token-end",
+                  "api-reference/endpoints/options-public-embed-chat-session-token-end",
+                  "api-reference/endpoints/post-public-embed-chat-session-token-messages",
+                  "api-reference/endpoints/options-public-embed-chat-session-token-messages",
+                  "api-reference/endpoints/post-workflow-workflow-id-embed-token",
+                  "api-reference/endpoints/get-workflow-workflow-id-embed-token",
+                  "api-reference/endpoints/delete-workflow-workflow-id-embed-token"
+                ]
+              },
+              {
+                "group": "Workspace configuration",
+                "pages": [
+                  "api-reference/endpoints/get-organizations-context",
+                  "api-reference/endpoints/get-organizations-model-configurations-v2-defaults",
+                  "api-reference/endpoints/get-organizations-model-configurations-v2",
+                  "api-reference/endpoints/put-organizations-model-configurations-v2",
+                  "api-reference/endpoints/get-organizations-model-configurations-v2-pricing",
+                  "api-reference/endpoints/get-organizations-model-configurations-v2-migration-preview",
+                  "api-reference/endpoints/post-organizations-model-configurations-v2-migrate",
+                  "api-reference/endpoints/get-organizations-disposition-codes",
+                  "api-reference/endpoints/get-organizations-preferences",
+                  "api-reference/endpoints/put-organizations-preferences",
+                  "api-reference/endpoints/get-organizations-langfuse-credentials",
+                  "api-reference/endpoints/post-organizations-langfuse-credentials",
+                  "api-reference/endpoints/delete-organizations-langfuse-credentials",
+                  "api-reference/endpoints/get-organizations-campaign-defaults"
+                ]
+              }
             ]
           }
         ]
@@ -287,24 +642,19 @@
   "logo": {
     "light": "/logo/light.svg",
     "dark": "/logo/dark.svg",
-    "href": "https://voice.menaceui.com/docs"
+    "href": "/"
   },
   "navbar": {
     "links": [],
     "primary": {
       "type": "button",
-      "label": "Dashboard",
+      "label": "Open Menace Voice",
       "href": "https://voice.menaceui.com"
     }
   },
-  "banner": {
-    "content": "🎉 **New: MCP Server & SDKs Released** — Drive Menace Voice from Claude, Cursor, or your own Python/TypeScript code. [MCP →](/integrations/mcp) · [SDKs →](/sdks/introduction)",
-    "dismissible": true
-  },
   "search": {
-    "prompt": "Search for Tools, Webhook, Deployment, etc..."
+    "prompt": "Search agents, tools, calls, or API endpoints…"
   },
-  "customCSS": "/custom.css",
   "contextual": {
     "options": [
       "copy",
@@ -316,11 +666,6 @@
       "cursor",
       "vscode"
     ]
-  },
-  "footer": {
-    "socials": {
-      "linkedin": "https://linkedin.com/company/dograh"
-    }
   },
   "api": {
     "openapi": "api-reference/openapi.json"
@@ -341,6 +686,49 @@
     {
       "source": "/contribution/fork-workflow",
       "destination": "/contribution/reference"
+    },
+    {
+      "source": "/core-concepts/how-dograh-works",
+      "destination": "/core-concepts/how-menace-voice-works"
+    },
+    {
+      "source": "/integrations/telephony/dograh-sip",
+      "destination": "/integrations/telephony/menace-sip"
+    },
+    {
+      "source": "/getting-started",
+      "destination": "/index"
+    },
+    {
+      "source": "/getting-started/index",
+      "destination": "/index"
+    },
+    {
+      "source": "/deployment/heroku",
+      "destination": "/deployment/introduction"
+    },
+    {
+      "source": "/contribution/platform-usage-recovery",
+      "destination": "/operations/usage-recovery"
     }
-  ]
+  ],
+  "description": "Official Menace Voice documentation: build, test, deploy, and operate conversational voice agents.",
+  "filterSidebar": true,
+  "poweredByDocs7": true,
+  "seo": {
+    "indexing": "navigable",
+    "trailingSlash": false,
+    "organization": {
+      "name": "Menace Voice",
+      "url": "https://voice.menaceui.com",
+      "sameAs": [
+        "https://github.com/drewsephski/menace-voice"
+      ]
+    }
+  },
+  "footer": {
+    "socials": {
+      "github": "https://github.com/drewsephski/menace-voice"
+    }
+  }
 }
