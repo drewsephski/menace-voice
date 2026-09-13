@@ -1,5 +1,4 @@
 import type { LandingNavigation } from "./landing-links";
-import { SectionLabel } from "./primitives";
 import { UseCaseCard } from "./use-case-card";
 import styles from "./use-cases.module.css";
 
@@ -46,9 +45,6 @@ export function UseCases({ navigation }: { navigation: LandingNavigation }) {
   return (
     <section className={styles.section} id="use-cases" tabIndex={-1}>
       <header className={styles.header}>
-        <div className={styles.label}>
-          <SectionLabel>Use cases</SectionLabel>
-        </div>
         <h2>Start with the calls your team handles every day</h2>
         <p>
           Choose a job, then configure the questions, connected tools, and

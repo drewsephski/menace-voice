@@ -1,5 +1,4 @@
 import { ArrowUpRight } from "lucide-react";
-import type { ReactNode } from "react";
 
 import { BrandLogo } from "@/components/BrandLogo";
 
@@ -7,15 +6,6 @@ import styles from "./primitives.module.css";
 
 export function Brand({ compact = false }: { compact?: boolean }) {
   return <BrandLogo inverse className={styles.brand} mark={compact} />;
-}
-
-export function SectionLabel({ children }: { children: ReactNode }) {
-  return (
-    <p className={styles.label}>
-      <span aria-hidden="true" />
-      {children}
-    </p>
-  );
 }
 
 export function ArrowIcon() {

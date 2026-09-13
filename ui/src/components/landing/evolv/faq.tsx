@@ -3,7 +3,6 @@
 import { useState } from "react";
 
 import styles from "./faq.module.css";
-import { SectionLabel } from "./primitives";
 
 const questions = [
   {
@@ -49,7 +48,6 @@ export function Faq() {
   return (
     <section className={styles.section} id="faq" tabIndex={-1}>
       <div className={styles.heading}>
-        <SectionLabel>FAQ</SectionLabel>
         <h2>Questions about building production voice agents</h2>
       </div>
       <div className={styles.questions}>
