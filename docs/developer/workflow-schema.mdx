@@ -42,8 +42,8 @@ Each node represents a step in the conversation.
 | `endCall` | Terminates the call |
 | `agentNode` | LLM-powered conversation step |
 | `globalNode` | Global configuration applied across all agent nodes |
-| `trigger` | Entry point for API-triggered (non-telephony) runs |
-| `webhook` | Sends an HTTP request when reached |
+| `trigger` | Configures API-triggered outbound calls |
+| `webhook` | Sends configured post-call data asynchronously after completion |
 | `qa` | Runs quality analysis on the completed call |
 
 ---
@@ -101,7 +101,7 @@ Each node represents a step in the conversation.
 
 | Field | Type | Default | Description |
 |---|---|---|---|
-| `enabled` | boolean | `true` | Whether this webhook fires when reached |
+| `enabled` | boolean | `true` | Whether this post-call webhook is enabled |
 | `http_method` | string | — | `GET`, `POST`, `PUT`, `PATCH`, or `DELETE` |
 | `endpoint_url` | string | — | Target URL |
 | `credential_uuid` | string | `null` | UUID of a stored auth credential |

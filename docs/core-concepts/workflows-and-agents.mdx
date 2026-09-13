@@ -34,8 +34,8 @@ graph LR
 | `agentNode` | An LLM-powered conversation step. The core building block |
 | `globalNode` | Defines instructions that apply across all agent nodes (e.g. tone, language, fallback behaviour) |
 | `endCall` | Terminates the call |
-| `trigger` | Entry point for API-triggered runs (non-telephony) |
-| `webhook` | Fires an HTTP request when reached — use for CRM updates, notifications, etc. |
+| `trigger` | Configures API-triggered outbound calls |
+| `webhook` | Sends configured post-call data asynchronously after completion |
 | `qa` | Runs automated quality analysis on the completed call |
 
 ## Edges and transitions
@@ -48,7 +48,7 @@ An edge connects two nodes and fires when its condition is satisfied:
 
 ## Versioning
 
-Every time you update a workflow's `workflow_definition`, Menace Voice saves a new version while keeping the history. The current version is always what runs. Old versions are retained for auditing.
+Editing an existing workflow saves a draft while the published definition continues serving production traffic. Editor tests and test trigger URLs can use the draft. Publish the reviewed draft to release it, and use the run's definition ID to identify what executed. Creating a new workflow through the API or workspace MCP stores its initial published version. See [drafts, versions, and publishing](/voice-agent/versions).
 
 ## Creating workflows
 

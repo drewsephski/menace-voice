@@ -653,7 +653,7 @@
     }
   },
   "search": {
-    "prompt": "Search agents, tools, calls, or API endpoints\u2026"
+    "prompt": "Search agents, tools, calls, or API endpoints…"
   },
   "contextual": {
     "options": [

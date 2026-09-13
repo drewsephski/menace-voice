@@ -23,7 +23,7 @@ Open `http://localhost:3333`. Verify the affected navigation, links, code blocks
 
 `docs/api-reference/openapi.json` is generated from the FastAPI application. Refresh it using the repository-owned exporter with the backend environment loaded, as documented in [contributor setup](/contribution/setup). Never substitute the development database environment for the test environment when running tests.
 
-API endpoint pages point to exact method/path pairs in the spec. Regenerate the extended catalog after changing the schema:
+API endpoint pages point to exact method/path pairs in the spec. Generated agent-only content also exposes parameter and response types directly to documentation retrieval tools. Regenerate the extended catalog after changing the schema:
 
 ```bash
 node scripts/sync_docs_api.mjs
