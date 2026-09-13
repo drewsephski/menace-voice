@@ -2,7 +2,7 @@
   "$schema": "https://context7.com/schema/context7.json",
   "projectTitle": "Menace Voice",
   "description": "Official Menace Voice documentation: build, test, deploy, and operate conversational voice agents.",
-  "branch": "codex/menace-docs7",
+  "branch": "main",
   "folders": [
     "docs"
   ],

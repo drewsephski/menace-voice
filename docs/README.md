@@ -15,6 +15,6 @@ Open http://localhost:3333. Requires Node.js 20.19 or newer and pnpm. The CLI do
 
 Publishing: select `drewsephski/menace-voice` in Context7 → Docs7, set the reviewed production branch and docs path `docs`, and enable **Add to Context7**. Inspect the hosted build and indexing before calling the release complete. The CLI does not publish.
 
-Live site: https://drewsephski-menace-voice.docs7.io. Context7 library: `/drewsephski/menace-voice`. Both currently read `codex/menace-docs7`; update their production branch together after merging the migration.
+Live site: https://drewsephski-menace-voice.docs7.io. Context7 library: `/drewsephski/menace-voice`. Both read `main`; documentation changes are published after merging into that branch.
 
-See [the maintenance guide](contribution/documentation.mdx) for source ownership and checks. `context7.json` at the repository root describes the intended indexing scope. The library currently uses equivalent dashboard settings because its initial refresh did not discover that file on the documentation branch. Docs7 generates Markdown, discovery, robots, and sitemap endpoints; no hand-maintained duplicate indexes are needed.
+See [the maintenance guide](contribution/documentation.mdx) for source ownership and checks. `context7.json` at the repository root describes the intended indexing scope. The library uses equivalent dashboard settings; keep the repository branch, included documentation folder, and exclusions aligned. Docs7 generates Markdown, discovery, robots, and sitemap endpoints; no hand-maintained duplicate indexes are needed.

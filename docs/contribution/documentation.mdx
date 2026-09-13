@@ -32,7 +32,7 @@ node scripts/check_docs.mjs
 
 ## Publishing settings
 
-Connect `drewsephski/menace-voice` in the Context7 team's **Docs7** tab, set the production branch to the reviewed documentation branch, and set **Docs path** to `docs`. Enable **Add to Context7**. Use `main` after the documentation change is merged if that is the team's chosen release branch.
+Connect `drewsephski/menace-voice` in the Context7 team's **Docs7** tab, set the production branch to `main`, and set **Docs path** to `docs`. Enable **Add to Context7** and set the library's indexing branch to `main` too. Keep these settings aligned with the root `context7.json`. Merging documentation changes into `main` triggers publication.
 
 After Publish, inspect the build's **Log** and **Health**, then check the live homepage, representative API pages, redirects, search, `/llms.txt`, and Context7 indexing. A build failure should leave the previous successful release available.
 
