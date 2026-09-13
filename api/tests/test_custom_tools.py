@@ -1518,6 +1518,8 @@ class TestCustomToolManagerUnit:
     @pytest.mark.asyncio
     async def test_register_handlers_creates_working_handler(self):
         """Test that register_handlers creates handlers that can execute tools."""
+        import json
+
         from api.services.workflow.pipecat_engine_custom_tools import CustomToolManager
 
         # Create a mock engine with a mock LLM
@@ -1606,7 +1608,10 @@ class TestCustomToolManagerUnit:
             mock_execute.assert_called_once()
 
             # Verify result was returned
-            assert result_received["status"] == "success"
+            assert json.loads(result_received) == {
+                "status": "success",
+                "data": {"response": "ok"},
+            }
 
     @pytest.mark.asyncio
     @pytest.mark.parametrize("category", ["end_call", "transfer_call"])
