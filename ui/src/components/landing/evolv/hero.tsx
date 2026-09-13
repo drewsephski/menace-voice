@@ -2,13 +2,12 @@ import { AudioLines, GitBranch, Headphones, Library, Phone, Plug } from "lucide-
 
 import styles from "./hero.module.css";
 import type { LandingNavigation } from "./landing-links";
-import { ArrowIcon, SectionLabel } from "./primitives";
+import { ArrowIcon } from "./primitives";
 
 export function Hero({ navigation }: { navigation: LandingNavigation }) {
   return (
     <section className={styles.hero}>
       <div className={styles.content}>
-        <SectionLabel>Menace Voice / Voice AI</SectionLabel>
         <h1>
           Turn your call flow<br />into a voice agent.
         </h1>
@@ -25,7 +24,7 @@ export function Hero({ navigation }: { navigation: LandingNavigation }) {
             See how it works
           </a>
         </div>
-        <p className={styles.note}>Start free with your own AI provider keys. Provider usage is billed separately.</p>
+        <p className={styles.note}>Free to start. No credit card required.</p>
       </div>
       <ul className={styles.capabilities} aria-label="Platform capabilities">
         <li><span className={styles.capabilityIcon}><GitBranch aria-hidden="true" /></span><div><strong>Visual call flows</strong><span>Shape every conversation</span></div></li>

@@ -1,7 +1,7 @@
 "use client";
 
 import { useReducedMotion } from "framer-motion";
-import { ArrowRight, Check, Headphones, MessageSquare, Phone, Sparkles } from "lucide-react";
+import { ArrowRight, Check, Headphones, MessageSquare, Phone } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
 import frame from "./walkthrough.module.css";
@@ -78,7 +78,6 @@ export function TemplateDemo({ paused, playOnSelect, onContinue }: { paused: boo
       <WindowFrame title="Create your first agent" status="Template preview">
         <div className={styles.builder}>
           <div className={styles.choices}>
-            <span className={styles.eyebrow}>01 / CHOOSE A STARTING POINT</span>
             <h3>What should your agent do?</h3>
             <p>Start with a role. Make it yours next.</p>
             <div className={styles.templateList} role="group" aria-label="Agent templates">
@@ -98,15 +97,14 @@ export function TemplateDemo({ paused, playOnSelect, onContinue }: { paused: boo
             <span className={styles.hint}>Try a template to see the draft change.</span>
           </div>
           <div className={styles.preview}>
-            <span className={styles.eyebrow}><Sparkles size={13} /> YOUR AGENT TAKES SHAPE</span>
             <div className={styles.agent} key={`${template.name}-${revision}`} aria-label={`${template.name} agent draft`}>
               <div className={styles.agentHeader}>
                 <span className={styles.agentIcon}><Icon size={23} /></span>
-                <div><span>YOUR NEW AGENT</span><h4>{template.name}</h4></div>
+                <div><h4>{template.name}</h4></div>
                 <span className={styles.draft}>Draft</span>
               </div>
               <div className={styles.greeting}>
-                <span>OPENING MESSAGE</span>
+                <span>Opening message</span>
                 <StreamingGreeting text={`“${template.greeting}”`} playing={interacted || !paused} />
               </div>
               <ol className={styles.steps}>

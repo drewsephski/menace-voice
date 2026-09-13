@@ -26,8 +26,7 @@
   font-family: "Evolv Geist Mono", monospace;
   font-size: 10px;
   font-weight: 500;
-  letter-spacing: .12em;
-  text-transform: uppercase;
+  letter-spacing: .02em;
 }
 .releaseLink {
   display: inline-flex;

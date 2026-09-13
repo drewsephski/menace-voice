@@ -1,12 +1,5 @@
-// Shared dark two-column auth shell, used by BOTH the Stack Auth handler
-// (/handler/[...stack], cloud) and the local/OSS auth pages (/auth/login,
-// /auth/signup). LEFT: a centered card that wraps the auth form (`children`).
-// RIGHT (lg+ only): a brand/value panel with the Menace logo, proof points, and
-// a Bland-style enterprise CTA block at the bottom (passed in as `enterpriseSlot`).
-// Mobile collapses to the single card column. The form column scrolls and stays
-// top-anchored so changing auth methods only expands the card downward. Palette is the
-// app's blacks/greys with one warm CTA accent.
-
+// Shared presentation for Stack Auth and local login/signup. Authentication
+// controls and callbacks remain owned by the forms passed as children.
 import Link from "next/link";
 import type { ReactNode } from "react";
 
@@ -14,10 +7,11 @@ import { BrandLogo } from "@/components/BrandLogo";
 
 import styles from "./auth-shell.module.css";
 
-const HIGHLIGHTS = [
-  "Speech-to-speech",
-  "MCP-native",
-  "BYOK - any model",
+// A static voice-signal illustration, not a live recording or activity meter.
+const SIGNAL_HEIGHTS = [
+  4, 6, 10, 6, 14, 24, 42, 30, 58, 86, 64, 108, 144, 112, 76, 128,
+  164, 138, 94, 62, 82, 48, 28, 16, 10, 6, 12, 24, 38, 64, 48, 90,
+  116, 82, 54, 70, 42, 26, 16, 8, 6, 4,
 ];
 
 export function AuthShell({
@@ -28,12 +22,10 @@ export function AuthShell({
   enterpriseSlot?: ReactNode;
 }) {
   return (
-    <div className={`${styles.shell} grid min-h-screen w-full bg-background lg:grid-cols-[55%_45%]`}>
-      {/* The fixed top inset keeps fields in place as the form grows. */}
-      <main className={`${styles.formColumn} auth-imprint flex min-h-screen flex-col overflow-y-auto lg:min-h-0`}>
-        <div className={`${styles.formWrap} flex min-h-0 flex-1 justify-center px-5 pb-5 sm:px-8 sm:pb-6`}>
-          <div className={`${styles.authCard} w-full max-w-md rounded-2xl border border-border/60 bg-card p-5 shadow-lg sm:p-6`}>
-            {/* Mobile-only wordmark (brand panel is hidden) */}
+    <div className={`${styles.shell} grid w-full bg-background lg:grid-cols-[55%_45%]`}>
+      <main className={`${styles.formColumn} auth-imprint`}>
+        <div className={styles.formWrap}>
+          <div className={`${styles.authCard} max-w-md rounded-2xl border border-border/60 bg-card p-5 sm:p-6`}>
             <div className="lg:hidden">
               <Link href="/" aria-label="Back to Menace Voice home">
                 <BrandLogo className="h-7" />
@@ -44,49 +36,31 @@ export function AuthShell({
         </div>
       </main>
 
-      {/* Brand / value panel (RIGHT) — hidden on mobile */}
-      <aside
-        className={`${styles.brandPanel} relative hidden flex-col justify-between overflow-hidden border-l border-border/60 bg-zinc-950 p-10 lg:flex xl:p-14`}
-      >
-        {/* Ambient depth: soft radial glow behind the content */}
-        <div
-          aria-hidden
-          className="pointer-events-none absolute -right-24 top-1/3 size-[28rem] rounded-full opacity-20 blur-3xl"
-          style={{ background: "radial-gradient(circle, var(--cta), transparent 70%)" }}
-        />
+      <aside className={styles.brandPanel} aria-label="About Menace Voice">
+        <Link className={styles.brandLink} href="/" aria-label="Back to Menace Voice home">
+          <BrandLogo inverse className="h-8" />
+        </Link>
 
-        <div className="relative">
-          <Link href="/" aria-label="Back to Menace Voice home">
-            <BrandLogo inverse className="h-8" />
-          </Link>
-        </div>
-
-        <div className="relative max-w-md space-y-5">
-          <h1 className="text-3xl font-semibold leading-tight tracking-tight text-zinc-50 xl:text-4xl">
-            Menace Voice is the voice AI platform for building and deploying conversational agents.
-          </h1>
-          <ul className="flex flex-wrap gap-2">
-            {HIGHLIGHTS.map((point) => (
-              <li
-                key={point}
-                className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-xs font-medium text-zinc-300"
-              >
-                {point}
-              </li>
+        <div className={styles.brandContent}>
+          <div className={styles.signal} aria-hidden="true">
+            {SIGNAL_HEIGHTS.map((height, index) => (
+              <span key={index} style={{ height }} />
             ))}
-          </ul>
+          </div>
+          <h1 className={styles.headline}>
+            Build an agent.<br />
+            <span>Put it on the line.</span>
+          </h1>
+          <p className={styles.description}>
+            Choose a voice, shape the conversation, and connect your phone number.
+          </p>
         </div>
 
-        {/* Enterprise CTA block (Bland-style) — bottom margin lifts it off the
-            viewport edge while justify-between keeps the column layout */}
-        <div className="relative mb-12 max-w-md space-y-3 rounded-xl border border-white/10 bg-white/[0.03] p-5 xl:mb-16">
-          <h2 className="text-sm font-semibold text-zinc-100">
-            Need on-prem, data residency &amp; a data perimeter?
-          </h2>
-          <p className="text-sm text-zinc-400">
-            We deploy Menace Voice inside your environment for regulated and
-            high-scale teams.
-          </p>
+        <div className={styles.enterprise}>
+          <div>
+            <h2>Run it on your infrastructure.</h2>
+            <p>Private deployments for your team.</p>
+          </div>
           {enterpriseSlot}
         </div>
       </aside>

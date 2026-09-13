@@ -21,7 +21,6 @@ import {
   useState,
 } from "react";
 
-import { SectionLabel } from "./primitives";
 import styles from "./walkthrough.module.css";
 import { WalkthroughCursor } from "./walkthrough-cursor";
 import fx from "./walkthrough-demo.module.css";
@@ -166,7 +165,7 @@ function AutomationDemo() {
         <div className={styles.workflowBody}>
           <div className={styles.flowCanvas} aria-label="Interactive call flow">
             <div className={fx.flowToolbar}>
-              <span className={fx.flowProgress} aria-live="polite">{step < 0 ? "SAMPLE CALL" : `${step + 1} / 4 · ${automationNodes[step].data.title}`}</span>
+              <span className={fx.flowProgress} aria-live="polite">{step < 0 ? "Sample call" : `${step + 1} / 4 · ${automationNodes[step].data.title}`}</span>
               <DemoButton className={`${fx.textAction} ${fx.primaryAction}`} onClick={advanceFlow}><Play size={11} />{step < 0 ? "Step through" : step === 3 ? "Replay" : "Next step"}</DemoButton>
               <DemoButton className={fx.textAction} aria-label="Reset call flow" onClick={() => { setNodes(automationNodes); setStep(-1); setSelectedNodeId("qualify"); }}><RotateCcw size={12} /></DemoButton>
             </div>
@@ -203,7 +202,7 @@ function AutomationDemo() {
           </div>
           <aside aria-live="polite">
             <InspectButton className={`${styles.runSummary} ${fx.inspector}`} aria-label="Inspect selected node" detail={{ title: selectedNode?.data.title ?? "Qualify", description: selectedNode?.data.prompt ?? "", fields: [["Type", selectedNode?.data.kind ?? "Agent Node"], ["Tool", selectedNode?.data.tool ?? ""], ["Step", selectedNode?.data.number ?? "02"]] }}>
-              <div><span className={styles.inspectorLabel}>{step < 0 ? "SELECTED NODE" : "SAMPLE CALL STEP"}</span><strong>{selectedNode?.data.title ?? "Qualify"}</strong></div>
+              <div><span className={styles.inspectorLabel}>{step < 0 ? "Selected node" : "Sample call step"}</span><strong>{selectedNode?.data.title ?? "Qualify"}</strong></div>
               <p>{selectedNode?.data.prompt}</p>
               <span className={styles.inspectorTool}><Wrench size={14} />{selectedNode?.data.tool}<ArrowUpRight size={12} /></span>
             </InspectButton>
@@ -348,7 +347,6 @@ export function Walkthrough() {
   return (
     <section className={styles.section} id="product-walkthrough" tabIndex={-1}>
       <div className={styles.heading}>
-        <SectionLabel>Product walkthrough</SectionLabel>
         <h2>From your first agent to a better call.</h2>
         <p>
           Start with a template, shape the conversation, and learn from every call.

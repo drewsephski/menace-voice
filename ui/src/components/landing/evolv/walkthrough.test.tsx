@@ -1,5 +1,4 @@
 import { act, fireEvent, render, screen, within } from "@testing-library/react";
-import type { ReactNode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { Walkthrough } from "./walkthrough";
@@ -21,9 +20,6 @@ vi.mock("./walkthrough.module.css", () => ({ default: {} }));
 vi.mock("./walkthrough-cursor.module.css", () => ({ default: {} }));
 vi.mock("./walkthrough-demo.module.css", () => ({ default: {} }));
 vi.mock("./walkthrough-template-demo.module.css", () => ({ default: {} }));
-vi.mock("./primitives", () => ({
-  SectionLabel: ({ children }: { children: ReactNode }) => children,
-}));
 
 let motion: EventTarget & { matches: boolean };
 

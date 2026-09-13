@@ -15,7 +15,7 @@
 
 .content h1 {
   max-width: 900px;
-  margin: 23px 0 0;
+  margin: 0;
   color: #f5f5f5;
   font-size: 76px;
   font-weight: 400;
@@ -100,10 +100,25 @@
   padding: 0;
   border: 1px solid var(--evolv-border);
   border-radius: 8px;
+  overflow: hidden;
   background: #1c1c1c;
   list-style: none;
 }
-.capabilities li { display: flex; align-items: center; gap: 14px; padding: 23px 26px; border-right: 1px solid var(--evolv-border); }
+.capabilities li {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 23px 26px;
+  border-right: 1px solid var(--evolv-border);
+  box-shadow: inset 0 1px 0 transparent, inset 0 2px 12px transparent;
+  transition: box-shadow 180ms ease;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .capabilities li:hover {
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / 3%), inset 0 2px 12px rgb(0 0 0 / 16%);
+  }
+}
 .capabilities li:nth-child(3n) { border-right: 0; }
 .capabilities li:nth-child(-n+3) { border-bottom: 1px solid var(--evolv-border); }
 .capabilityIcon { display: grid; width: 36px; height: 36px; flex: 0 0 auto; place-items: center; border: 1px solid rgb(240 68 56 / 18%); border-radius: 7px; background: rgb(240 68 56 / 5%); }
@@ -153,7 +168,8 @@
 
 @media (prefers-reduced-motion: reduce) {
   .primaryAction,
-  .secondaryAction {
+  .secondaryAction,
+  .capabilities li {
     transition: none;
   }
 }

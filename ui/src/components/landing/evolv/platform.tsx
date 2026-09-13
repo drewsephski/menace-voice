@@ -3,7 +3,6 @@
 import { useId, useState } from "react";
 
 import styles from "./platform.module.css";
-import { SectionLabel } from "./primitives";
 
 const FEATURES = [
   {
@@ -40,7 +39,6 @@ export function Platform() {
   return (
     <section className={styles.section} id="platform" tabIndex={-1}>
       <div className={styles.intro}>
-        <SectionLabel>Platform</SectionLabel>
         <h2>From call script to phone line</h2>
         <p>
           Write the conversation, choose your voice providers, and review what

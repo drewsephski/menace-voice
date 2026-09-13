@@ -8,6 +8,7 @@
 // token-gated /leads/enterprise. Shared by the Stack Auth handler and the
 // local/OSS auth pages.
 
+import { ArrowUpRight } from "lucide-react";
 import posthog from "posthog-js";
 import { useState } from "react";
 
@@ -28,9 +29,9 @@ export function AuthEnterpriseCTA() {
       <Button
         variant="outline"
         onClick={openModal}
-        className="w-full border-white/20 bg-white/5 text-zinc-100 hover:bg-white/10 hover:text-white"
+        className="gap-2 border-white/20 bg-transparent text-zinc-100 hover:bg-white/5 hover:text-white"
       >
-        Enterprise Enquiry
+        Talk to us <ArrowUpRight aria-hidden="true" className="size-4" />
       </Button>
       <EnterpriseModal open={open} onOpenChange={setOpen} source="auth_page" />
     </>

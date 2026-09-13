@@ -1,8 +1,7 @@
 .canvas { display: grid; align-items: center; }
 .builder { display: grid; grid-template-columns: 1fr 1fr; min-height: 490px; }
 .choices { padding: 32px; border-right: 1px solid rgb(255 255 255 / 8%); }
-.eyebrow { display: flex; align-items: center; gap: 7px; color: #999; font: 10px "Evolv Geist Mono", monospace; letter-spacing: .07em; }
-.choices h3 { margin: 17px 0 8px; color: #eee; font-size: 23px; font-weight: 500; letter-spacing: -.035em; }
+.choices h3 { margin: 0 0 8px; color: #eee; font-size: 23px; font-weight: 500; letter-spacing: -.035em; }
 .choices > p { margin: 0; color: #999; font-size: 13px; }
 .templateList { display: grid; gap: 10px; margin-top: 26px; }
 .template { display: flex; align-items: center; gap: 13px; width: 100%; padding: 16px; border: 1px solid #383838; border-radius: 8px; background: #202020; }
@@ -16,11 +15,11 @@
 .template[aria-pressed="true"] .selection { background: var(--evolv-accent); border-color: var(--evolv-accent); color: white; }
 .hint { display: block; margin-top: 18px; color: #888; font-size: 11px; }
 .preview { display: flex; flex-direction: column; justify-content: center; padding: 32px; background: radial-gradient(ellipse at 70% 25%, rgb(240 68 56 / 5%), transparent 65%), #171717; }
-.agent { margin-top: 22px; padding: 20px; border: 1px solid #3b3332; border-radius: 10px; background: #202020; box-shadow: 0 16px 40px rgb(0 0 0 / 15%); }
+.agent { padding: 20px; border: 1px solid #3b3332; border-radius: 10px; background: #202020; box-shadow: 0 16px 40px rgb(0 0 0 / 15%); }
 .agentHeader { display: flex; align-items: center; gap: 12px; }
 .agentIcon { display: grid; place-items: center; width: 44px; height: 44px; border-radius: 10px; background: rgb(240 68 56 / 10%); color: #f79891; }
-.agentHeader > div > span, .greeting > span { color: #999; font: 9px "Evolv Geist Mono", monospace; letter-spacing: .06em; }
-.agentHeader h4 { margin: 5px 0 0; color: #eee; font-size: 17px; font-weight: 500; }
+.greeting > span { color: #999; font: 9px "Evolv Geist Mono", monospace; letter-spacing: .06em; }
+.agentHeader h4 { margin: 0; color: #eee; font-size: 17px; font-weight: 500; }
 .draft { margin-left: auto; padding: 4px 7px; border: 1px solid #414141; border-radius: 4px; color: #aaa; font-size: 10px; }
 .greeting { margin-top: 22px; padding: 14px; border: 1px solid #393939; border-radius: 6px; background: #262626; animation-delay: .4s; }
 .greeting p { min-height: 2lh; margin: 8px 0 0; color: #d2d2d2; font-size: 13px; line-height: 1.65; }
@@ -51,14 +50,14 @@
   .canvas { height: auto; }
   .builder { grid-template-columns: 1fr; min-height: 0; }
   .choices { padding: 16px; border-right: 0; border-bottom: 1px solid #333; }
-  .choices h3 { margin-top: 10px; font-size: 20px; }
+  .choices h3 { font-size: 20px; }
   .choices > p { font-size: 12px; }
   .templateList { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; margin-top: 15px; }
   .template { flex-direction: column; gap: 8px; padding: 12px 5px; text-align: center; }
   .template strong { font-size: 10px; }
   .template small, .selection, .hint { display: none; }
   .preview { padding: 18px 16px; }
-  .agent { margin-top: 14px; padding: 15px; }
+  .agent { padding: 15px; }
   .agentHeader { gap: 8px; }
   .agentIcon { width: 36px; height: 36px; flex-shrink: 0; }
   .agentHeader h4 { font-size: 14px; }

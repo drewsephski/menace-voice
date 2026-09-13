@@ -2,7 +2,7 @@ import Image from "next/image";
 
 import styles from "./integrations.module.css";
 import type { LandingNavigation } from "./landing-links";
-import { ArrowIcon, SectionLabel } from "./primitives";
+import { ArrowIcon } from "./primitives";
 
 const technologies = [
   { name: "OpenClaw", src: "/templates/evolv-ai/tech/openclaw.svg" },
@@ -30,7 +30,6 @@ export function Integrations({ navigation }: { navigation: LandingNavigation }) 
   return (
     <section className={styles.section} id="integrations" tabIndex={-1}>
       <div className={styles.heading}>
-        <SectionLabel>Developer ecosystem</SectionLabel>
         <h2>Bring your tools into the conversation.</h2>
         <p className={styles.description}>
           Connect APIs and MCP servers to your workflows. Explore the tools and
