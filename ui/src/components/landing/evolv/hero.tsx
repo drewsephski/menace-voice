@@ -1,5 +1,4 @@
-import { AudioLines, GitBranch, Headphones, Library, Phone, Plug } from "lucide-react";
-
+import { CapabilityCard } from "./capability-card";
 import styles from "./hero.module.css";
 import type { LandingNavigation } from "./landing-links";
 import { ArrowIcon } from "./primitives";
@@ -27,12 +26,12 @@ export function Hero({ navigation }: { navigation: LandingNavigation }) {
         <p className={styles.note}>Free to start. No credit card required.</p>
       </div>
       <ul className={styles.capabilities} aria-label="Platform capabilities">
-        <li><span className={styles.capabilityIcon}><GitBranch aria-hidden="true" /></span><div><strong>Visual call flows</strong><span>Shape every conversation</span></div></li>
-        <li><span className={styles.capabilityIcon}><Phone aria-hidden="true" /></span><div><strong>Inbound &amp; outbound</strong><span>Connect your phone lines</span></div></li>
-        <li><span className={styles.capabilityIcon}><AudioLines aria-hidden="true" /></span><div><strong>Browser voice testing</strong><span>Hear it before you launch</span></div></li>
-        <li><span className={styles.capabilityIcon}><Plug aria-hidden="true" /></span><div><strong>API &amp; MCP tools</strong><span>Connect to your systems</span></div></li>
-        <li><span className={styles.capabilityIcon}><Library aria-hidden="true" /></span><div><strong>Knowledge sources</strong><span>Ground answers in your docs</span></div></li>
-        <li><span className={styles.capabilityIcon}><Headphones aria-hidden="true" /></span><div><strong>Human handoff</strong><span>Bring in your team</span></div></li>
+        <CapabilityCard icon="flow" title="Visual call flows" description="Shape every conversation" />
+        <CapabilityCard icon="phone" title="Inbound & outbound" description="Connect your phone lines" />
+        <CapabilityCard icon="voice" title="Browser voice testing" description="Hear it before you launch" />
+        <CapabilityCard icon="tools" title="API & MCP tools" description="Connect to your systems" />
+        <CapabilityCard icon="knowledge" title="Knowledge sources" description="Ground answers in your docs" />
+        <CapabilityCard icon="handoff" title="Human handoff" description="Bring in your team" />
       </ul>
     </section>
   );

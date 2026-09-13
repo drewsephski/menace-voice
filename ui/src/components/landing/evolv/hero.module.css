@@ -123,9 +123,9 @@
 .capabilities li:nth-child(-n+3) { border-bottom: 1px solid var(--evolv-border); }
 .capabilityIcon { display: grid; width: 36px; height: 36px; flex: 0 0 auto; place-items: center; border: 1px solid rgb(240 68 56 / 18%); border-radius: 7px; background: rgb(240 68 56 / 5%); }
 .capabilities svg { width: 18px; height: 18px; color: var(--evolv-accent); stroke-width: 1.6; }
-.capabilities li > div { display: grid; gap: 5px; }
+.capabilityCopy { display: grid; gap: 5px; }
 .capabilities strong { color: #e4e4e7; font-size: 13px; font-weight: 500; }
-.capabilities li > div > span { color: #8f8f98; font-size: 11px; line-height: 1.4; }
+.capabilityCopy > span { color: #8f8f98; font-size: 11px; line-height: 1.4; }
 
 @media (max-width: 1000px) {
   .hero {
@@ -162,7 +162,7 @@
   .capabilities li:nth-child(-n+4) { border-bottom: 1px solid var(--evolv-border); }
   .capabilityIcon { width: 26px; height: 28px; border: 0; background: none; }
   .capabilities strong { font-size: 12px; line-height: 1.4; }
-  .capabilities li > div > span { font-size: 10px; }
+  .capabilityCopy > span { font-size: 10px; }
 
 }
 
