@@ -10,6 +10,7 @@ These tests verify:
 import asyncio
 import uuid
 from dataclasses import dataclass
+from datetime import UTC, datetime
 from typing import List
 from unittest.mock import AsyncMock, MagicMock, patch
 
@@ -165,12 +166,12 @@ async def campaign_test_data(db_session_factory) -> CampaignTestData:
         async with db_session_factory() as cleanup_session:
             # Delete in reverse order of dependencies
             await cleanup_session.execute(
-                delete(QueuedRunModel).where(QueuedRunModel.campaign_id == campaign.id)
-            )
-            await cleanup_session.execute(
                 delete(WorkflowRunModel).where(
                     WorkflowRunModel.campaign_id == campaign.id
                 )
+            )
+            await cleanup_session.execute(
+                delete(QueuedRunModel).where(QueuedRunModel.campaign_id == campaign.id)
             )
             await cleanup_session.execute(
                 delete(CampaignModel).where(CampaignModel.id == campaign.id)
@@ -442,6 +443,10 @@ class TestProcessBatchConcurrency:
         # Each run should be processed exactly once (no duplicates)
         assert len(processed_runs) == 10, f"Expected 10 runs, got {len(processed_runs)}"
         assert len(set(processed_runs)) == 10, "Duplicate runs were processed!"
+        from api.db import db_client
+
+        campaign = await db_client.get_campaign_by_id(campaign_test_data.campaign_id)
+        assert campaign.processed_rows == 10
 
     @pytest.mark.asyncio
     async def test_concurrent_process_batch_with_different_batch_sizes(
@@ -920,3 +925,39 @@ class TestAcquireConcurrentSlotScoping:
             scope_max_concurrent=None,
             retry_interval=1,
         )
+
+
+async def test_processed_acknowledgement_is_atomic_and_idempotent(
+    campaign_test_data, db_session_factory
+):
+    from api.db import db_client
+
+    rows = await db_client.claim_queued_runs_for_processing(
+        campaign_id=campaign_test_data.campaign_id,
+        scheduled_before=datetime.now(UTC),
+        limit=10,
+    )
+    runs = []
+    for row in rows:
+        run = await db_client.create_workflow_run(
+            name=f"ack-{row.id}",
+            workflow_id=campaign_test_data.workflow_id,
+            mode="twilio",
+            user_id=campaign_test_data.user_id,
+            campaign_id=campaign_test_data.campaign_id,
+            queued_run_id=row.id,
+            organization_id=campaign_test_data.organization_id,
+        )
+        runs.append(run)
+    results = await asyncio.gather(
+        *[
+            db_client.mark_queued_run_processed(row.id, campaign_test_data.campaign_id)
+            for row, run in zip(rows, runs)
+            for _ in range(3)
+        ]
+    )
+    assert sum(results) == 10
+    campaign = await db_client.get_campaign_by_id(campaign_test_data.campaign_id)
+    assert campaign.processed_rows == 10
+    await db_client.fail_processing_queued_run(rows[0].id)
+    assert await db_client.count_queued_runs(campaign.id, state="processed") == 10

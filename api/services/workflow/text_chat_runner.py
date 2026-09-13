@@ -3,6 +3,7 @@ import hashlib
 import time
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
+from types import SimpleNamespace
 from typing import Any
 
 from fastapi.encoders import jsonable_encoder
@@ -466,7 +467,18 @@ async def execute_text_chat_pending_turn(
     # reached org-specific exporters).
     set_current_org_id(workflow.organization_id)
 
-    run_definition = workflow_run.definition
+    regression = session_data.get("regression")
+    run_definition = (
+        SimpleNamespace(
+            id=regression["snapshot"]["definition_id"], **regression["snapshot"]
+        )
+        if regression
+        else workflow_run.definition
+    )
+    if regression:
+        from api.services.workflow.text_scenarios import regression_snapshot
+
+        regression_snapshot(run_definition)  # Revalidate before every model call.
     run_configs = run_definition.workflow_configurations or {}
 
     from api.services.configuration.ai_model_configuration import (
@@ -613,9 +625,9 @@ async def execute_text_chat_pending_turn(
         embeddings_api_version = getattr(user_config.embeddings, "api_version", None)
 
     has_recordings = await db_client.has_active_recordings(workflow.organization_id)
-    context_compaction_enabled = (workflow.workflow_configurations or {}).get(
-        "context_compaction_enabled", False
-    )
+    context_compaction_enabled = (
+        run_configs if regression else (workflow.workflow_configurations or {})
+    ).get("context_compaction_enabled", False)
     engine = PipecatEngine(
         llm=llm,
         inference_llm=inference_llm,

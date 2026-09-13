@@ -6,4 +6,4 @@ ruff format api
 
 ruff format pipecat
 
-(cd ui && npm run fix-lint)
+(cd ui && pnpm run fix-lint)

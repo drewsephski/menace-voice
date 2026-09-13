@@ -116,12 +116,16 @@ async def test_execute_pending_turn_surfaces_original_exception_message(monkeypa
 
 
 @pytest.mark.asyncio
-async def test_completed_pending_turn_enqueues_workflow_completion(monkeypatch):
+@pytest.mark.parametrize("regression", [False, True])
+async def test_completed_pending_turn_enqueues_workflow_completion(
+    monkeypatch, regression
+):
     started_at = datetime.now(UTC) - timedelta(minutes=5)
     session = SimpleNamespace(
         revision=7,
         created_at=started_at,
         session_data={
+            "regression": {"snapshot": {}} if regression else None,
             "status": "pending_assistant_turn",
             "turns": [
                 {
@@ -201,12 +205,16 @@ async def test_completed_pending_turn_enqueues_workflow_completion(monkeypatch):
     duration = complete_session.await_args.kwargs["usage_info"]["call_duration_seconds"]
     assert 300 <= duration < 310
     upload_transcript.assert_awaited_once()
-    enqueue_completion.assert_awaited_once_with(42)
+    if regression:
+        enqueue_completion.assert_not_awaited()
+    else:
+        enqueue_completion.assert_awaited_once_with(42)
 
 
 @pytest.mark.asyncio
+@pytest.mark.parametrize("regression", [False, True])
 async def test_complete_text_chat_session_marks_user_hangup_and_enqueues(
-    monkeypatch, no_disposition_mapping
+    monkeypatch, no_disposition_mapping, regression
 ):
     started_at = datetime(2026, 8, 5, 12, 0, tzinfo=UTC)
     completed_at = started_at + timedelta(minutes=7, seconds=30)
@@ -220,7 +228,11 @@ async def test_complete_text_chat_session_marks_user_hangup_and_enqueues(
     session = SimpleNamespace(
         revision=4,
         created_at=started_at,
-        session_data={"status": "idle", "turns": []},
+        session_data={
+            "status": "idle",
+            "turns": [],
+            "regression": {"snapshot": {}} if regression else None,
+        },
         workflow_run=workflow_run,
     )
     reloaded = SimpleNamespace(workflow_run=SimpleNamespace(is_completed=True))
@@ -274,7 +286,10 @@ async def test_complete_text_chat_session_marks_user_hangup_and_enqueues(
     }
     assert update["logs"] == {"realtime_feedback_events": []}
     upload_transcript.assert_awaited_once_with(42, [])
-    enqueue_completion.assert_awaited_once_with(42)
+    if regression:
+        enqueue_completion.assert_not_awaited()
+    else:
+        enqueue_completion.assert_awaited_once_with(42)
 
 
 def test_text_chat_duration_uses_session_wall_clock_lifetime():

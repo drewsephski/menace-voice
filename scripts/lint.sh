@@ -4,5 +4,6 @@ set -e
 set -x
 
 mypy api
-ruff check api --check
+# Keep the check gate aligned with the rules applied by scripts/format.sh.
+ruff check api --select I,F401
 ruff format api --check

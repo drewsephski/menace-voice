@@ -22,7 +22,7 @@ from api.services.telephony.registry import (
     SetupStep,
 )
 
-from .config import MANAGED_BY
+from .config import MANAGED_BY, webhook_secret_matches_api_token
 
 MANAGED_DOCS_URL = "https://voice.menaceui.com/docs/integrations/telephony/dograh-sip"
 SELF_SERVE_DOCS_URL = "https://voice.menaceui.com/docs/integrations/telephony/cloudonix"
@@ -51,6 +51,20 @@ def resolve_setup_checklist(
                 "used for every call on this configuration."
             ),
             complete=connected,
+            blocks_outbound=True,
+        ),
+        SetupStep(
+            key="webhook_authentication",
+            title="Configure authenticated call updates",
+            description=(
+                "Set a Webhook Secret of at least 32 characters and save this "
+                "configuration to sync callback authentication with Cloudonix. "
+                "For a managed SIP domain, refresh its provisioning first."
+            ),
+            complete=bool(credentials.get("webhook_secret"))
+            and not webhook_secret_matches_api_token(
+                credentials.get("webhook_secret"), credentials.get("bearer_token")
+            ),
             blocks_outbound=True,
         ),
         SetupStep(

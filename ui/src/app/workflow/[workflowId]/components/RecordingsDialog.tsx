@@ -33,6 +33,7 @@ import { LANGUAGE_DISPLAY_NAMES } from "@/constants/languages";
 import { PostHogEvent } from "@/constants/posthog-events";
 import { useUserConfig } from "@/context/UserConfigContext";
 import { useAudioPlayback } from "@/hooks/useAudioPlayback";
+import { detailFromError } from "@/lib/apiError";
 
 interface RecordingsDialogProps {
     open: boolean;
@@ -309,7 +310,7 @@ export const RecordingsDialog = ({
             );
 
             // Step 3: Create all recording records
-            await createRecordingsApiV1WorkflowRecordingsPost({
+            const createResponse = await createRecordingsApiV1WorkflowRecordingsPost({
                 body: {
                     recordings: items.map((item: RecordingUploadResponseSchema, idx: number) => ({
                         recording_id: item.recording_id,
@@ -327,6 +328,10 @@ export const RecordingsDialog = ({
                     })),
                 },
             });
+
+            if (createResponse.error || !createResponse.data) {
+                throw new Error(detailFromError(createResponse.error, "Failed to save recordings"));
+            }
 
             // Reset form and refresh list
             setPendingFiles([]);

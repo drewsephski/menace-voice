@@ -339,6 +339,7 @@ class TestRecordAndEvaluate:
                 campaign_id=42,
                 is_failure=True,
                 config=custom_config,
+                workflow_run_id=None,
             )
 
     @pytest.mark.asyncio
@@ -380,7 +381,9 @@ class TestCircuitBreakerRecentFailures:
         with patch("api.services.campaign.circuit_breaker.db_client") as mock_db:
             mock_db.get_campaign_by_id = AsyncMock(return_value=mock_campaign)
             mock_db.append_campaign_log = AsyncMock()
-            cb.record_call_outcome = AsyncMock(return_value=(False, None))
+            cb.record_call_outcome = AsyncMock(
+                return_value=(False, {"failure_count": 1})
+            )
             cb._push_recent_failure = AsyncMock()
             cb._get_recent_failures = AsyncMock(return_value=[])
 
@@ -654,7 +657,9 @@ class TestProcessStatusUpdateCircuitBreaker:
 
             await _process_status_update(100, status)
 
-            mock_cb.record_and_evaluate.assert_called_once_with(42, is_failure=False)
+            mock_cb.record_and_evaluate.assert_called_once_with(
+                42, is_failure=False, workflow_run_id=100
+            )
 
     @pytest.mark.asyncio
     async def test_non_campaign_call_skips_circuit_breaker(

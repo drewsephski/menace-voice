@@ -551,6 +551,55 @@ class CampaignClient(BaseDBClient):
             await session.refresh(queued_run)
             return queued_run
 
+    async def fail_processing_queued_run(self, queued_run_id: int) -> None:
+        """Do not downgrade an acknowledged dispatch after a later write error."""
+        async with self.async_session() as session:
+            await session.execute(
+                update(QueuedRunModel)
+                .where(
+                    QueuedRunModel.id == queued_run_id,
+                    QueuedRunModel.state == "processing",
+                )
+                .values(state="failed", processed_at=datetime.now(UTC))
+            )
+            await session.commit()
+
+    async def mark_queued_run_processed(
+        self, queued_run_id: int, campaign_id: int
+    ) -> bool:
+        """Count each dispatched queue row once, in the same transaction.
+
+        Retries are separate queued rows and count as separate attempts. The
+        conditional transition prevents duplicate acknowledgements; the SQL
+        increment prevents concurrent batches overwriting each other's progress.
+        """
+        async with self.async_session() as session:
+            result = await session.execute(
+                update(QueuedRunModel)
+                .where(
+                    QueuedRunModel.id == queued_run_id,
+                    QueuedRunModel.campaign_id == campaign_id,
+                    QueuedRunModel.state == "processing",
+                )
+                .values(
+                    state="processed",
+                    processed_at=datetime.now(UTC),
+                )
+                .returning(QueuedRunModel.id)
+            )
+            changed = result.scalar_one_or_none() is not None
+            if changed:
+                await session.execute(
+                    update(CampaignModel)
+                    .where(CampaignModel.id == campaign_id)
+                    .values(
+                        processed_rows=func.coalesce(CampaignModel.processed_rows, 0)
+                        + 1
+                    )
+                )
+            await session.commit()
+            return changed
+
     async def return_processing_queued_runs_without_workflow(
         self, queued_run_ids: list[int]
     ) -> int:

@@ -7,7 +7,6 @@ from api.constants import REDIS_URL, TEXT_CHAT_INACTIVITY_SWEEP_INTERVAL_MINUTES
 
 # Setup logging - this is now idempotent and safe to call multiple times
 from api.logging_config import setup_logging
-from api.tasks.function_names import FunctionNames
 
 setup_logging()
 
@@ -62,6 +61,10 @@ from api.tasks.campaign_tasks import (
     sync_campaign_source,
 )
 from api.tasks.knowledge_base_processing import process_knowledge_base_document
+from api.tasks.platform_usage_delivery import (
+    deliver_platform_usage,
+    sweep_platform_usage_deliveries,
+)
 from api.tasks.run_integrations import run_integrations_post_workflow_run
 from api.tasks.text_chat_inactivity import (
     complete_inactive_text_chat_session,
@@ -79,9 +82,16 @@ class WorkerSettings:
         process_campaign_batch,
         process_knowledge_base_document,
         deliver_webhook,
+        deliver_platform_usage,
         complete_inactive_text_chat_session,
     ]
     cron_jobs = [
+        cron(
+            sweep_platform_usage_deliveries,
+            minute=set(range(0, 60, 1)),
+            second=15,
+            run_at_startup=True,
+        ),
         # Safety net for webhook deliveries whose ARQ job was lost (worker
         # restart / Redis flush): re-enqueue any pending delivery that is overdue.
         cron(
@@ -147,7 +157,7 @@ async def get_arq_redis() -> ArqRedis:
     return _redis_pool
 
 
-async def enqueue_job(function_name: FunctionNames, *args, **kwargs):
+async def enqueue_job(function_name: str, *args, **kwargs):
     redis = await get_arq_redis()
     # kwargs forwards ARQ job options (e.g. _job_id, _defer_by) used for
     # deterministic, backed-off webhook delivery retries.

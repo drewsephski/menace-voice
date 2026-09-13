@@ -5,7 +5,7 @@ Consolidated from split modules for easier maintenance.
 
 import json
 import uuid
-from typing import Optional
+from typing import Any, Optional, cast
 
 from fastapi import (
     APIRouter,
@@ -1185,6 +1185,8 @@ async def complete_transfer_function_call(transfer_id: str, request: Request):
 
     call_status = data.get("CallStatus", "")
     call_sid = data.get("CallSid", "")
+    if not isinstance(call_status, str) or not isinstance(call_sid, str):
+        raise HTTPException(status_code=400, detail="Invalid callback fields")
 
     logger.info(
         f"Transfer result(call status) webhook: {transfer_id} status={call_status}"
@@ -1194,8 +1196,47 @@ async def complete_transfer_function_call(transfer_id: str, request: Request):
     call_transfer_manager = await get_call_transfer_manager()
     transfer_context = await call_transfer_manager.get_transfer_context(transfer_id)
 
-    original_call_sid = transfer_context.original_call_sid if transfer_context else None
-    conference_name = transfer_context.conference_name if transfer_context else None
+    if not transfer_context or not transfer_context.workflow_run_id:
+        raise HTTPException(status_code=404, detail="Transfer not found")
+    workflow_run = await db_client.get_workflow_run_by_id(
+        transfer_context.workflow_run_id
+    )
+    if not workflow_run:
+        raise HTTPException(status_code=404, detail="Workflow run not found")
+    workflow = await db_client.get_workflow_by_id(cast(int, workflow_run.workflow_id))
+    if not workflow:
+        raise HTTPException(status_code=404, detail="Workflow not found")
+    provider = await get_telephony_provider_for_run(
+        workflow_run, cast(int, workflow.organization_id)
+    )
+    if provider.PROVIDER_NAME != "twilio" or workflow_run.mode != "twilio":
+        raise HTTPException(status_code=403, detail="Transfer provider mismatch")
+    if not await provider.verify_inbound_signature(
+        str(request.url), cast(dict[str, Any], form_data), dict(request.headers)
+    ):
+        raise HTTPException(status_code=401, detail="Invalid webhook signature")
+    if (
+        data.get("AccountSid") != getattr(provider, "account_sid", None)
+        or not call_sid
+        or (transfer_context.call_sid and call_sid != transfer_context.call_sid)
+        or transfer_context.original_call_sid
+        != (cast(dict[str, Any] | None, workflow_run.gathered_context) or {}).get(
+            "call_id"
+        )
+    ):
+        raise HTTPException(status_code=403, detail="Transfer call identity mismatch")
+    if not transfer_context.call_sid:
+        # The callback can beat the dial response. Twilio signs the complete
+        # transfer-specific URL, so bind an early callback to that URL and
+        # the expected destination until the dial response stores its SID.
+        destination = data.get("To")
+        if not isinstance(destination, str) or not numbers_match(
+            destination, transfer_context.target_number
+        ):
+            raise HTTPException(status_code=403, detail="Transfer destination mismatch")
+
+    original_call_sid = transfer_context.original_call_sid
+    conference_name = transfer_context.conference_name
 
     # Determine the result based on call status with user-friendly messaging
     if call_status in ("in-progress", "answered"):

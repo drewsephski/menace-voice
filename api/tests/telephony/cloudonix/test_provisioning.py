@@ -1,5 +1,5 @@
 from types import SimpleNamespace
-from unittest.mock import AsyncMock
+from unittest.mock import ANY, AsyncMock
 
 import pytest
 
@@ -66,12 +66,18 @@ async def test_managed_configuration_is_created_from_mps_provisioning(monkeypatc
     provisioning._preprocess_credentials_on_save.assert_awaited_once_with(
         {
             "bearer_token": "domain-bearer",
+            "webhook_secret": ANY,
             "domain_id": "oss-dograh-11111111.cloudonix.net",
             "domain_uuid": mps_result["domain_uuid"],
             "managed_by": provisioning.MANAGED_BY,
             "provisioning_id": mps_result["provisioning_id"],
         }
     )
+    generated = provisioning._preprocess_credentials_on_save.await_args.args[0][
+        "webhook_secret"
+    ]
+    assert len(generated) >= 32
+    assert generated != "domain-bearer"
     create.assert_awaited_once_with(
         organization_id=42,
         name=provisioning.MANAGED_CONFIGURATION_NAME,

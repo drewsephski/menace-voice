@@ -11,6 +11,7 @@ written when the breaker trips can show *which* calls pushed it over.
 
 import json
 import time
+import uuid
 from typing import Any, Dict, List, Optional, Tuple
 
 import redis.asyncio as aioredis
@@ -104,6 +105,8 @@ class CircuitBreaker:
         campaign_id: int,
         is_failure: bool,
         config: Optional[dict] = None,
+        *,
+        workflow_run_id: Optional[int] = None,
     ) -> Tuple[bool, Optional[dict]]:
         """Record a call outcome and check if the circuit breaker should trip.
 
@@ -133,6 +136,9 @@ class CircuitBreaker:
         window_start = now - window_seconds
 
         fail_key, succ_key = self._keys(campaign_id)
+        member = (
+            str(workflow_run_id) if workflow_run_id is not None else uuid.uuid4().hex
+        )
 
         lua_script = """
         local fail_key = KEYS[1]
@@ -143,16 +149,40 @@ class CircuitBreaker:
         local threshold = tonumber(ARGV[4])
         local min_calls = tonumber(ARGV[5])
         local ttl = tonumber(ARGV[6])
+        local member = ARGV[7]
+        local recorded = redis.call('HMGET', KEYS[3], 'failure', 'score')
+        local previous = recorded[1]
+        -- Pipeline failures can correct a carrier success; a later completed
+        -- callback must not erase a failure. Repeated callbacks never re-trip.
+        if previous == '1' or (previous == '0' and is_failure == 0) then
+            return {0, 0, 0, 0, 0}
+        end
+        local score = tonumber(recorded[2]) or now
+        redis.call('HSET', KEYS[3], 'failure', is_failure, 'score', score)
+        redis.call('EXPIRE', KEYS[3], 604800)
+        if previous == '0' then
+            -- Reset removes the window but intentionally preserves dedup keys.
+            -- An old outcome correction must not repopulate a resumed window.
+            if not redis.call('ZSCORE', succ_key, member) then
+                return {0, 0, 0, 0, 0}
+            end
+            redis.call('ZREM', succ_key, member)
+        end
 
         -- Trim both sets to the sliding window
         redis.call('ZREMRANGEBYSCORE', fail_key, 0, window_start)
         redis.call('ZREMRANGEBYSCORE', succ_key, 0, window_start)
 
+        -- Late corrections do not resurrect an outcome outside the window.
+        if score <= window_start then
+            return {0, 0, 0, 0, 0}
+        end
+
         -- Add the new outcome to the appropriate set
         if is_failure == 1 then
-            redis.call('ZADD', fail_key, now, now)
+            redis.call('ZADD', fail_key, score, member)
         else
-            redis.call('ZADD', succ_key, now, now)
+            redis.call('ZADD', succ_key, score, member)
         end
 
         -- Refresh TTL on both keys
@@ -166,25 +196,29 @@ class CircuitBreaker:
 
         -- Check trip condition
         if total >= min_calls and (failures / total) >= threshold then
-            return {1, failures, successes, total}
+            return {1, failures, successes, total, 1}
         end
 
-        return {0, failures, successes, total}
+        return {0, failures, successes, total, 1}
         """
 
         try:
             result = await redis_client.eval(
                 lua_script,
-                2,
+                3,
                 fail_key,
                 succ_key,
+                f"cb_outcome:{campaign_id}:{member}",
                 now,
                 window_start,
                 1 if is_failure else 0,
                 threshold,
                 min_calls,
                 window_seconds + 60,  # TTL with buffer
+                member,
             )
+            if len(result) > 4 and not result[4]:
+                return False, None
 
             tripped = bool(result[0])
             failure_count = int(result[1])
@@ -305,10 +339,11 @@ class CircuitBreaker:
         It handles fetching campaign config, recording the outcome, and
         pausing + publishing an event if the breaker trips.
 
-        ``workflow_run_id`` and ``reason`` are optional but should be supplied
-        on failures: they are appended to a capped Redis list so the campaign
-        log entry written on trip can name the calls that pushed the breaker
-        over the threshold.
+        Supply ``workflow_run_id`` for every outcome so Redis can deduplicate
+        carrier retries and pipeline errors atomically. Failures take precedence
+        over successes for the same run. ``reason`` annotates the first failure
+        in the recent-failures list. Deduplication lasts seven days and survives
+        reset, so delayed callbacks cannot pollute a resumed campaign.
 
         Exceptions are caught internally so this never disrupts the caller.
         """
@@ -321,18 +356,18 @@ class CircuitBreaker:
             if campaign.orchestrator_metadata:
                 cb_config = campaign.orchestrator_metadata.get("circuit_breaker", {})
 
-            if is_failure and workflow_run_id is not None:
+            tripped, stats = await self.record_call_outcome(
+                campaign_id=campaign_id,
+                is_failure=is_failure,
+                config=cb_config,
+                workflow_run_id=workflow_run_id,
+            )
+            if stats is not None and is_failure and workflow_run_id is not None:
                 await self._push_recent_failure(
                     campaign_id=campaign_id,
                     workflow_run_id=workflow_run_id,
                     reason=reason,
                 )
-
-            tripped, stats = await self.record_call_outcome(
-                campaign_id=campaign_id,
-                is_failure=is_failure,
-                config=cb_config,
-            )
 
             if tripped and stats:
                 logger.warning(

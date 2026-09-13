@@ -107,12 +107,13 @@ step "Switching pipecat to editable install from workspace"
 uv pip install -e "$ROOT_DIR/pipecat" --no-deps
 step_done
 
-step "Installing npm dependencies (ui + ts_validator in parallel)"
-npm ci --prefix ui &
+step "Installing dependencies (ui + ts_validator in parallel)"
+npm install --global pnpm@10.33.2
+pnpm --dir ui install --frozen-lockfile &
 ui_pid=$!
 npm ci --prefix api/mcp_server/ts_validator &
 ts_pid=$!
-wait "$ui_pid" || fail "npm ci ui"
+wait "$ui_pid" || fail "pnpm install ui"
 wait "$ts_pid" || fail "npm ci ts_validator"
 step_done
 

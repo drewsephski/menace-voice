@@ -53,3 +53,21 @@ After a call completes, the run record includes:
 | `initial_context` | The data passed in when the call was triggered |
 | `usage_info` | Duration in seconds, token count |
 | `cost_info` | Cost in USD |
+
+## Review pilot outcomes
+
+Open an agent's **Runs** page and select **Pilot review** to compare its recorded
+phone, web, and chat runs. The review shows 25 runs per page, with links to each
+run's conversation and supporting details. Use **Refresh** for new results or
+**Older runs** to continue through the history.
+
+Each card shows the recorded disposition, call status, transfer evidence,
+duration, token usage, and webhook delivery status when those records exist.
+Missing evidence is labeled **Not recorded**. A completed run alone does not
+establish a successful business outcome.
+
+Webhook **accepted** means the destination returned a successful HTTP response.
+It does not confirm downstream processing or human receipt. A recorded transfer
+does not establish that a person answered. The review does not infer currency
+costs from token usage; authoritative costs and human receipt remain **Not
+recorded** until there is a source for those facts.

@@ -2,7 +2,6 @@ from datetime import UTC, datetime
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, patch
 
-import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
@@ -459,7 +458,9 @@ def test_create_workflow_from_template_hardens_onboarding_prompts_and_layout():
         mock_mps.await_args.kwargs["activity_description"]
         == "Structured generator brief"
     )
-    saved_setup = mock_db.create_workflow.await_args.kwargs["workflow_configurations"]["agent_setup"]
+    saved_setup = mock_db.create_workflow.await_args.kwargs["workflow_configurations"][
+        "agent_setup"
+    ]
     assert saved_setup["agent_brief"] == "Call me about my organized sock drawer."
     assert saved_setup["behavior_notes"] == "Stop when I say the test is over."
     assert saved_setup["call_type"] == "outbound"

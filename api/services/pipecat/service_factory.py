@@ -18,10 +18,15 @@ from api.services.configuration.options import (
     DEEPGRAM_FLUX_MULTILINGUAL_LANGUAGE_OPTIONS,
 )
 from api.services.configuration.registry import ServiceProviders
+from api.services.pipecat.dograh_llm import DograhManagedLLMService
 from api.services.pipecat.gemini_json_schema_adapter import (
     DograhGeminiJSONSchemaAdapter,
 )
 from api.services.pipecat.minimax_tts import MiniMaxOwnedSessionTTSService
+from api.services.pipecat.openai_llm import (
+    DograhOpenAILLMService,
+    DograhOpenRouterLLMService,
+)
 from api.utils.url_security import validate_user_configured_service_url
 from pipecat.services.assemblyai.stt import AssemblyAISTTService, AssemblyAISTTSettings
 from pipecat.services.aws.llm import AWSBedrockLLMService, AWSBedrockLLMSettings
@@ -42,11 +47,6 @@ from pipecat.services.deepgram.flux.stt import (
 from pipecat.services.deepgram.stt import DeepgramSTTService, DeepgramSTTSettings
 from pipecat.services.deepgram.tts import DeepgramTTSService, DeepgramTTSSettings
 from pipecat.services.dograh.flux.stt import DograhFluxSTTService
-from api.services.pipecat.dograh_llm import DograhManagedLLMService
-from api.services.pipecat.openai_llm import (
-    DograhOpenAILLMService,
-    DograhOpenRouterLLMService,
-)
 from pipecat.services.dograh.stt import DograhSTTService, DograhSTTSettings
 from pipecat.services.dograh.tts import DograhTTSService, DograhTTSSettings
 from pipecat.services.elevenlabs.stt import (
@@ -78,13 +78,12 @@ from pipecat.services.minimax.llm import MiniMaxLLMService
 from pipecat.services.minimax.tts import MiniMaxTTSSettings
 from pipecat.services.openai._constants import OPENAI_SAMPLE_RATE
 from pipecat.services.openai.base_llm import OpenAILLMSettings
-from pipecat.services.openai.llm import OpenAILLMService
 from pipecat.services.openai.stt import (
     OpenAISTTService,
     OpenAISTTSettings,
 )
 from pipecat.services.openai.tts import OpenAITTSService, OpenAITTSSettings
-from pipecat.services.openrouter.llm import OpenRouterLLMService, OpenRouterLLMSettings
+from pipecat.services.openrouter.llm import OpenRouterLLMSettings
 from pipecat.services.rime.tts import RimeTTSService, RimeTTSSettings
 from pipecat.services.sarvam.llm import SarvamLLMService, SarvamLLMSettings
 from pipecat.services.sarvam.stt import SarvamSTTService, SarvamSTTSettings

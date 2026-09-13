@@ -20,6 +20,7 @@ from api.services.workflow.node_specs._base import (
 )
 from api.services.workflow.node_specs.constants import DEFAULT_QA_SYSTEM_PROMPT
 from api.services.workflow.node_specs.model_spec import node_spec, spec_field
+from api.utils.webhook_security import validate_webhook_url
 
 
 class NodeType(str, Enum):
@@ -799,6 +800,13 @@ class WebhookNodeData(BaseNodeData):
     payload_template: Optional[dict] = spec_field(
         default=None, ui_type=PropertyType.json
     )
+
+    @field_validator("endpoint_url")
+    @classmethod
+    def validate_endpoint_url(cls, value: Optional[str]) -> Optional[str]:
+        if value:
+            validate_webhook_url(value)
+        return value
 
 
 @node_spec(

@@ -45,7 +45,7 @@ The `src/client/` directory is auto-generated from the backend OpenAPI spec. Whe
 new api route in backend, and wish to use it in the UI, generate the client using below command.
 
 ```bash
-npm run generate-client
+pnpm run generate-client
 ```
 
 ## Conventions
@@ -89,6 +89,6 @@ Use `detailFromError` from `@/lib/apiError` to turn the error into a string — 
 ## Development
 
 ```bash
-npm install
-npm run dev    # Runs on port 3000
+pnpm install --frozen-lockfile
+pnpm run dev    # Runs on port 3000
 ```

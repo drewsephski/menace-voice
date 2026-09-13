@@ -4,7 +4,9 @@ Mounted under ``/api/v1/telephony`` by ``api.routes.telephony`` via the
 provider registry — see ProviderSpec.router.
 """
 
+import base64
 import json
+from typing import Any, cast
 
 from fastapi import APIRouter, HTTPException, Request
 from loguru import logger
@@ -156,25 +158,47 @@ async def handle_telnyx_transfer_result(transfer_id: str, request: Request):
         - call.answered: https://developers.telnyx.com/api-reference/callbacks/call-answered
         - call.hangup:   https://developers.telnyx.com/api-reference/callbacks/call-hangup
     """
-    event_data = await request.json()
-    logger.info(
-        f"Telnyx transfer-result webhook (transfer_id={transfer_id}): "
-        f"{json.dumps(event_data)}"
-    )
+    try:
+        raw_body = (await request.body()).decode("utf-8")
+        event_data = json.loads(raw_body)
+    except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+        raise HTTPException(status_code=400, detail="Invalid webhook JSON") from exc
+    if not isinstance(event_data, dict):
+        raise HTTPException(status_code=400, detail="Expected webhook object")
+    logger.info(f"Telnyx transfer-result webhook (transfer_id={transfer_id})")
 
     data = event_data.get("data", {})
+    if not isinstance(data, dict) or not isinstance(data.get("payload"), dict):
+        raise HTTPException(status_code=400, detail="Invalid webhook envelope")
     event_type = normalize_event_type(data.get("event_type", ""))
-    payload = data.get("payload", {})
+    payload = data["payload"]
     call_control_id = payload.get("call_control_id", "")
-
-    # Pre-answer events carry no outcome — wait for answered/hangup.
-    if event_type in ("call.initiated", "call.bridging", "streaming.started"):
-        return {"status": "pending"}
 
     call_transfer_manager = await get_call_transfer_manager()
     transfer_context = await call_transfer_manager.get_transfer_context(transfer_id)
-    original_call_sid = transfer_context.original_call_sid if transfer_context else ""
-    conference_name = transfer_context.conference_name if transfer_context else None
+    if not transfer_context:
+        raise HTTPException(status_code=404, detail="Transfer not found")
+    provider = await _resolve_telnyx_provider(transfer_context)
+    if not provider:
+        raise HTTPException(status_code=403, detail="Transfer provider mismatch")
+    if not await provider.verify_inbound_signature(
+        str(request.url), event_data, dict(request.headers), raw_body
+    ):
+        raise HTTPException(status_code=401, detail="Invalid webhook signature")
+    expected_state = base64.b64encode(transfer_id.encode()).decode()
+    if (
+        payload.get("connection_id") != provider.connection_id
+        or payload.get("client_state") != expected_state
+        or not call_control_id
+    ):
+        raise HTTPException(status_code=403, detail="Transfer call identity mismatch")
+
+    # Informational callbacks must also pass authentication and call binding.
+    if event_type in ("call.initiated", "call.bridging", "streaming.started"):
+        return {"status": "pending"}
+
+    original_call_sid = transfer_context.original_call_sid
+    conference_name = transfer_context.conference_name
 
     if event_type == "call.answered":
         # Seed the conference now with the destination's live call_control_id
@@ -304,7 +328,14 @@ async def _resolve_telnyx_provider(
     provider = await get_telephony_provider_for_run(
         workflow_run, workflow.organization_id
     )
-    if not isinstance(provider, TelnyxProvider):
+    if (
+        not isinstance(provider, TelnyxProvider)
+        or workflow_run.mode != "telnyx"
+        or transfer_context.original_call_sid
+        != (cast(dict[str, Any] | None, workflow_run.gathered_context) or {}).get(
+            "call_id"
+        )
+    ):
         logger.error(
             f"Transfer {transfer_context.transfer_id} resolved to non-Telnyx "
             f"provider ({type(provider).__name__})"

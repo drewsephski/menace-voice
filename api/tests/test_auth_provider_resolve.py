@@ -60,6 +60,4 @@ def test_blank_without_creds_stays_local():
 
 def test_explicit_stack_without_creds_still_stack():
     # Health then omits stack_project_id; the UI logs and stays on a spinner.
-    assert (
-        resolve_auth_provider("stack", project_id=None, secret=None) == "stack"
-    )
+    assert resolve_auth_provider("stack", project_id=None, secret=None) == "stack"

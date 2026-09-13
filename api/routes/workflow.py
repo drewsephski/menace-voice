@@ -23,6 +23,7 @@ from api.enums import (
     WorkflowRunMode,
     WorkflowStatus,
 )
+from api.schemas.agent_setup import AgentOnboardingContext, OnboardingSetup
 from api.schemas.ai_model_configuration import OrganizationAIModelConfigurationV2
 from api.schemas.workflow import WorkflowRunResponseSchema
 from api.schemas.workflow_configurations import WorkflowConfigurationDefaults
@@ -66,7 +67,6 @@ from api.services.workflow.mcp_prompt import (
     append_mcp_usage_instructions,
     build_mcp_usage_instructions,
 )
-from api.schemas.agent_setup import AgentOnboardingContext, OnboardingSetup
 from api.services.workflow.onboarding_prompt import (
     InvalidOnboardingWorkflowLayout,
     enhance_onboarding_workflow_prompts,
@@ -1283,7 +1283,9 @@ async def get_agent_setup(
     )
     if workflow is None:
         raise HTTPException(status_code=404, detail="Agent not found")
-    version = await db_client.get_draft_version(workflow_id) or workflow.released_definition
+    version = (
+        await db_client.get_draft_version(workflow_id) or workflow.released_definition
+    )
     setup, source = recover_agent_setup(
         version.workflow_json, version.workflow_configurations, workflow.name
     )
@@ -1301,15 +1303,28 @@ async def preview_agent(
     )
     if workflow is None:
         raise HTTPException(status_code=404, detail="Agent not found")
-    version = await db_client.get_draft_version(workflow_id) or workflow.released_definition
+    version = (
+        await db_client.get_draft_version(workflow_id) or workflow.released_definition
+    )
     original = version.workflow_json
     try:
-        preserve_launch_configuration(original, {"nodes": [n for n in original["nodes"] if n["type"] in {"startCall", "agentNode", "endCall", "globalNode"}], "edges": []})
+        preserve_launch_configuration(
+            original,
+            {
+                "nodes": [
+                    n
+                    for n in original["nodes"]
+                    if n["type"] in {"startCall", "agentNode", "endCall", "globalNode"}
+                ],
+                "edges": [],
+            },
+        )
     except ValueError as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from exc
     tool_ids, document_ids = revision_resources(original)
     _, _, selected_tools, documents = await _validate_template_resources(
-        tool_uuids=tool_ids, document_uuids=document_ids,
+        tool_uuids=tool_ids,
+        document_uuids=document_ids,
         organization_id=user.selected_organization_id,
     )
     try:
@@ -1357,7 +1372,10 @@ async def preview_agent(
             ),
         ) from exc
     except ValueError as exc:
-        raise HTTPException(status_code=422, detail="We could not produce a complete conversation from this brief. Your current agent is unchanged. Please try again.") from exc
+        raise HTTPException(
+            status_code=422,
+            detail="We could not produce a complete conversation from this brief. Your current agent is unchanged. Please try again.",
+        ) from exc
     return AgentPreviewResponse(
         workflow_definition=mask_workflow_definition(definition), agent_setup=request
     )
@@ -1428,7 +1446,9 @@ async def publish_workflow(
         raise HTTPException(status_code=400, detail="No draft to publish")
 
     try:
-        has_voice_clone = bool((draft.workflow_configurations or {}).get("voice_clone_id"))
+        has_voice_clone = bool(
+            (draft.workflow_configurations or {}).get("voice_clone_id")
+        )
         async with (
             operation_lock(user.selected_organization_id)
             if has_voice_clone and user.selected_organization_id

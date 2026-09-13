@@ -24,18 +24,24 @@ import httpx
 from loguru import logger
 from pipecat.utils.run_context import set_current_org_id, set_current_run_id
 
-from api.constants import DEFAULT_WEBHOOK_DELIVERY_CONFIG
+from api.constants import DEFAULT_WEBHOOK_DELIVERY_CONFIG, DEPLOYMENT_MODE
 from api.db import db_client
 from api.db.models import WebhookDeliveryModel
 from api.errors.failure import (
     DograhFailure,
     ErrorSource,
+    ErrorType,
     classify_exception,
     classify_http_response,
     log_failure,
 )
 from api.tasks.function_names import FunctionNames
 from api.utils.credential_auth import build_auth_header
+from api.utils.webhook_security import (
+    UnsafeWebhookURL,
+    prepare_webhook_request,
+    send_webhook_request,
+)
 
 # HTTP statuses that are worth retrying even though the server answered.
 _RETRYABLE_STATUS_CODES = {408, 425, 429, 500, 502, 503, 504}
@@ -281,6 +287,9 @@ async def deliver_webhook(_ctx, delivery_id: int) -> None:
 
     try:
         headers = await _build_headers(delivery, attempt)
+        request_urls, headers, extensions = await prepare_webhook_request(
+            delivery.endpoint_url, headers
+        )
         _log_webhook_request(
             delivery,
             method=method,
@@ -288,24 +297,40 @@ async def deliver_webhook(_ctx, delivery_id: int) -> None:
             headers=headers,
         )
 
-        async with httpx.AsyncClient() as client:
-            if method in ("POST", "PUT", "PATCH"):
-                response = await client.request(
-                    method=method,
-                    url=delivery.endpoint_url,
-                    json=delivery.payload,
-                    headers=headers,
-                    timeout=timeout,
-                )
-            else:  # GET, DELETE
-                response = await client.request(
-                    method=method,
-                    url=delivery.endpoint_url,
-                    headers=headers,
-                    timeout=timeout,
-                )
+        async with httpx.AsyncClient(
+            follow_redirects=False, trust_env=DEPLOYMENT_MODE == "oss"
+        ) as client:
+            response = await send_webhook_request(
+                client,
+                request_urls,
+                method=method,
+                payload=delivery.payload,
+                headers=headers,
+                timeout=timeout,
+                extensions=extensions,
+            )
 
         response.raise_for_status()
+    except UnsafeWebhookURL as e:
+        # Persisted configurations are checked on every attempt, including rows
+        # created before the URL policy was introduced. Never retry blocked URLs.
+        await db_client.mark_webhook_delivery_dead_letter(
+            delivery.id, attempt, str(e), None
+        )
+        _log_dead_letter_failure(
+            delivery,
+            DograhFailure(
+                source=ErrorSource.WEBHOOK,
+                type=ErrorType.CONFIG_ERROR,
+                code="webhook-unsafe-url",
+                internal_message=str(e),
+                external_message="Configure a public HTTP or HTTPS webhook URL.",
+                provider="webhook",
+                error_owner="user",
+                retryable=False,
+            ),
+        )
+        return
     except httpx.HTTPStatusError as e:
         status_code = e.response.status_code
         error = f"HTTP {status_code}: {e.response.text[:200]}"

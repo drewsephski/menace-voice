@@ -321,7 +321,10 @@ async def run_integrations_post_workflow_run(_ctx, workflow_run_id: int):
                         source=ErrorSource.WEBHOOK,
                         type=ErrorType.CONFIG_ERROR,
                         code="webhook-invalid-config",
-                        internal_message=f"Webhook node #{node_id} failed validation: {e}",
+                        internal_message=(
+                            f"Webhook node #{node_id} failed validation: "
+                            f"{e.errors(include_input=False, include_context=False)}"
+                        ),
                         external_message="Check the webhook node configuration.",
                         provider="webhook",
                         error_owner="user",

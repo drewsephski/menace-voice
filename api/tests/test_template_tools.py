@@ -13,10 +13,7 @@ from api.services.workflow.template_tools import (
 
 
 def test_normalize_mcp_url_strips_trailing_slash():
-    assert (
-        normalize_mcp_url("https://mcp.exa.ai/mcp/")
-        == "https://mcp.exa.ai/mcp"
-    )
+    assert normalize_mcp_url("https://mcp.exa.ai/mcp/") == "https://mcp.exa.ai/mcp"
 
 
 @pytest.mark.asyncio
@@ -94,12 +91,15 @@ async def test_ensure_template_tools_creates_missing_builtin_tools():
         created_tools.append(category)
         return SimpleNamespace(tool_uuid=tool_uuid)
 
-    with patch(
-        "api.services.workflow.template_tools.db_client.get_tools_for_organization",
-        AsyncMock(return_value=[]),
-    ), patch(
-        "api.services.workflow.template_tools.db_client.create_tool",
-        AsyncMock(side_effect=create_tool),
+    with (
+        patch(
+            "api.services.workflow.template_tools.db_client.get_tools_for_organization",
+            AsyncMock(return_value=[]),
+        ),
+        patch(
+            "api.services.workflow.template_tools.db_client.create_tool",
+            AsyncMock(side_effect=create_tool),
+        ),
     ):
         tool_uuids = await ensure_template_tools(
             template_id="receptionist",

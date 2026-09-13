@@ -3,6 +3,7 @@ Cloudonix implementation of the TelephonyProvider interface.
 """
 
 import asyncio
+import hmac
 import json
 import re
 from typing import TYPE_CHECKING, Any, Dict, List, Optional
@@ -29,7 +30,7 @@ from api.services.workflow.initial_context import merge_external_initial_context
 from api.utils.common import get_backend_endpoints
 from api.utils.telephony_address import normalize_telephony_address
 
-from .config import normalize_cloudonix_domain
+from .config import normalize_cloudonix_domain, webhook_secret_matches_api_token
 from .regions import CLOUDONIX_REGIONS, CloudonixRegion
 
 if TYPE_CHECKING:
@@ -41,13 +42,6 @@ CLOUDONIX_API_BASE_URL = "https://api.cloudonix.io"
 # stream opens. The agent-stream route holds an org concurrency slot while we
 # wait, so an idle socket must not be able to hold it indefinitely.
 AGENT_STREAM_HANDSHAKE_TIMEOUT_S = 10
-
-
-def _key_tail(key: str | None) -> str:
-    """Last 8 characters of an API key, for logs that compare two keys."""
-    if not key:
-        return "MISSING"
-    return key[-8:] if len(key) > 8 else "SHORT_KEY"
 
 
 def _inbound_transports(
@@ -103,6 +97,7 @@ class CloudonixProvider(TelephonyProvider):
                 - from_numbers: List of phone numbers to use (optional, fetched from API if not provided)
         """
         self.bearer_token = config.get("bearer_token")
+        self.webhook_secret = config.get("webhook_secret")
         self.domain_id = self._normalize_domain(config.get("domain_id"))
         self.domain_uuid = config.get("domain_uuid")
         self.application_name = config.get("application_name")
@@ -184,6 +179,13 @@ class CloudonixProvider(TelephonyProvider):
         """
         if not self.validate_config():
             raise ValueError("Cloudonix provider not properly configured")
+
+        if not self.webhook_secret or webhook_secret_matches_api_token(
+            self.webhook_secret, self.bearer_token
+        ):
+            raise ValueError(
+                "Set and save a Cloudonix Webhook Secret before placing calls"
+            )
 
         endpoint = f"{self.base_url}/calls/{self.domain_id}/application"
 
@@ -438,7 +440,8 @@ class CloudonixProvider(TelephonyProvider):
         return {
             "call_id": data.get("token")
             or data.get("session_id")
-            or data.get("CallSid", ""),
+            or data.get("CallSid")
+            or data.get("Session", ""),
             "status": mapped_status,
             "from_number": data.get("caller_id") or data.get("From"),
             "to_number": data.get("destination") or data.get("To"),
@@ -941,45 +944,27 @@ class CloudonixProvider(TelephonyProvider):
         headers: Dict[str, str],
         body: str = "",
     ) -> bool:
+        """Validate the domain's native authorization-api-key bearer secret.
+
+        X-CX-APIKey is Cloudonix's application API credential, not proof of
+        possession of our configured webhook secret or domain API token.
+        https://developers.cloudonix.com/Documentation/dataModels/domain
         """
-        Verify the API key of an inbound Cloudonix webhook for security.
-
-        Cloudonix uses ``x-cx-apikey`` header validation instead of signature
-        verification. The API key from the webhook should match the
-        bearer_token in our configuration.
-        """
-        api_key = headers.get("x-cx-apikey", "")
-        if not api_key:
-            logger.warning("No x-cx-apikey provided in Cloudonix webhook")
-            return False
-
-        # The bearer_token in config is the same as x-cx-apikey header value
-        if not self.bearer_token:
-            logger.warning("No bearer_token configured for Cloudonix provider")
-            return False
-
-        # Compare the API keys
-        is_valid = api_key == self.bearer_token
-
-        if is_valid:
-            logger.info(
-                f"Cloudonix x-cx-apikey validation successful for "
-                f"domain={self.domain_id}"
-            )
-        else:
-            # A mismatch here usually means the config this request resolved to
-            # is not the one Cloudonix called: the key belongs to whichever
-            # domain took the call, the expected key to whatever the inbound
-            # route matched. Print both tails so the two can be told apart.
+        authorization = headers.get("authorization", "")
+        scheme, _, token = authorization.partition(" ")
+        if not self.webhook_secret or webhook_secret_matches_api_token(
+            self.webhook_secret, self.bearer_token
+        ):
             logger.warning(
-                f"Cloudonix x-cx-apikey validation failed. Received key ending "
-                f"with ...{_key_tail(api_key)}, expected key ending with "
-                f"...{_key_tail(self.bearer_token)} "
-                f"(matched config domain={self.domain_id}, "
-                f"application={self.application_name})"
+                "Cloudonix webhook authentication is not configured; "
+                "set and save Webhook Secret on the telephony configuration"
             )
-
-        return True  # TODO: update this post clarification from cloudonix
+            return False
+        return bool(
+            scheme.lower() == "bearer"
+            and token
+            and hmac.compare_digest(token.encode(), self.webhook_secret.encode())
+        )
 
     async def configure_inbound(
         self, address: str, webhook_url: Optional[str]
@@ -1394,6 +1379,13 @@ class CloudonixProvider(TelephonyProvider):
         """
         if not self.validate_config():
             raise ValueError("Cloudonix provider not properly configured")
+
+        if not self.webhook_secret or webhook_secret_matches_api_token(
+            self.webhook_secret, self.bearer_token
+        ):
+            raise ValueError(
+                "Set and save a Cloudonix Webhook Secret before placing calls"
+            )
 
         from_number = self.select_from_number()
         if from_number is None:

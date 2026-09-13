@@ -1424,6 +1424,12 @@ export type CloudonixConfigurationRequest = {
      */
     domain_id: string;
     /**
+     * Webhook Secret
+     *
+     * Webhook bearer secret, distinct from the Cloudonix API token. Saving synchronizes the domain profile authorization-api-key.
+     */
+    webhook_secret?: string | null;
+    /**
      * Application Name
      *
      * Cloudonix Voice Application name. The application's url is updated when inbound workflows are attached to numbers on this domain. If omitted, an application is auto-created on save and its name is stored on the configuration.
@@ -4826,6 +4832,79 @@ export type PhoneNumberUpdateRequest = {
 };
 
 /**
+ * PilotReviewPage
+ */
+export type PilotReviewPage = {
+    /**
+     * Runs
+     */
+    runs: Array<PilotRunReview>;
+    /**
+     * Next Before Id
+     */
+    next_before_id?: number | null;
+};
+
+/**
+ * PilotRunReview
+ */
+export type PilotRunReview = {
+    /**
+     * Run Id
+     */
+    run_id: number;
+    /**
+     * Workflow Id
+     */
+    workflow_id: number;
+    /**
+     * Created At
+     */
+    created_at: string;
+    /**
+     * State
+     */
+    state: string;
+    /**
+     * Mode
+     */
+    mode: string;
+    /**
+     * Is Completed
+     */
+    is_completed: boolean;
+    /**
+     * Disposition
+     */
+    disposition: string | null;
+    /**
+     * Call Status
+     */
+    call_status: string | null;
+    /**
+     * Error Recorded
+     */
+    error_recorded: boolean;
+    /**
+     * Transfer
+     */
+    transfer: 'recorded_transfer' | 'not_recorded';
+    /**
+     * Duration Seconds
+     */
+    duration_seconds: number | null;
+    /**
+     * Recorded Token Usage
+     */
+    recorded_token_usage: number | null;
+    /**
+     * Actual Cost
+     */
+    actual_cost?: 'not_recorded';
+    webhooks?: WebhookReview;
+};
+
+/**
  * PlivoConfigurationRequest
  *
  * Request schema for Plivo configuration.
@@ -5428,6 +5507,16 @@ export type RedialCampaignRequest = {
 };
 
 /**
+ * ReplayScenarioRequest
+ */
+export type ReplayScenarioRequest = {
+    /**
+     * Use Draft
+     */
+    use_draft?: boolean;
+};
+
+/**
  * RetryConfigRequest
  */
 export type RetryConfigRequest = {
@@ -5701,6 +5790,102 @@ export type SarvamTtsConfiguration = {
      * Speech speed multiplier.
      */
     speed?: number;
+};
+
+/**
+ * SaveScenarioRequest
+ */
+export type SaveScenarioRequest = {
+    /**
+     * Name
+     */
+    name: string;
+    assertions?: ScenarioAssertions;
+};
+
+/**
+ * SavedScenario
+ */
+export type SavedScenario = {
+    /**
+     * Source Run Id
+     */
+    source_run_id: number;
+    /**
+     * Name
+     */
+    name: string;
+    /**
+     * Messages
+     */
+    messages: Array<string>;
+    /**
+     * Initial Context
+     */
+    initial_context: {
+        [key: string]: unknown;
+    };
+    assertions: ScenarioAssertions;
+};
+
+/**
+ * ScenarioAssertions
+ */
+export type ScenarioAssertions = {
+    /**
+     * Node Ids
+     */
+    node_ids?: Array<string>;
+    /**
+     * Reply Contains
+     */
+    reply_contains?: Array<string>;
+};
+
+/**
+ * ScenarioCheck
+ */
+export type ScenarioCheck = {
+    /**
+     * Description
+     */
+    description: string;
+    /**
+     * Passed
+     */
+    passed: boolean;
+};
+
+/**
+ * ScenarioReplayResult
+ */
+export type ScenarioReplayResult = {
+    /**
+     * Workflow Run Id
+     */
+    workflow_run_id: number;
+    /**
+     * Definition Id
+     */
+    definition_id: number;
+    /**
+     * Passed
+     */
+    passed: boolean;
+    /**
+     * Checks
+     */
+    checks: Array<ScenarioCheck>;
+    /**
+     * Turns
+     */
+    turns: Array<{
+        [key: string]: unknown;
+    }>;
+    /**
+     * Error
+     */
+    error?: string | null;
 };
 
 /**
@@ -7728,6 +7913,28 @@ export type VonageConfigurationRequest = {
  * Webhook credential authentication types
  */
 export type WebhookCredentialType = 'none' | 'api_key' | 'bearer_token' | 'basic_auth' | 'custom_header';
+
+/**
+ * WebhookReview
+ */
+export type WebhookReview = {
+    /**
+     * Queued
+     */
+    queued?: number;
+    /**
+     * Accepted
+     */
+    accepted?: number;
+    /**
+     * Failed
+     */
+    failed?: number;
+    /**
+     * Human Receipt
+     */
+    human_receipt?: 'not_recorded';
+};
 
 /**
  * WidgetTexts
@@ -10438,6 +10645,196 @@ export type RewindTextChatSessionApiV1WorkflowWorkflowIdTextChatSessionsRunIdRew
 };
 
 export type RewindTextChatSessionApiV1WorkflowWorkflowIdTextChatSessionsRunIdRewindPostResponse = RewindTextChatSessionApiV1WorkflowWorkflowIdTextChatSessionsRunIdRewindPostResponses[keyof RewindTextChatSessionApiV1WorkflowWorkflowIdTextChatSessionsRunIdRewindPostResponses];
+
+export type ListTextScenariosApiV1WorkflowWorkflowIdTextChatScenariosGetData = {
+    body?: never;
+    headers?: {
+        /**
+         * Authorization
+         */
+        authorization?: string | null;
+        /**
+         * X-Api-Key
+         */
+        'X-API-Key'?: string | null;
+    };
+    path: {
+        /**
+         * Workflow Id
+         */
+        workflow_id: number;
+    };
+    query?: never;
+    url: '/api/v1/workflow/{workflow_id}/text-chat/scenarios';
+};
+
+export type ListTextScenariosApiV1WorkflowWorkflowIdTextChatScenariosGetErrors = {
+    /**
+     * Not found
+     */
+    404: unknown;
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type ListTextScenariosApiV1WorkflowWorkflowIdTextChatScenariosGetError = ListTextScenariosApiV1WorkflowWorkflowIdTextChatScenariosGetErrors[keyof ListTextScenariosApiV1WorkflowWorkflowIdTextChatScenariosGetErrors];
+
+export type ListTextScenariosApiV1WorkflowWorkflowIdTextChatScenariosGetResponses = {
+    /**
+     * Response List Text Scenarios Api V1 Workflow  Workflow Id  Text Chat Scenarios Get
+     *
+     * Successful Response
+     */
+    200: Array<SavedScenario>;
+};
+
+export type ListTextScenariosApiV1WorkflowWorkflowIdTextChatScenariosGetResponse = ListTextScenariosApiV1WorkflowWorkflowIdTextChatScenariosGetResponses[keyof ListTextScenariosApiV1WorkflowWorkflowIdTextChatScenariosGetResponses];
+
+export type DeleteTextScenarioApiV1WorkflowWorkflowIdTextChatScenariosRunIdDeleteData = {
+    body?: never;
+    headers?: {
+        /**
+         * Authorization
+         */
+        authorization?: string | null;
+        /**
+         * X-Api-Key
+         */
+        'X-API-Key'?: string | null;
+    };
+    path: {
+        /**
+         * Workflow Id
+         */
+        workflow_id: number;
+        /**
+         * Run Id
+         */
+        run_id: number;
+    };
+    query?: never;
+    url: '/api/v1/workflow/{workflow_id}/text-chat/scenarios/{run_id}';
+};
+
+export type DeleteTextScenarioApiV1WorkflowWorkflowIdTextChatScenariosRunIdDeleteErrors = {
+    /**
+     * Not found
+     */
+    404: unknown;
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type DeleteTextScenarioApiV1WorkflowWorkflowIdTextChatScenariosRunIdDeleteError = DeleteTextScenarioApiV1WorkflowWorkflowIdTextChatScenariosRunIdDeleteErrors[keyof DeleteTextScenarioApiV1WorkflowWorkflowIdTextChatScenariosRunIdDeleteErrors];
+
+export type DeleteTextScenarioApiV1WorkflowWorkflowIdTextChatScenariosRunIdDeleteResponses = {
+    /**
+     * Successful Response
+     */
+    204: void;
+};
+
+export type DeleteTextScenarioApiV1WorkflowWorkflowIdTextChatScenariosRunIdDeleteResponse = DeleteTextScenarioApiV1WorkflowWorkflowIdTextChatScenariosRunIdDeleteResponses[keyof DeleteTextScenarioApiV1WorkflowWorkflowIdTextChatScenariosRunIdDeleteResponses];
+
+export type SaveTextScenarioApiV1WorkflowWorkflowIdTextChatScenariosRunIdPutData = {
+    body: SaveScenarioRequest;
+    headers?: {
+        /**
+         * Authorization
+         */
+        authorization?: string | null;
+        /**
+         * X-Api-Key
+         */
+        'X-API-Key'?: string | null;
+    };
+    path: {
+        /**
+         * Workflow Id
+         */
+        workflow_id: number;
+        /**
+         * Run Id
+         */
+        run_id: number;
+    };
+    query?: never;
+    url: '/api/v1/workflow/{workflow_id}/text-chat/scenarios/{run_id}';
+};
+
+export type SaveTextScenarioApiV1WorkflowWorkflowIdTextChatScenariosRunIdPutErrors = {
+    /**
+     * Not found
+     */
+    404: unknown;
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type SaveTextScenarioApiV1WorkflowWorkflowIdTextChatScenariosRunIdPutError = SaveTextScenarioApiV1WorkflowWorkflowIdTextChatScenariosRunIdPutErrors[keyof SaveTextScenarioApiV1WorkflowWorkflowIdTextChatScenariosRunIdPutErrors];
+
+export type SaveTextScenarioApiV1WorkflowWorkflowIdTextChatScenariosRunIdPutResponses = {
+    /**
+     * Successful Response
+     */
+    200: SavedScenario;
+};
+
+export type SaveTextScenarioApiV1WorkflowWorkflowIdTextChatScenariosRunIdPutResponse = SaveTextScenarioApiV1WorkflowWorkflowIdTextChatScenariosRunIdPutResponses[keyof SaveTextScenarioApiV1WorkflowWorkflowIdTextChatScenariosRunIdPutResponses];
+
+export type ReplayTextScenarioApiV1WorkflowWorkflowIdTextChatScenariosRunIdReplayPostData = {
+    body: ReplayScenarioRequest;
+    headers?: {
+        /**
+         * Authorization
+         */
+        authorization?: string | null;
+        /**
+         * X-Api-Key
+         */
+        'X-API-Key'?: string | null;
+    };
+    path: {
+        /**
+         * Workflow Id
+         */
+        workflow_id: number;
+        /**
+         * Run Id
+         */
+        run_id: number;
+    };
+    query?: never;
+    url: '/api/v1/workflow/{workflow_id}/text-chat/scenarios/{run_id}/replay';
+};
+
+export type ReplayTextScenarioApiV1WorkflowWorkflowIdTextChatScenariosRunIdReplayPostErrors = {
+    /**
+     * Not found
+     */
+    404: unknown;
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type ReplayTextScenarioApiV1WorkflowWorkflowIdTextChatScenariosRunIdReplayPostError = ReplayTextScenarioApiV1WorkflowWorkflowIdTextChatScenariosRunIdReplayPostErrors[keyof ReplayTextScenarioApiV1WorkflowWorkflowIdTextChatScenariosRunIdReplayPostErrors];
+
+export type ReplayTextScenarioApiV1WorkflowWorkflowIdTextChatScenariosRunIdReplayPostResponses = {
+    /**
+     * Successful Response
+     */
+    200: ScenarioReplayResult;
+};
+
+export type ReplayTextScenarioApiV1WorkflowWorkflowIdTextChatScenariosRunIdReplayPostResponse = ReplayTextScenarioApiV1WorkflowWorkflowIdTextChatScenariosRunIdReplayPostResponses[keyof ReplayTextScenarioApiV1WorkflowWorkflowIdTextChatScenariosRunIdReplayPostResponses];
 
 export type GetDefaultConfigurationsApiV1UserConfigurationsDefaultsGetData = {
     body?: never;
@@ -14570,6 +14967,59 @@ export type GetDailyUsageBreakdownApiV1OrganizationsUsageDailyBreakdownGetRespon
 };
 
 export type GetDailyUsageBreakdownApiV1OrganizationsUsageDailyBreakdownGetResponse = GetDailyUsageBreakdownApiV1OrganizationsUsageDailyBreakdownGetResponses[keyof GetDailyUsageBreakdownApiV1OrganizationsUsageDailyBreakdownGetResponses];
+
+export type GetPilotReviewApiV1WorkflowWorkflowIdPilotReviewGetData = {
+    body?: never;
+    headers?: {
+        /**
+         * Authorization
+         */
+        authorization?: string | null;
+        /**
+         * X-Api-Key
+         */
+        'X-API-Key'?: string | null;
+    };
+    path: {
+        /**
+         * Workflow Id
+         */
+        workflow_id: number;
+    };
+    query?: {
+        /**
+         * Limit
+         */
+        limit?: number;
+        /**
+         * Before Id
+         */
+        before_id?: number | null;
+    };
+    url: '/api/v1/workflow/{workflow_id}/pilot-review';
+};
+
+export type GetPilotReviewApiV1WorkflowWorkflowIdPilotReviewGetErrors = {
+    /**
+     * Not found
+     */
+    404: unknown;
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type GetPilotReviewApiV1WorkflowWorkflowIdPilotReviewGetError = GetPilotReviewApiV1WorkflowWorkflowIdPilotReviewGetErrors[keyof GetPilotReviewApiV1WorkflowWorkflowIdPilotReviewGetErrors];
+
+export type GetPilotReviewApiV1WorkflowWorkflowIdPilotReviewGetResponses = {
+    /**
+     * Successful Response
+     */
+    200: PilotReviewPage;
+};
+
+export type GetPilotReviewApiV1WorkflowWorkflowIdPilotReviewGetResponse = GetPilotReviewApiV1WorkflowWorkflowIdPilotReviewGetResponses[keyof GetPilotReviewApiV1WorkflowWorkflowIdPilotReviewGetResponses];
 
 export type GetDailyReportApiV1OrganizationsReportsDailyGetData = {
     body?: never;

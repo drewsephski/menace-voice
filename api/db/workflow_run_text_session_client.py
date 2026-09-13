@@ -6,6 +6,7 @@ from sqlalchemy.orm import joinedload
 
 from api.db.base_client import BaseDBClient
 from api.db.models import (
+    WorkflowDefinitionModel,
     WorkflowModel,
     WorkflowRunModel,
     WorkflowRunTextSessionModel,
@@ -254,3 +255,75 @@ class WorkflowRunTextSessionClient(BaseDBClient):
                 raise
             await session.refresh(text_session)
             return text_session
+
+    async def list_text_scenarios(self, workflow_id: int, *, organization_id: int):
+        """Saved scenarios live with their source transcript and its retention policy."""
+        async with self.async_session() as session:
+            result = await session.execute(
+                select(WorkflowRunTextSessionModel)
+                .join(WorkflowRunTextSessionModel.workflow_run)
+                .join(WorkflowRunModel.workflow)
+                .where(
+                    WorkflowModel.id == workflow_id,
+                    WorkflowModel.organization_id == organization_id,
+                    WorkflowRunTextSessionModel.session_data["saved_scenario"]
+                    .as_string()
+                    .is_not(None),
+                )
+                .order_by(WorkflowRunTextSessionModel.updated_at.desc())
+                .limit(100)
+            )
+            return list(result.scalars().all())
+
+    async def set_text_scenario(
+        self,
+        workflow_id: int,
+        run_id: int,
+        *,
+        organization_id: int,
+        scenario: dict | None,
+    ) -> bool:
+        """Lock before merging so scenario edits cannot overwrite transcript state."""
+        async with self.async_session() as session:
+            result = await session.execute(
+                select(WorkflowRunTextSessionModel)
+                .join(WorkflowRunTextSessionModel.workflow_run)
+                .join(WorkflowRunModel.workflow)
+                .where(
+                    WorkflowRunTextSessionModel.workflow_run_id == run_id,
+                    WorkflowModel.id == workflow_id,
+                    WorkflowModel.organization_id == organization_id,
+                    WorkflowRunModel.is_completed.is_(True),
+                )
+                .with_for_update(of=WorkflowRunTextSessionModel)
+            )
+            row = result.scalar_one_or_none()
+            if row is None:
+                return False
+            data = dict(row.session_data or {})
+            if scenario is None:
+                data.pop("saved_scenario", None)
+            else:
+                data["saved_scenario"] = scenario
+            row.session_data = data
+            row.revision += 1
+            await session.commit()
+            return True
+
+    async def get_text_scenario_definition(
+        self, workflow_id: int, definition_id: int | None, *, organization_id: int
+    ):
+        async with self.async_session() as session:
+            result = await session.execute(
+                select(WorkflowDefinitionModel)
+                .join(
+                    WorkflowModel,
+                    WorkflowModel.id == WorkflowDefinitionModel.workflow_id,
+                )
+                .where(
+                    WorkflowDefinitionModel.id == definition_id,
+                    WorkflowModel.id == workflow_id,
+                    WorkflowModel.organization_id == organization_id,
+                )
+            )
+            return result.scalar_one_or_none()

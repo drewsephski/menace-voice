@@ -103,12 +103,25 @@ class CallConcurrencyService:
 
         wait_start = time.time()
         while True:
-            acquisition = await rate_limiter.try_acquire_concurrent_slot_details(
-                organization_id,
-                max_concurrent,
-                scope_key=scope_key,
-                scope_max_concurrent=scope_max_concurrent,
+            acquisition_task = asyncio.create_task(
+                rate_limiter.try_acquire_concurrent_slot_details(
+                    organization_id,
+                    max_concurrent,
+                    scope_key=scope_key,
+                    scope_max_concurrent=scope_max_concurrent,
+                )
             )
+            try:
+                acquisition = await asyncio.shield(acquisition_task)
+            except asyncio.CancelledError:
+                # A Redis reservation may commit despite cancellation of the
+                # waiting caller. Settle its receipt before releasing ownership.
+                acquisition = await acquisition_task
+                if acquisition:
+                    await rate_limiter.release_concurrent_slot(
+                        organization_id, acquisition.slot_id, scope_key=scope_key
+                    )
+                raise
             if acquisition:
                 logger.info(
                     f"Acquired concurrent call slot for org {organization_id}: "

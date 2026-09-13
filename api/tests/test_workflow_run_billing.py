@@ -2,192 +2,120 @@ from types import SimpleNamespace
 from unittest.mock import AsyncMock
 
 import pytest
+from arq import Retry
 
 from api.enums import WorkflowRunMode
-from api.services import workflow_run_billing as workflow_run_billing_mod
-from api.services.workflow_run_billing import (
-    _is_usage_not_ready_error,
-    report_completed_workflow_run_platform_usage,
-    report_workflow_run_platform_usage,
+from api.services import workflow_run_billing as billing
+from api.tasks import arq, workflow_completion
+
+
+def _run(**changes):
+    values = {
+        "id": 123,
+        "workflow_id": 456,
+        "is_completed": True,
+        "initial_context": {"mps_correlation_id": "mps-corr-123"},
+        "usage_info": {"call_duration_seconds": 87},
+        "workflow": SimpleNamespace(organization_id=42),
+    }
+    return SimpleNamespace(**(values | changes))
+
+
+@pytest.fixture
+def outbox(monkeypatch):
+    monkeypatch.setattr(billing, "DEPLOYMENT_MODE", "saas")
+    monkeypatch.delenv("MPS_PLATFORM_USAGE_IDEMPOTENCY_CONFIRMED", raising=False)
+    create = AsyncMock(return_value=SimpleNamespace(id=9, status="pending"))
+    enqueue = AsyncMock()
+    monkeypatch.setattr(billing.db_client, "create_platform_usage_delivery", create)
+    monkeypatch.setattr(arq, "enqueue_job", enqueue)
+    return create, enqueue
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("correlation", ["mps-corr-123", None])
+async def test_completion_persists_frozen_report_before_enqueue(outbox, correlation):
+    create, enqueue = outbox
+    run = _run(
+        initial_context={"mps_correlation_id": correlation} if correlation else {}
+    )
+    await billing.report_workflow_run_platform_usage(run)
+    create.assert_awaited_once_with(
+        workflow_run_id=123,
+        organization_id=42,
+        retry_safe=False,
+        payload={
+            "workflow_run_id": 123,
+            "correlation_id": correlation,
+            "duration_seconds": None if correlation else 87.0,
+            "metadata": {
+                "source": "workflow_run_completion",
+                "workflow_id": 456,
+                "duration_source": "mps_correlation"
+                if correlation
+                else "dograh_usage_info",
+            },
+        },
+    )
+    enqueue.assert_awaited_once_with("deliver_platform_usage", 9)
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "changes",
+    [
+        {"is_completed": False},
+        {"mode": WorkflowRunMode.TEXTCHAT.value},
+        {"workflow": None},
+        {"initial_context": {}, "usage_info": {}},
+        {"initial_context": {}, "usage_info": {"call_duration_seconds": float("inf")}},
+    ],
 )
-
-
-def _make_workflow_run():
-    return SimpleNamespace(
-        id=123,
-        workflow_id=456,
-        is_completed=True,
-        initial_context={"mps_correlation_id": "mps-corr-123"},
-        usage_info={"call_duration_seconds": 87},
-        workflow=SimpleNamespace(
-            organization_id=42,
-            user=SimpleNamespace(selected_organization_id=42),
-        ),
-    )
-
-
-def test_is_usage_not_ready_error_detects_mps_409():
-    exc = Exception("Failed to report platform usage")
-    exc.response = SimpleNamespace(
-        status_code=409,
-        text='{"detail":"usage_not_ready"}',
-    )
-
-    assert _is_usage_not_ready_error(exc) is True
+async def test_unbillable_runs_do_not_create_reports(outbox, changes):
+    await billing.report_workflow_run_platform_usage(_run(**changes))
+    outbox[0].assert_not_awaited()
 
 
 @pytest.mark.asyncio
-async def test_report_workflow_run_platform_usage_reports_hosted_completion(
-    monkeypatch,
+async def test_oss_never_creates_reports(outbox, monkeypatch):
+    monkeypatch.setattr(billing, "DEPLOYMENT_MODE", "oss")
+    await billing.report_workflow_run_platform_usage(_run())
+    outbox[0].assert_not_awaited()
+
+
+@pytest.mark.asyncio
+async def test_redis_failure_preserves_durable_report(outbox):
+    outbox[1].side_effect = ConnectionError("Redis unavailable")
+    await billing.report_workflow_run_platform_usage(_run())
+    outbox[0].assert_awaited_once()
+
+
+@pytest.mark.asyncio
+async def test_database_failure_propagates_and_retries_before_integrations(
+    outbox, monkeypatch
 ):
-    workflow_run = _make_workflow_run()
-    report_usage = AsyncMock(return_value={"metered": True})
-
-    monkeypatch.setattr(workflow_run_billing_mod, "DEPLOYMENT_MODE", "saas")
+    outbox[0].side_effect = RuntimeError("PostgreSQL unavailable")
     monkeypatch.setattr(
-        workflow_run_billing_mod.mps_service_key_client,
-        "report_platform_usage",
-        report_usage,
+        billing.db_client, "get_workflow_run_by_id", AsyncMock(return_value=_run())
     )
-
-    await report_workflow_run_platform_usage(workflow_run)
-
-    report_usage.assert_awaited_once_with(
-        organization_id=42,
-        correlation_id="mps-corr-123",
-        duration_seconds=None,
-        workflow_run_id=workflow_run.id,
-        metadata={
-            "source": "workflow_run_completion",
-            "workflow_id": workflow_run.workflow_id,
-            "duration_source": "mps_correlation",
-        },
+    integrations = AsyncMock()
+    monkeypatch.setattr(
+        workflow_completion, "run_integrations_post_workflow_run", integrations
     )
+    with pytest.raises(Retry):
+        await workflow_completion.process_workflow_completion({}, 123)
+    integrations.assert_not_awaited()
 
 
 @pytest.mark.asyncio
-async def test_report_workflow_run_platform_usage_reports_duration_without_correlation(
-    monkeypatch,
-):
-    workflow_run = _make_workflow_run()
-    workflow_run.initial_context = {}
-    report_usage = AsyncMock(return_value={"metered": True})
-
-    monkeypatch.setattr(workflow_run_billing_mod, "DEPLOYMENT_MODE", "saas")
-    monkeypatch.setattr(
-        workflow_run_billing_mod.mps_service_key_client,
-        "report_platform_usage",
-        report_usage,
-    )
-
-    await report_workflow_run_platform_usage(workflow_run)
-
-    report_usage.assert_awaited_once_with(
-        organization_id=42,
-        correlation_id=None,
-        duration_seconds=87.0,
-        workflow_run_id=workflow_run.id,
-        metadata={
-            "source": "workflow_run_completion",
-            "workflow_id": workflow_run.workflow_id,
-            "duration_source": "dograh_usage_info",
-        },
-    )
+async def test_completed_report_is_not_enqueued_again(outbox):
+    outbox[0].return_value.status = "sent"
+    await billing.report_workflow_run_platform_usage(_run())
+    outbox[1].assert_not_awaited()
 
 
 @pytest.mark.asyncio
-async def test_report_workflow_run_platform_usage_skips_missing_duration_without_correlation(
-    monkeypatch,
-):
-    workflow_run = _make_workflow_run()
-    workflow_run.initial_context = {}
-    workflow_run.usage_info = {}
-    report_usage = AsyncMock()
-
-    monkeypatch.setattr(workflow_run_billing_mod, "DEPLOYMENT_MODE", "saas")
-    monkeypatch.setattr(
-        workflow_run_billing_mod.mps_service_key_client,
-        "report_platform_usage",
-        report_usage,
-    )
-
-    await report_workflow_run_platform_usage(workflow_run)
-
-    report_usage.assert_not_awaited()
-
-
-@pytest.mark.asyncio
-async def test_report_workflow_run_platform_usage_skips_oss(monkeypatch):
-    workflow_run = _make_workflow_run()
-    report_usage = AsyncMock()
-
-    monkeypatch.setattr(workflow_run_billing_mod, "DEPLOYMENT_MODE", "oss")
-    monkeypatch.setattr(
-        workflow_run_billing_mod.mps_service_key_client,
-        "report_platform_usage",
-        report_usage,
-    )
-
-    await report_workflow_run_platform_usage(workflow_run)
-
-    report_usage.assert_not_awaited()
-
-
-@pytest.mark.asyncio
-async def test_report_workflow_run_platform_usage_skips_text_chat(monkeypatch):
-    workflow_run = _make_workflow_run()
-    workflow_run.mode = WorkflowRunMode.TEXTCHAT.value
-    report_usage = AsyncMock()
-
-    monkeypatch.setattr(workflow_run_billing_mod, "DEPLOYMENT_MODE", "saas")
-    monkeypatch.setattr(
-        workflow_run_billing_mod.mps_service_key_client,
-        "report_platform_usage",
-        report_usage,
-    )
-
-    await report_workflow_run_platform_usage(workflow_run)
-
-    report_usage.assert_not_awaited()
-
-
-@pytest.mark.asyncio
-async def test_report_workflow_run_platform_usage_skips_incomplete(monkeypatch):
-    workflow_run = _make_workflow_run()
-    workflow_run.is_completed = False
-    report_usage = AsyncMock()
-
-    monkeypatch.setattr(workflow_run_billing_mod, "DEPLOYMENT_MODE", "saas")
-    monkeypatch.setattr(
-        workflow_run_billing_mod.mps_service_key_client,
-        "report_platform_usage",
-        report_usage,
-    )
-
-    await report_workflow_run_platform_usage(workflow_run)
-
-    report_usage.assert_not_awaited()
-
-
-@pytest.mark.asyncio
-async def test_report_completed_workflow_run_platform_usage_loads_run(monkeypatch):
-    workflow_run = _make_workflow_run()
-    get_run = AsyncMock(return_value=workflow_run)
-    report_usage = AsyncMock(return_value={"metered": True})
-
-    monkeypatch.setattr(workflow_run_billing_mod, "DEPLOYMENT_MODE", "saas")
-    monkeypatch.setattr(
-        workflow_run_billing_mod.db_client,
-        "get_workflow_run_by_id",
-        get_run,
-    )
-    monkeypatch.setattr(
-        workflow_run_billing_mod.mps_service_key_client,
-        "report_platform_usage",
-        report_usage,
-    )
-
-    await report_completed_workflow_run_platform_usage(workflow_run.id)
-
-    get_run.assert_awaited_once_with(workflow_run.id)
-    report_usage.assert_awaited_once()
+async def test_idempotency_confirmation_is_explicit(outbox, monkeypatch):
+    monkeypatch.setenv("MPS_PLATFORM_USAGE_IDEMPOTENCY_CONFIRMED", "true")
+    await billing.report_workflow_run_platform_usage(_run())
+    assert outbox[0].call_args.kwargs["retry_safe"] is True

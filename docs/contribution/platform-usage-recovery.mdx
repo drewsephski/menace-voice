@@ -1,0 +1,55 @@
+---
+title: Platform usage recovery
+description: Inspect and reconcile durable hosted platform billing reports.
+---
+
+Hosted voice completions persist one frozen usage request per workflow run in
+`platform_usage_deliveries` before running completion integrations. A dedicated
+worker sends it; a minute sweeper recovers lost Redis jobs. OSS and text chat
+runs do not create reports. Existing completed runs are not backfilled because
+some may already have been charged by the previous billing path.
+
+The default is conservative: connect/pool failures and HTTP 429 retry with
+bounded backoff (eight attempts). HTTP 5xx, read/write timeouts and worker death
+after claiming can mean MPS already processed the request. These outcomes become
+`dead_letter` and require reconciliation. The stable `Idempotency-Key` header is
+`dograh-platform-usage:<organization_id>:<workflow_run_id>`; a header alone is not
+proof of receiver deduplication.
+
+Set `MPS_PLATFORM_USAGE_IDEMPOTENCY_CONFIRMED=true` **only after verifying that the
+deployed MPS endpoint deduplicates this key for the full retry and reconciliation
+window**. This enables retry after ambiguous outcomes for newly created reports.
+The setting is frozen per report; changing it does not silently replay parked
+charges. Attempts retain the exact same payload and key. Claim fencing prevents
+a stale worker from overwriting a newer result. The existing final
+`409 usage_not_ready` behavior remains a terminal `skipped` report (no billable
+STT usage), after the client's short readiness retries.
+
+Apply migrations before deploying the worker. Server operators with database
+access can inspect parked reports; there is no public mutation endpoint:
+
+```bash
+source venv/bin/activate
+set -a
+source api/.env
+set +a
+python -m scripts.reconcile_platform_usage list --organization-id 42
+```
+
+Lists show at most 100 records; use `--after-id <last_id>` for the next page.
+Check the organization's MPS ledger for the workflow run and correlation id
+before choosing either action:
+
+```bash
+# MPS confirms that the request already produced its charge:
+python -m scripts.reconcile_platform_usage confirm-processed --organization-id 42 --delivery-id 123
+# MPS confirms that the request was never processed:
+python -m scripts.reconcile_platform_usage confirm-not-processed --organization-id 42 --delivery-id 123
+```
+
+The first marks the report sent without making a billing request. The second
+opens another bounded eight-attempt window, recovered by the sweeper. Never
+choose the second when MPS processing status is unknown. These commands require
+an exact organization and delivery match in dead-letter state. They retain a
+confirmation reason and update time; they do not expose credentials or payloads.
+Include pending report age and dead-letter count in deployment monitoring.

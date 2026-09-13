@@ -1,5 +1,6 @@
 """Cloudonix telephony configuration schemas."""
 
+import hmac
 import re
 from typing import Literal
 
@@ -13,6 +14,17 @@ from .regions import CLOUDONIX_REGION_NAMES, get_cloudonix_region
 MANAGED_CONFIGURATION_NAME = "Menace Voice Cloudonix SIP"
 LEGACY_MANAGED_CONFIGURATION_NAMES = frozenset({"Dograh Cloudonix SIP"})
 MANAGED_BY = "dograh-mps"
+
+
+def webhook_secret_matches_api_token(
+    webhook_secret: str | None, bearer_token: str | None
+) -> bool:
+    """Compare resolved secrets, never their masked display representations."""
+    return bool(
+        webhook_secret
+        and bearer_token
+        and hmac.compare_digest(webhook_secret.encode(), bearer_token.encode())
+    )
 
 
 def normalize_cloudonix_domain(value: str | None) -> str | None:
@@ -88,6 +100,14 @@ class CloudonixConfigurationRequest(BaseModel):
     provider: Literal["cloudonix"] = Field(default="cloudonix")
     bearer_token: str = Field(..., description="Cloudonix API Bearer Token")
     domain_id: str = Field(..., description="Cloudonix domain name")
+    webhook_secret: str | None = Field(
+        default=None,
+        min_length=32,
+        description=(
+            "Webhook bearer secret, distinct from the Cloudonix API token. "
+            "Saving synchronizes the domain profile authorization-api-key."
+        ),
+    )
 
     @field_validator("domain_id")
     @classmethod

@@ -1,10 +1,12 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { getWorkflowRunsApiV1WorkflowWorkflowIdRunsGet } from "@/client/sdk.gen";
 import { WorkflowRunResponseSchema } from "@/client/types.gen";
+import { Button } from "@/components/ui/button";
 import { WorkflowRunsTable } from "@/components/workflow-runs";
 import { useDispositionCodes } from "@/hooks/useDispositionCodes";
 import { useAuth } from '@/lib/auth';
@@ -180,6 +182,11 @@ export function WorkflowExecutions({ workflowId, searchParams }: WorkflowExecuti
 
     return (
         <div className="container mx-auto py-8">
+            <div className="mb-4 flex justify-end">
+                <Button variant="outline" asChild>
+                    <Link href={`/workflow/${workflowId}/pilot-review`}>Pilot review</Link>
+                </Button>
+            </div>
             <WorkflowRunsTable
                 runs={workflowRuns}
                 loading={loading}

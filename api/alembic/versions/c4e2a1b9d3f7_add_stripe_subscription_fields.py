@@ -41,7 +41,9 @@ def upgrade() -> None:
     )
     op.add_column(
         "organizations",
-        sa.Column("subscription_current_period_end", sa.DateTime(timezone=True), nullable=True),
+        sa.Column(
+            "subscription_current_period_end", sa.DateTime(timezone=True), nullable=True
+        ),
     )
     op.add_column(
         "organizations",

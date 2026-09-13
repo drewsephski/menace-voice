@@ -234,7 +234,7 @@ def test_model_override_wrapper_preserves_openai_base_url():
     )
 
     with patch(
-        "api.services.pipecat.service_factory.OpenAILLMService"
+        "api.services.pipecat.service_factory.DograhOpenAILLMService"
     ) as openai_service:
         result = create_llm_service_with_model_override(
             config,
@@ -243,6 +243,7 @@ def test_model_override_wrapper_preserves_openai_base_url():
             usage_context="qa_analysis",
         )
 
+    openai_service.assert_called_once()
     assert result is openai_service.return_value
     assert config.llm.model == "configured-model"
     kwargs = openai_service.call_args.kwargs

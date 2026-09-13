@@ -65,3 +65,50 @@ Supported in Agent and End Call Nodes:
 - Define agent node movement
 - Use [tool calls](/voice-agent/tools/http-api) to transition between nodes
 - **"tool"** is a reserved keyword for function calls and actions
+## Saved conversation regressions
+
+Before replaying, save your workflow and configure an LLM. Replay uses your
+organization's normal model quota and can incur model usage.
+
+1. Open the workflow tester's manual text chat and complete a conversation.
+2. Select **End chat**, then expand **Saved conversation regressions**.
+3. Enter a scenario name. Optionally add **Expected reply contains** and comma-separated
+   **Expected node IDs**. Node assertions use the IDs in the workflow definition,
+   not the display names shown on the canvas.
+4. Select **Save this conversation**. The scenario stores the ordered completed user
+   messages and the conversation's starting context. Saving again replaces the
+   scenario for that conversation.
+5. Select **Replay** beside a saved scenario. Leave **Replay current draft** checked
+   to test the saved draft, or uncheck it to test the published version. Save editor
+   changes before replaying. Each replay copies the selected definition at its start,
+   so subsequent edits do not change that replay.
+
+The result shows the run and definition IDs, each assertion, and an expandable
+transcript. A replay passes when every saved message completes, all expected nodes
+are visited, and every expected phrase appears in the assistant replies. Phrase
+matching ignores case. If the agent ends before all messages finish, a check fails.
+Without optional assertions, the result only checks that all saved messages complete.
+Model responses can vary between runs.
+
+For example, save a booking conversation with expected reply text `appointment`
+and the ID of your confirmation node. After changing the prompt, replay it to check
+that the assistant still reaches confirmation and discusses the appointment.
+
+### Scope and limits
+
+- Save 1–20 completed user messages, each at most 4,000 characters. A replay has a
+  three-minute execution limit; quota failures and execution errors are reported.
+- Replay supports conversational Start, Agent, Global, and End nodes, plus Trigger
+  nodes. Workflows containing HTTP/custom tools, MCP tools, call transfers, pre-call
+  fetch, integration nodes, webhook nodes, or QA nodes are rejected before model
+  execution. Use a separate conversation-only workflow and provide required values
+  in its initial context; replay does not fabricate external tool results.
+- Regression replay skips completion integrations and webhooks. **Ending the original
+  manual conversation still runs its normal completion integrations.**
+- Text regressions do not verify speech recognition, audio quality, interruptions,
+  telephony, or external delivery. Test those separately with real voice calls and
+  integration checks.
+- The list shows up to 100 recently updated saved scenarios. Scenarios are visible
+  only within their workflow's organization and follow the source conversation's
+  retention policy. **Delete** removes the saved scenario without deleting its
+  source transcript.

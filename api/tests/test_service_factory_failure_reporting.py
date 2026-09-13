@@ -31,15 +31,17 @@ def test_service_factory_classifies_constructor_failure_and_reraises(monkeypatch
 def test_service_factory_tags_success_with_authoritative_ownership():
     service = SimpleNamespace()
     with patch(
-        "api.services.pipecat.service_factory.OpenAILLMService",
+        "api.services.pipecat.service_factory.DograhOpenAILLMService",
         return_value=service,
-    ):
+    ) as openai_service:
         result = create_llm_service_from_provider(
             provider="openai",
             model="gpt-4.1-mini",
             api_key="key",
         )
 
+    openai_service.assert_called_once()
+    assert result is service
     metadata = failure_metadata_for_processor(result)
     assert metadata.source == ErrorSource.LLM
     assert metadata.provider == "openai"

@@ -157,7 +157,10 @@ async def test_preview_requires_audio_before_marking_voice_ready(mocks):
 async def test_runtime_uses_same_credentials_and_keeps_original_config(mocks):
     config = EffectiveAIModelConfiguration(
         tts=ElevenlabsTTSConfiguration(
-            api_key="original", voice="stock", speed=0.85, model="eleven_multilingual_v2"
+            api_key="original",
+            voice="stock",
+            speed=0.85,
+            model="eleven_multilingual_v2",
         )
     )
     result = await service.apply_clone_to_config(config, "clone-1", 7)
@@ -286,12 +289,22 @@ async def test_real_decoder_accepts_valid_sample():
 
 
 @pytest.mark.asyncio
-async def test_real_decoder_accepts_seekable_m4a_and_removes_temp_file(tmp_path, monkeypatch):
+async def test_real_decoder_accepts_seekable_m4a_and_removes_temp_file(
+    tmp_path, monkeypatch
+):
     monkeypatch.setattr(service.tempfile, "tempdir", str(tmp_path))
     recording = tmp_path / "voice.m4a"
     process = await asyncio.create_subprocess_exec(
-        "ffmpeg", "-v", "error", "-f", "lavfi", "-i",
-        "sine=frequency=440:duration=40", "-c:a", "aac", str(recording),
+        "ffmpeg",
+        "-v",
+        "error",
+        "-f",
+        "lavfi",
+        "-i",
+        "sine=frequency=440:duration=40",
+        "-c:a",
+        "aac",
+        str(recording),
     )
     assert await process.wait() == 0
     result = await service.normalize_sample(recording.read_bytes())
@@ -301,7 +314,9 @@ async def test_real_decoder_accepts_seekable_m4a_and_removes_temp_file(tmp_path,
 
 
 @pytest.mark.asyncio
-async def test_real_decoder_rejects_playlist_and_removes_temp_file(tmp_path, monkeypatch):
+async def test_real_decoder_rejects_playlist_and_removes_temp_file(
+    tmp_path, monkeypatch
+):
     monkeypatch.setattr(service.tempfile, "tempdir", str(tmp_path))
     recording = tmp_path / "voice.wav"
     recording.write_bytes(wav_sample(30))

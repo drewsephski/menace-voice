@@ -1,12 +1,13 @@
 import asyncio
 import time
+from collections.abc import Coroutine
 from datetime import UTC, datetime
 from typing import TYPE_CHECKING, Optional
 
 from loguru import logger
 
 from api.db import db_client
-from api.db.models import QueuedRunModel, WorkflowRunModel
+from api.db.models import CampaignModel, QueuedRunModel, WorkflowRunModel
 from api.enums import WorkflowRunState
 from api.services.call_concurrency import (
     CallConcurrencyLimitError,
@@ -90,11 +91,23 @@ class CampaignCallDispatcher:
 
         # Atomically claim queued runs for processing (thread-safe)
         # This uses SELECT FOR UPDATE SKIP LOCKED to prevent race conditions
-        queued_runs = await db_client.claim_queued_runs_for_processing(
-            campaign_id=campaign_id,
-            scheduled_before=datetime.now(UTC),
-            limit=batch_size,
-        )
+        queued_runs: list[QueuedRunModel] = []
+
+        async def claim_runs():
+            nonlocal queued_runs
+            queued_runs = await db_client.claim_queued_runs_for_processing(
+                campaign_id=campaign_id,
+                scheduled_before=datetime.now(UTC),
+                limit=batch_size,
+            )
+
+        try:
+            await self._settle_resource_operation(claim_runs())
+        except asyncio.CancelledError:
+            await self._return_unprocessed_claims(
+                queued_runs, set(), reason="task_cancelled_during_claim"
+            )
+            raise
 
         if not queued_runs:
             logger.info(f"No more queued runs for campaign {campaign_id}")
@@ -109,6 +122,11 @@ class CampaignCallDispatcher:
                     provider.from_numbers,
                     telephony_configuration_id=campaign.telephony_configuration_id,
                 )
+        except asyncio.CancelledError:
+            await self._return_unprocessed_claims(
+                queued_runs, set(), reason="task_cancelled"
+            )
+            raise
         except Exception as e:
             logger.warning(f"Failed to initialize from_number pool: {e}")
 
@@ -128,25 +146,16 @@ class CampaignCallDispatcher:
                 )
 
                 # Dispatch the call
-                workflow_run = await self.dispatch_call(
-                    queued_run, campaign, concurrency_slot
-                )
+                await self.dispatch_call(queued_run, campaign, concurrency_slot)
 
-                # Update queued run as processed
-                await db_client.update_queued_run(
-                    queued_run_id=queued_run.id,
-                    state="processed",
-                    workflow_run_id=workflow_run.id,
-                    processed_at=datetime.now(UTC),
-                )
-
-                processed_count += 1
+                if await self._settle_resource_operation(
+                    db_client.mark_queued_run_processed(
+                        queued_run_id=queued_run.id,
+                        campaign_id=campaign_id,
+                    )
+                ):
+                    processed_count += 1
                 processed_run_ids.add(queued_run.id)
-
-                # Update campaign processed count
-                await db_client.update_campaign(
-                    campaign_id=campaign_id, processed_rows=campaign.processed_rows + 1
-                )
 
             except asyncio.CancelledError:
                 logger.warning(
@@ -204,11 +213,7 @@ class CampaignCallDispatcher:
 
                 # Mark the queued run as failed to prevent infinite retry loops
                 try:
-                    await db_client.update_queued_run(
-                        queued_run_id=queued_run.id,
-                        state="failed",
-                        processed_at=datetime.now(UTC),
-                    )
+                    await db_client.fail_processing_queued_run(queued_run.id)
                     logger.info(
                         f"Marked queued run {queued_run.id} as failed due to error: {e}"
                     )
@@ -254,13 +259,14 @@ class CampaignCallDispatcher:
     async def dispatch_call(
         self,
         queued_run: QueuedRunModel,
-        campaign: any,
+        campaign: CampaignModel,
         concurrency_slot: CallConcurrencySlot,
-    ) -> Optional[WorkflowRunModel]:
+    ) -> WorkflowRunModel:
         """Creates workflow run and initiates call. Requires a pre-acquired slot."""
         from_number = None
-        workflow_run = None
-        slot_bound = False
+        workflow_run: WorkflowRunModel | None = None
+        provider_started = False
+        provider_accepted = False
 
         try:
             # Get workflow details
@@ -312,75 +318,69 @@ class CampaignCallDispatcher:
             # Create workflow run with queued_run_id tracking
             workflow_run_name = f"WR-CAMPAIGN-{campaign.id}-{queued_run.id}"
             run_inputs = await prepare_workflow_run_inputs(db_client, workflow)
-            workflow_run = await db_client.create_workflow_run(
-                name=workflow_run_name,
-                workflow_id=campaign.workflow_id,
-                mode=workflow_run_mode,
-                user_id=campaign.created_by,
-                initial_context=initial_context,
-                campaign_id=campaign.id,
-                queued_run_id=queued_run.id,  # Link to queued run for retry tracking
-                organization_id=campaign.organization_id,
-                definition_id=run_inputs.definition_id,
-            )
-            await call_concurrency.bind_workflow_run(concurrency_slot, workflow_run.id)
-            slot_bound = True
+
+            async def create_and_bind_run():
+                nonlocal workflow_run
+                workflow_run = await db_client.create_workflow_run(
+                    name=workflow_run_name,
+                    workflow_id=campaign.workflow_id,
+                    mode=workflow_run_mode,
+                    user_id=campaign.created_by,
+                    initial_context=initial_context,
+                    campaign_id=campaign.id,
+                    queued_run_id=queued_run.id,  # Link to queued run for retry tracking
+                    organization_id=campaign.organization_id,
+                    definition_id=run_inputs.definition_id,
+                )
+                await call_concurrency.bind_workflow_run(
+                    concurrency_slot, workflow_run.id
+                )
+
+            await self._settle_resource_operation(create_and_bind_run())
+            assert workflow_run is not None
 
             # Store from_number mapping for cleanup on call completion
-            await rate_limiter.store_workflow_from_number_mapping(
-                workflow_run.id,
-                campaign.organization_id,
-                from_number,
-                telephony_configuration_id=campaign.telephony_configuration_id,
-            )
-        except Exception:
-            # Release slot and from_number on error
-            if slot_bound and workflow_run:
-                await call_concurrency.release_workflow_run_slot(workflow_run.id)
-            else:
-                await call_concurrency.release_slot(concurrency_slot)
-            if from_number:
-                await rate_limiter.release_from_number(
+            await self._settle_resource_operation(
+                rate_limiter.store_workflow_from_number_mapping(
+                    workflow_run.id,
                     campaign.organization_id,
                     from_number,
                     telephony_configuration_id=campaign.telephony_configuration_id,
                 )
-            raise
-
-        # Add "retry" tag if this is a retry call
-        if queued_run.context_variables.get("is_retry"):
-            retry_reason = queued_run.context_variables.get("retry_reason", "unknown")
-            await db_client.update_workflow_run(
-                run_id=workflow_run.id,
-                gathered_context={
-                    "call_tags": ["retry", f"retry_reason_{retry_reason}"]
-                },
             )
+            # Add "retry" tag if this is a retry call
+            if queued_run.context_variables.get("is_retry"):
+                retry_reason = queued_run.context_variables.get(
+                    "retry_reason", "unknown"
+                )
+                await db_client.update_workflow_run(
+                    run_id=workflow_run.id,
+                    gathered_context={
+                        "call_tags": ["retry", f"retry_reason_{retry_reason}"]
+                    },
+                )
 
-        quota_result = await authorize_workflow_run_start(
-            workflow_id=campaign.workflow_id,
-            organization_id=campaign.organization_id,
-            workflow_run_id=workflow_run.id,
-        )
-        if not quota_result.has_quota:
-            error_message = quota_result.error_message or "Quota exceeded"
-            logger.warning(
-                f"Campaign {campaign.id} quota check failed for workflow run "
-                f"{workflow_run.id}: {error_message}"
+            quota_result = await authorize_workflow_run_start(
+                workflow_id=campaign.workflow_id,
+                organization_id=campaign.organization_id,
+                workflow_run_id=workflow_run.id,
             )
-            await db_client.update_workflow_run(
-                run_id=workflow_run.id,
-                is_completed=True,
-                state=WorkflowRunState.COMPLETED.value,
-                gathered_context={"error": error_message},
-            )
+            if not quota_result.has_quota:
+                error_message = quota_result.error_message or "Quota exceeded"
+                logger.warning(
+                    f"Campaign {campaign.id} quota check failed for workflow run "
+                    f"{workflow_run.id}: {error_message}"
+                )
+                await db_client.update_workflow_run(
+                    run_id=workflow_run.id,
+                    is_completed=True,
+                    state=WorkflowRunState.COMPLETED.value,
+                    gathered_context={"error": error_message},
+                )
 
-            await self.release_call_slot(workflow_run.id)
+                raise ValueError(error_message)
 
-            raise ValueError(error_message)
-
-        # Initiate call via telephony provider
-        try:
+            # Initiate call via telephony provider
             # Construct webhook URL with parameters
             backend_endpoint, _ = await get_backend_endpoints()
             webhook_endpoint = provider.WEBHOOK_ENDPOINT
@@ -391,6 +391,7 @@ class CampaignCallDispatcher:
                 f"&organization_id={campaign.organization_id}"
             )
 
+            provider_started = True
             call_result = await provider.initiate_call(
                 to_number=phone_number,
                 webhook_url=webhook_url,
@@ -400,6 +401,7 @@ class CampaignCallDispatcher:
                 organization_id=campaign.organization_id,
             )
 
+            provider_accepted = True
             # Store provider type and metadata in gathered_context
             # (required for WebSocket handler to route to correct provider)
             await db_client.update_workflow_run(
@@ -414,46 +416,114 @@ class CampaignCallDispatcher:
                 f"Call initiated for workflow run {workflow_run.id}, Call ID: {call_result.call_id}"
             )
 
-        except Exception as e:
-            logger.error(
-                f"Failed to initiate call for workflow run {workflow_run.id}: {e}"
-            )
+        except (Exception, asyncio.CancelledError) as exc:
+            if workflow_run is not None and (
+                provider_accepted
+                or (provider_started and isinstance(exc, asyncio.CancelledError))
+            ):
+                # The provider may have accepted the request. Keep reservations
+                # and the workflow link for terminal callbacks/stale-slot expiry;
+                # never return this row to the dial queue.
+                if provider_accepted:
+                    await db_client.mark_queued_run_processed(
+                        queued_run.id, campaign.id
+                    )
+                else:
+                    await db_client.update_queued_run(
+                        queued_run_id=queued_run.id,
+                        state="failed",
+                        processed_at=datetime.now(UTC),
+                    )
+                await db_client.update_workflow_run(
+                    run_id=workflow_run.id,
+                    gathered_context={
+                        "dispatch_status": (
+                            "accepted_pending_metadata"
+                            if provider_accepted
+                            else "unknown_after_cancellation"
+                        )
+                    },
+                )
+                logger.warning(
+                    f"Dispatch interrupted after provider request for run {workflow_run.id}; "
+                    "retaining reservations pending provider reconciliation"
+                )
+                raise
 
-            # Update workflow run as failed
-            telephony_callback_logs = workflow_run.logs.get(
-                "telephony_status_callbacks", []
-            )
-            telephony_callback_log = {
-                "status": "failed",
-                "timestamp": datetime.now(UTC).isoformat(),
-                "data": {"error": str(e)},
-            }
-            telephony_callback_logs.append(telephony_callback_log)
-            await db_client.update_workflow_run(
-                run_id=workflow_run.id,
-                is_completed=True,
-                state=WorkflowRunState.COMPLETED.value,
-                gathered_context={
-                    "error": str(e),
-                },
-                logs={
-                    "telephony_status_callbacks": telephony_callback_logs,
-                },
-            )
+            # Before contacting the provider, cancellation is safe to clean up.
+            # Independently attempt every release so one failure cannot skip the rest.
+            cleanup_errors = []
+            cleanup_operations = [call_concurrency.release_slot(concurrency_slot)]
+            if workflow_run is not None:
+                cleanup_operations.append(
+                    call_concurrency.release_workflow_run_slot(workflow_run.id)
+                )
+            if from_number:
 
-            # Record call initiation failure in circuit breaker
-            await circuit_breaker.record_and_evaluate(
-                campaign.id,
-                is_failure=True,
-                workflow_run_id=workflow_run.id,
-                reason="call_initiation_failed",
-            )
+                async def release_number():
+                    released = await rate_limiter.release_from_number(
+                        campaign.organization_id,
+                        from_number,
+                        telephony_configuration_id=campaign.telephony_configuration_id,
+                    )
+                    if released and workflow_run is not None:
+                        await rate_limiter.delete_workflow_from_number_mapping(
+                            workflow_run.id
+                        )
 
-            await self.release_call_slot(workflow_run.id)
+                cleanup_operations.append(release_number())
+            for operation in cleanup_operations:
+                try:
+                    await operation
+                except Exception as cleanup_error:
+                    cleanup_errors.append(str(cleanup_error))
+            if cleanup_errors:
+                logger.error(f"Campaign dispatch cleanup failed: {cleanup_errors}")
 
+            if workflow_run is not None:
+                await db_client.update_workflow_run(
+                    run_id=workflow_run.id,
+                    is_completed=True,
+                    state=WorkflowRunState.COMPLETED.value,
+                    gathered_context={"error": str(exc) or "dispatch_cancelled"},
+                )
+                # An undispatched run with a workflow cannot use the generic
+                # no-workflow requeue path. Mark it terminal instead of stranding
+                # it in processing; a new attempt must be explicitly scheduled.
+                await db_client.update_queued_run(
+                    queued_run_id=queued_run.id,
+                    state="failed",
+                    processed_at=datetime.now(UTC),
+                )
+                if provider_started:
+                    await circuit_breaker.record_and_evaluate(
+                        campaign.id,
+                        is_failure=True,
+                        workflow_run_id=workflow_run.id,
+                        reason="call_initiation_failed",
+                    )
             raise
 
         return workflow_run
+
+    @staticmethod
+    async def _settle_resource_operation[T](
+        operation: Coroutine[object, object, T],
+    ) -> T:
+        """Settle ownership-changing writes before propagating cancellation.
+
+        Otherwise a cancelled Redis/DB await can commit remotely after cleanup
+        has already inspected its local ownership state.
+        """
+        task = asyncio.create_task(operation)
+        try:
+            return await asyncio.shield(task)
+        except asyncio.CancelledError:
+            try:
+                await task
+            except Exception:
+                logger.exception("Resource operation failed while cancelling dispatch")
+            raise
 
     async def apply_rate_limit(self, organization_id: int, rate_limit: int) -> None:
         """
@@ -487,7 +557,7 @@ class CampaignCallDispatcher:
             await asyncio.sleep(wait_time)
 
     async def acquire_concurrent_slot(
-        self, organization_id: int, campaign: any, timeout: float = 600
+        self, organization_id: int, campaign: CampaignModel, timeout: float = 600
     ) -> CallConcurrencySlot:
         """
         Acquires a concurrent call slot - waits if necessary until a slot is available.
@@ -549,9 +619,24 @@ class CampaignCallDispatcher:
         wait_start = time.time()
 
         while True:
-            from_number = await rate_limiter.acquire_from_number(
-                organization_id, telephony_configuration_id
-            )
+            from_number = None
+
+            async def acquire_number():
+                nonlocal from_number
+                from_number = await rate_limiter.acquire_from_number(
+                    organization_id, telephony_configuration_id
+                )
+
+            try:
+                await self._settle_resource_operation(acquire_number())
+            except asyncio.CancelledError:
+                if from_number:
+                    await rate_limiter.release_from_number(
+                        organization_id,
+                        from_number,
+                        telephony_configuration_id=telephony_configuration_id,
+                    )
+                raise
             if from_number:
                 return from_number
 

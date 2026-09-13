@@ -28,16 +28,16 @@ from api.services.telephony.external_pbx import resolve_external_pbx_field_mappi
 from api.services.telephony.factory import get_telephony_provider_for_run
 from api.services.telephony.transfer_event_protocol import TransferContext
 from api.services.workflow.tools.calculator import get_calculator_tools, safe_calculator
+from api.services.workflow.tools.custom_tool import (
+    execute_http_tool,
+    tool_to_function_schema,
+)
 from api.services.workflow.tools.timezone import (
     convert_time,
     get_current_time,
     get_time_tools,
 )
 from api.services.workflow.tools.tool_result_limits import bound_tool_result_for_llm
-from api.services.workflow.tools.custom_tool import (
-    execute_http_tool,
-    tool_to_function_schema,
-)
 from api.services.workflow.tools.transfer_resolver import (
     TransferResolutionError,
     resolve_transfer_config,

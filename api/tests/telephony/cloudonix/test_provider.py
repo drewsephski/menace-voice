@@ -407,6 +407,7 @@ async def test_create_configuration_persists_fetched_domain_uuid():
     now = datetime.now(UTC)
     stored_credentials = {
         "bearer_token": "secret-token",
+        "webhook_secret": None,
         "domain_id": "friendly-name.cloudonix.net",
         "application_name": "existing-app",
         "domain_uuid": DOMAIN_UUID,
@@ -443,6 +444,7 @@ async def test_create_configuration_persists_fetched_domain_uuid():
         ),
         patch("api.routes.organization.db_client") as db_client,
         patch("api.routes.organization.capture_event"),
+        patch("api.routes.organization.assert_subscription_feature", AsyncMock()),
     ):
         db_client.create_telephony_configuration = AsyncMock(return_value=row)
         db_client.list_phone_numbers_for_config = AsyncMock(return_value=[])
@@ -603,6 +605,7 @@ def test_cloudonix_metadata_leaves_outbound_trunks_to_the_dedicated_form():
     assert not [name for name in fields if name.startswith("outbound_trunk")]
     assert set(fields) == {
         "bearer_token",
+        "webhook_secret",
         "domain_id",
         "application_name",
         "from_numbers",
@@ -1050,6 +1053,7 @@ async def test_outbound_calls_are_pinned_to_the_managed_trunk_name():
     provider = CloudonixProvider(
         {
             "bearer_token": "secret-token",
+            "webhook_secret": "configured-test-webhook-secret-32",
             "domain_id": "friendly-name.cloudonix.net",
             "trunks": [{"id": 1, "enabled": True, "name": "  dograh-carrier  "}],
             "trunk_id_by_number": {"+15551230001": 1},
@@ -1094,6 +1098,7 @@ async def test_transfer_calls_are_pinned_to_the_managed_trunk_name():
     provider = CloudonixProvider(
         {
             "bearer_token": "secret-token",
+            "webhook_secret": "configured-test-webhook-secret-32",
             "domain_id": "friendly-name.cloudonix.net",
             "trunks": [{"id": 1, "enabled": True, "name": "dograh-carrier"}],
             "trunk_id_by_number": {"+15551230001": 1},
@@ -1133,6 +1138,7 @@ async def test_disabled_outbound_trunk_is_not_sent_with_outbound_calls():
     provider = CloudonixProvider(
         {
             "bearer_token": "secret-token",
+            "webhook_secret": "configured-test-webhook-secret-32",
             "domain_id": "friendly-name.cloudonix.net",
             "trunks": [{"id": 1, "enabled": False, "name": "dograh-carrier"}],
             "trunk_id_by_number": {"+15551230001": 1},

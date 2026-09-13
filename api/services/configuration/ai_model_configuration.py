@@ -105,7 +105,10 @@ async def get_effective_ai_model_configuration_for_workflow(
         )
     clone_id = workflow_configurations.get("voice_clone_id")
     if clone_id:
-        from api.services.voice_cloning.service import VoiceCloneError, apply_clone_to_config
+        from api.services.voice_cloning.service import (
+            VoiceCloneError,
+            apply_clone_to_config,
+        )
 
         if not organization_id:
             raise VoiceCloneError("Voice cloning requires an organization.", 403)

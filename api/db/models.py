@@ -20,7 +20,7 @@ from sqlalchemy import (
     func,
     text,
 )
-from sqlalchemy.orm import declarative_base, relationship
+from sqlalchemy.orm import Mapped, declarative_base, mapped_column, relationship
 
 from api.constants import DEFAULT_CAMPAIGN_RETRY_CONFIG
 
@@ -1554,11 +1554,74 @@ class VoiceCloneModel(Base):
     __tablename__ = "voice_clones"
 
     id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
-    organization_id = Column(Integer, ForeignKey("organizations.id"), nullable=False, index=True)
+    organization_id = Column(
+        Integer, ForeignKey("organizations.id"), nullable=False, index=True
+    )
     created_by = Column(Integer, ForeignKey("users.id"), nullable=False)
     name = Column(String(80), nullable=False)
     provider_voice_id = Column(String(128), nullable=False)
     credential_source = Column(String(20), nullable=False)
     status = Column(String(30), nullable=False, default="ready")
     consent_version = Column(String(30), nullable=False)
-    created_at = Column(DateTime(timezone=True), nullable=False, default=lambda: datetime.now(UTC))
+    created_at = Column(
+        DateTime(timezone=True), nullable=False, default=lambda: datetime.now(UTC)
+    )
+
+
+class PlatformUsageDeliveryModel(Base):
+    """One frozen platform usage report per completed workflow run.
+
+    retry_safe is captured when the report is created, and must only be enabled
+    after MPS confirms receiver-side deduplication of the stable idempotency key.
+    An expired sending lease is ambiguous; unsafe reports require reconciliation.
+    """
+
+    __tablename__ = "platform_usage_deliveries"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    workflow_run_id: Mapped[int] = mapped_column(
+        Integer,
+        ForeignKey("workflow_runs.id", ondelete="CASCADE"),
+        nullable=False,
+        unique=True,
+    )
+    organization_id: Mapped[int] = mapped_column(
+        Integer,
+        ForeignKey("organizations.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    payload: Mapped[dict] = mapped_column(JSON, nullable=False)
+    retry_safe: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, default=False, server_default=text("false")
+    )
+    status: Mapped[str] = mapped_column(
+        String(20), nullable=False, default="pending", server_default="pending"
+    )
+    attempt_count: Mapped[int] = mapped_column(
+        Integer, nullable=False, default=0, server_default=text("0")
+    )
+    max_attempts: Mapped[int] = mapped_column(
+        Integer, nullable=False, default=8, server_default=text("8")
+    )
+    scheduled_for: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+    last_error: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    last_status_code: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, default=lambda: datetime.now(UTC)
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+        default=lambda: datetime.now(UTC),
+        onupdate=lambda: datetime.now(UTC),
+    )
+
+    __table_args__ = (
+        Index(
+            "idx_platform_usage_deliveries_due",
+            "scheduled_for",
+            postgresql_where=text("status IN ('pending', 'sending')"),
+        ),
+    )

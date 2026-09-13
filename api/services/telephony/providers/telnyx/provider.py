@@ -793,6 +793,9 @@ class TelnyxProvider(TelephonyProvider):
             "webhook_url_method": "POST",
         }
         payload.update(kwargs)
+        # Telnyx signs and echoes client_state in callbacks. It binds this
+        # transfer even when a routed leg gets a new call_control_id.
+        payload["client_state"] = base64.b64encode(transfer_id.encode()).decode()
 
         endpoint = f"{self.TELNYX_API_BASE}/calls"
 

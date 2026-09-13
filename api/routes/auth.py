@@ -6,8 +6,8 @@ from api.db.models import UserModel
 from api.enums import PostHogEvent
 from api.schemas.auth import AuthResponse, LoginRequest, SignupRequest, UserResponse
 from api.services.auth.depends import get_user, require_local_auth
-from api.services.organization_bootstrap import ensure_organization_bootstrapped
 from api.services.billing.stripe_service import initialize_organization_trial
+from api.services.organization_bootstrap import ensure_organization_bootstrapped
 from api.services.posthog_client import capture_event
 from api.utils.auth import create_jwt_token, hash_password, verify_password
 

@@ -20,6 +20,7 @@ from api.utils.common import get_backend_endpoints
 from .config import (
     CloudonixConfigurationRequest,
     CloudonixTrunkSettings,
+    webhook_secret_matches_api_token,
 )
 from .provider import CLOUDONIX_API_BASE_URL, CloudonixProvider
 from .regions import CLOUDONIX_REGION_NAMES, get_cloudonix_region
@@ -31,7 +32,7 @@ def _config_loader(value: dict[str, Any]) -> dict[str, Any]:
     return {
         "provider": "cloudonix",
         "bearer_token": value.get("bearer_token"),
-        "api_key": value.get("api_key"),  # For x-cx-apikey validation
+        "webhook_secret": value.get("webhook_secret"),
         "domain_id": value.get("domain_id"),
         "domain_uuid": value.get("domain_uuid"),
         "application_name": value.get("application_name"),
@@ -706,12 +707,93 @@ async def _remove_trunk_on_delete(
         ) from e
 
 
+def _validate_webhook_credentials(credentials: dict[str, Any]) -> None:
+    if webhook_secret_matches_api_token(
+        credentials.get("webhook_secret"), credentials.get("bearer_token")
+    ):
+        raise HTTPException(
+            422, "Webhook Secret must differ from the Cloudonix API Bearer Token"
+        )
+
+
+async def _sync_webhook_secret(
+    credentials: dict[str, Any], existing_credentials: dict[str, Any] | None = None
+) -> dict[str, Any]:
+    """Preserve the domain profile while configuring native callback auth.
+
+    Cloudonix sends authorization-api-key as an Authorization Bearer header
+    on all customer HTTP endpoints. Do not put the domain API token there.
+    """
+    _validate_webhook_credentials(credentials)
+    secret = credentials.get("webhook_secret")
+    if not secret:
+        return credentials
+    domain = quote(str(credentials["domain_id"]), safe="")
+    endpoint = f"{CLOUDONIX_API_BASE_URL}/customers/self/domains/{domain}"
+    headers = {"Authorization": f"Bearer {credentials['bearer_token']}"}
+    try:
+        async with aiohttp.ClientSession(
+            timeout=aiohttp.ClientTimeout(total=20)
+        ) as session:
+            async with session.get(endpoint, headers=headers) as response:
+                if response.status != 200:
+                    raise HTTPException(
+                        502, "Could not read Cloudonix webhook configuration"
+                    )
+                data = await response.json()
+            profile = data.get("profile", {}) if isinstance(data, dict) else None
+            if not isinstance(profile, dict):
+                raise HTTPException(502, "Invalid Cloudonix domain profile")
+            current_secret = profile.get("authorization-api-key")
+            if current_secret == secret:
+                return credentials
+            if current_secret and current_secret != (existing_credentials or {}).get(
+                "webhook_secret"
+            ):
+                raise HTTPException(
+                    409,
+                    "Cloudonix already has a different domain webhook secret. "
+                    "Use its existing authorization-api-key to preserve other integrations.",
+                )
+            async with session.put(
+                endpoint,
+                headers=headers,
+                json={"profile": {**profile, "authorization-api-key": secret}},
+            ) as response:
+                if response.status not in (200, 204):
+                    raise HTTPException(
+                        502, "Could not configure Cloudonix webhook authentication"
+                    )
+    except (aiohttp.ClientError, TimeoutError, ValueError) as exc:
+        # Remote errors and profiles may contain credentials; never echo them.
+        raise HTTPException(
+            502, "Could not synchronize Cloudonix webhook authentication"
+        ) from exc
+    return credentials
+
+
 async def _preprocess_credentials_on_save(
     credentials: dict[str, Any],
     existing_credentials: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
+    if (
+        not credentials.get("webhook_secret")
+        and existing_credentials
+        and credentials.get("domain_id") == existing_credentials.get("domain_id")
+        and existing_credentials.get("webhook_secret")
+    ):
+        # Older clients omit this additive field. Do not erase authentication
+        # on an unrelated edit; account changes must not carry the old secret.
+        credentials = {
+            **credentials,
+            "webhook_secret": existing_credentials["webhook_secret"],
+        }
+    # Masked fields have already been restored by the configuration route.
+    # Reject reuse before any provider request can propagate the API token.
+    _validate_webhook_credentials(credentials)
     credentials = await _fetch_domain_uuid(credentials)
-    return await _ensure_application_name(credentials)
+    credentials = await _ensure_application_name(credentials)
+    return await _sync_webhook_secret(credentials, existing_credentials)
 
 
 _UI_METADATA = ProviderUIMetadata(
@@ -725,6 +807,18 @@ _UI_METADATA = ProviderUIMetadata(
             type="password",
             sensitive=True,
             description="Cloudonix API Bearer Token",
+        ),
+        ProviderUIField(
+            name="webhook_secret",
+            label="Webhook Secret",
+            type="password",
+            sensitive=True,
+            required=False,
+            description=(
+                "At least 32 characters, distinct from your API token. Required "
+                "for calls; saving syncs callback authentication to Cloudonix. "
+                "Use the existing authorization-api-key if this domain is shared."
+            ),
         ),
         ProviderUIField(
             name="domain_id",

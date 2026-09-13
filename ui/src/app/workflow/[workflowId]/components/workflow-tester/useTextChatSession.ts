@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { type Dispatch, type SetStateAction, useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import {
@@ -40,7 +40,13 @@ export function useTextChatSession({
 }: UseTextChatSessionProps) {
     const [session, setSession] = useState<TextChatSession | null>(null);
     const [started, setStarted] = useState(false);
-    const [draft, setDraft] = useState("");
+    const [draft, updateDraft] = useState("");
+    const draftRevisionRef = useRef(0);
+    const submittingRef = useRef(false);
+    const setDraft: Dispatch<SetStateAction<string>> = useCallback((value) => {
+        draftRevisionRef.current += 1;
+        updateDraft(value);
+    }, []);
     const [creatingSession, setCreatingSession] = useState(false);
     const [sendingMessage, setSendingMessage] = useState(false);
     const [endingSession, setEndingSession] = useState(false);
@@ -86,7 +92,7 @@ export function useTextChatSession({
         } finally {
             setCreatingSession(false);
         }
-    }, [disabled, initialContextVariables, workflowId]);
+    }, [disabled, initialContextVariables, setDraft, workflowId]);
 
     useEffect(() => {
         if (!started || creatingSession || session || !ready || disabled) {
@@ -127,11 +133,14 @@ export function useTextChatSession({
             setEditingTurnId(null);
             setDraft("");
         }
-    }, [editingTurnId, turns]);
+    }, [editingTurnId, setDraft, turns]);
 
     const submitMessage = useCallback(async (messageText: string, replayOptions?: TurnActionState) => {
         const trimmedText = messageText.trim();
-        if (!session || session.is_completed || !trimmedText || disabled || endingSession) return;
+        if (!session || session.is_completed || !trimmedText || disabled || endingSession || submittingRef.current) return;
+
+        submittingRef.current = true;
+        const submittedDraftRevision = draftRevisionRef.current;
 
         setSendingMessage(true);
         if (replayOptions) {
@@ -156,6 +165,9 @@ export function useTextChatSession({
 
                 activeSession = toTextChatSession(rewindResponse.data);
                 setSession(activeSession);
+                // Rewind removes the edited turn. Preserve the composer text
+                // for a failed append or for typing during its response.
+                if (replayOptions.type === "edit") setEditingTurnId(null);
             }
 
             const response = await appendTextChatMessageApiV1WorkflowWorkflowIdTextChatSessionsRunIdMessagesPost({
@@ -171,15 +183,18 @@ export function useTextChatSession({
             }
 
             setSession(toTextChatSession(response.data));
-            setDraft("");
-            setEditingTurnId(null);
+            if (replayOptions?.type !== "rewind" && draftRevisionRef.current === submittedDraftRevision) {
+                setDraft("");
+                setEditingTurnId(null);
+            }
         } catch (error) {
             toast.error(getErrorMessage(error));
         } finally {
+            submittingRef.current = false;
             setSendingMessage(false);
             setActiveTurnAction(null);
         }
-    }, [disabled, endingSession, session, workflowId]);
+    }, [disabled, endingSession, session, setDraft, workflowId]);
 
     const endSession = useCallback(async () => {
         if (!session || session.is_completed || sendingMessage || endingSession) return;
@@ -204,7 +219,7 @@ export function useTextChatSession({
         } finally {
             setEndingSession(false);
         }
-    }, [endingSession, sendingMessage, session, workflowId]);
+    }, [endingSession, sendingMessage, session, setDraft, workflowId]);
 
     const rewindTurn = useCallback(async (turn: TextChatTurn) => {
         if (!turn.user_message) return;
@@ -223,12 +238,12 @@ export function useTextChatSession({
             textarea?.focus();
             textarea?.setSelectionRange(nextText.length, nextText.length);
         });
-    }, [composerId]);
+    }, [composerId, setDraft]);
 
     const cancelEditingTurn = useCallback(() => {
         setEditingTurnId(null);
         setDraft("");
-    }, []);
+    }, [setDraft]);
 
     const submitComposer = useCallback(async () => {
         if (editingTurnId) {

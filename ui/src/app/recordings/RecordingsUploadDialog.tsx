@@ -28,6 +28,7 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { LANGUAGE_DISPLAY_NAMES } from "@/constants/languages";
+import { detailFromError } from "@/lib/apiError";
 interface RecordingsUploadDialogProps {
     open: boolean;
     onOpenChange: (open: boolean) => void;
@@ -245,7 +246,7 @@ export const RecordingsUploadDialog = ({
                 })
             );
 
-            await createRecordingsApiV1WorkflowRecordingsPost({
+            const createResponse = await createRecordingsApiV1WorkflowRecordingsPost({
                 body: {
                     recordings: items.map((item: RecordingUploadResponseSchema, idx: number) => ({
                         recording_id: item.recording_id,
@@ -260,6 +261,10 @@ export const RecordingsUploadDialog = ({
                     })),
                 },
             });
+
+            if (createResponse.error || !createResponse.data) {
+                throw new Error(detailFromError(createResponse.error, "Failed to save recordings"));
+            }
 
             setPendingFiles([]);
             setLanguage("multi");

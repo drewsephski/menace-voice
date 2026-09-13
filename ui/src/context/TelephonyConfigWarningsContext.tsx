@@ -24,7 +24,7 @@ const TelephonyConfigWarningsContext = createContext<TelephonyConfigWarningsCont
 // banner and the nav badge means we don't want to refetch on every route
 // change. Page-level callers invalidate via refresh() after a save.
 export function TelephonyConfigWarningsProvider({ children }: { children: ReactNode }) {
-    const auth = useAuth();
+    const { loading: authLoading, isAuthenticated, provider, getSelectedTeam } = useAuth();
     const [telnyxCount, setTelnyxCount] = useState(0);
     const [vonageCount, setVonageCount] = useState(0);
     const [loading, setLoading] = useState(false);
@@ -45,16 +45,16 @@ export function TelephonyConfigWarningsProvider({ children }: { children: ReactN
     }, []);
 
     useEffect(() => {
-        if (auth.loading || !auth.isAuthenticated || hasFetched.current) return;
-        if (auth.provider === 'stack' && !auth.getSelectedTeam?.()) return;
+        if (authLoading || !isAuthenticated || hasFetched.current) return;
+        if (provider === 'stack' && !getSelectedTeam?.()) return;
         hasFetched.current = true;
         doFetch();
-    }, [auth.loading, auth.isAuthenticated, auth.provider, auth.getSelectedTeam, doFetch]);
+    }, [authLoading, isAuthenticated, provider, getSelectedTeam, doFetch]);
 
     const refresh = useCallback(async () => {
-        if (!auth.isAuthenticated) return;
+        if (!isAuthenticated) return;
         await doFetch();
-    }, [auth.isAuthenticated, doFetch]);
+    }, [isAuthenticated, doFetch]);
 
     return (
         <TelephonyConfigWarningsContext.Provider

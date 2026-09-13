@@ -32,12 +32,17 @@ jobs:
         with:
           python-version: "3.13"
 
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.33.2
+
       - name: Set up Node 22
         uses: actions/setup-node@v4
         with:
           node-version: "22"
-          cache: npm
-          cache-dependency-path: ui/package-lock.json
+          cache: pnpm
+          cache-dependency-path: ui/pnpm-lock.yaml
 
       - name: Create Python virtual environment
         run: |
@@ -49,7 +54,15 @@ jobs:
 
       - name: Install ui dependencies
         working-directory: ui
-        run: npm ci
+        run: pnpm install --frozen-lockfile
+
+      - name: Typecheck UI
+        working-directory: ui
+        run: pnpm exec tsc --noEmit --incremental false
+
+      - name: Test UI
+        working-directory: ui
+        run: pnpm test
 
       - name: Run scripts/format.sh
         run: ./scripts/format.sh
@@ -65,7 +78,7 @@ jobs:
       - name: Check for UI lint drift
         run: |
           if ! git diff --exit-code ui; then
-            echo "::error::UI files have outstanding lint fixes. Run 'npm run fix-lint' inside ui/ locally and commit the result before raising the PR."
+            echo "::error::UI files have outstanding lint fixes. Run 'pnpm run fix-lint' inside ui/ locally and commit the result before raising the PR."
             exit 1
           fi
           echo "UI lint is clean."

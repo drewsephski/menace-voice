@@ -1,6 +1,6 @@
 """Regression tests for Cloudonix CDR webhook handling.
 
-A Cloudonix CDR webhook is a public, unauthenticated endpoint that parses
+A Cloudonix CDR webhook is a public, authenticated endpoint that parses
 arbitrary external JSON. A partial / malformed payload (missing ``session``,
 or a ``null`` ``session`` / ``disposition``) must produce a graceful error
 response, not an unhandled ``AttributeError`` (HTTP 500).

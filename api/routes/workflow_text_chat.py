@@ -9,6 +9,7 @@ from pydantic import BaseModel, Field
 from api.db import db_client
 from api.db.models import UserModel, WorkflowRunTextSessionModel
 from api.enums import WorkflowRunMode
+from api.routes.workflow_text_scenarios import router as scenarios_router
 from api.services.auth.depends import get_user_with_selected_organization
 from api.services.quota_service import authorize_workflow_run_start
 from api.services.workflow.initial_context import merge_external_initial_context
@@ -213,7 +214,10 @@ async def create_text_chat_session(
 
     text_session = await db_client.ensure_workflow_run_text_session(
         workflow_run.id,
-        session_data=default_text_chat_session_data(),
+        session_data={
+            **default_text_chat_session_data(),
+            "original_initial_context": run_inputs.initial_context,
+        },
         checkpoint=default_text_chat_checkpoint(),
     )
 
@@ -334,3 +338,6 @@ async def rewind_text_chat_session(
         raise HTTPException(status_code=409, detail=_revision_conflict_detail(e))
 
     return _build_response(text_session)
+
+
+router.include_router(scenarios_router)

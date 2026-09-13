@@ -15,6 +15,7 @@ from api.routes.knowledge_base import router as knowledge_base_router
 from api.routes.node_types import router as node_types_router
 from api.routes.organization import router as organization_router
 from api.routes.organization_usage import router as organization_usage_router
+from api.routes.pilot_review import router as pilot_review_router
 from api.routes.public_agent import router as public_agent_router
 from api.routes.public_download import router as public_download_router
 from api.routes.public_embed import router as public_embed_router
@@ -58,6 +59,7 @@ router.include_router(stripe_billing_router)
 router.include_router(stripe_webhook_router)
 router.include_router(service_keys_router)
 router.include_router(organization_usage_router)
+router.include_router(pilot_review_router)
 router.include_router(reports_router)
 router.include_router(webrtc_signaling_router)
 router.include_router(turn_credentials_router)
@@ -142,7 +144,9 @@ async def health() -> HealthResponse:
         signup_enabled=ENABLE_SIGNUP,
         stack_project_id=STACK_AUTH_PROJECT_ID if is_stack else None,
         stack_publishable_client_key=(
-            STACK_PUBLISHABLE_CLIENT_KEY if is_stack and STACK_PUBLISHABLE_CLIENT_KEY else None
+            STACK_PUBLISHABLE_CLIENT_KEY
+            if is_stack and STACK_PUBLISHABLE_CLIENT_KEY
+            else None
         ),
         stripe_billing_enabled=stripe_billing_enabled(),
         stripe_publishable_key=STRIPE_PUBLISHABLE_KEY,

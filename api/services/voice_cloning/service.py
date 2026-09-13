@@ -314,9 +314,7 @@ async def apply_clone_to_config(
         )
     else:
         tts = ElevenlabsTTSConfiguration(api_key=api_key, voice=clone.provider_voice_id)
-    return configuration.model_copy(
-        update={"tts": tts}
-    )
+    return configuration.model_copy(update={"tts": tts})
 
 
 async def assign_clone(

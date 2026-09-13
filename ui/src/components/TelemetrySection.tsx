@@ -13,6 +13,7 @@ import { DeleteConfirmationDialog } from "@/components/DeleteConfirmationDialog"
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { detailFromError } from "@/lib/apiError";
 import { useAuth } from "@/lib/auth";
 
 export function TelemetrySection() {
@@ -77,7 +78,10 @@ export function TelemetrySection() {
   async function handleDelete() {
     setSaving(true);
     try {
-      await deleteLangfuseCredentialsApiV1OrganizationsLangfuseCredentialsDelete();
+      const response = await deleteLangfuseCredentialsApiV1OrganizationsLangfuseCredentialsDelete();
+      if (response.error) {
+        throw new Error(detailFromError(response.error, "Failed to remove telemetry credentials"));
+      }
       setCredentials({
         host: "",
         public_key: "",
@@ -87,8 +91,8 @@ export function TelemetrySection() {
       });
       toast.success("Telemetry credentials removed");
       setShowDeleteDialog(false);
-    } catch {
-      toast.error("Failed to remove telemetry credentials");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Failed to remove telemetry credentials");
     } finally {
       setSaving(false);
     }

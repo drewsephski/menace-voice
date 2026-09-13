@@ -8,6 +8,7 @@ import type { ConversationItem } from "@/components/workflow/conversation";
 import { ConversationTimeline } from "@/components/workflow/conversation";
 
 import { ChatComposer } from "./ChatComposer";
+import { SavedScenarios } from "./SavedScenarios";
 import { DisabledNotice, ManualChatEmptyState, TypingIndicator } from "./shared";
 import { TurnMessageActions } from "./TurnMessageActions";
 import type { WorkflowRuntimeNodeTransition } from "./types";
@@ -66,6 +67,7 @@ export function ManualTextChatPanel({
         return (
             <div className="flex h-full min-h-0 flex-col gap-3">
                 {disabledReason ? <DisabledNotice reason={disabledReason} /> : null}
+                <SavedScenarios workflowId={workflowId} disabled={disabled || !ready} />
                 <ManualChatEmptyState disabled={disabled} ready={ready} onStart={startSession} />
             </div>
         );
@@ -73,6 +75,7 @@ export function ManualTextChatPanel({
 
     return (
         <div className="flex min-h-0 flex-1 flex-col">
+            <SavedScenarios workflowId={workflowId} session={session} disabled={disabled || sendingMessage || endingSession || !ready} />
             {disabledReason ? (
                 <div className="pb-3">
                     <DisabledNotice reason={disabledReason} />

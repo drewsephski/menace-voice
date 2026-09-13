@@ -29,6 +29,37 @@ a full suite of call-control capabilities and more.
 - A SIP carrier or trunk that owns your phone numbers and can route calls to
   Cloudonix
 
+## Authenticate callbacks before upgrading
+
+Cloudonix inbound, status, CDR, and transfer callbacks require an `Authorization:
+Bearer` header matching **Webhook Secret** on the call's Cloudonix configuration.
+Missing or invalid authentication is rejected before call state changes. The
+Cloudonix domain API token and `X-CX-APIKey` application credential are different
+credentials and are not accepted as webhook authentication.
+
+For existing deployments, roll out the configuration field and synchronization
+first, prepare each configuration, and then enable the callback enforcement
+changes. Enter a random secret of at least 32 characters in **Webhook Secret**
+and save. Deploying enforcement before this preparation rejects existing inbound
+calls and call updates until the configuration is saved. Saving reads the domain profile, preserves its other settings, and
+synchronizes `authorization-api-key`. Cloudonix sends that value as its default
+Bearer authorization on customer HTTP callbacks, as documented in the
+[Cloudonix domain profile reference](https://developers.cloudonix.com/Documentation/dataModels/domain).
+If the domain already has a different `authorization-api-key`, reuse that existing
+secret; the save rejects overwriting an unknown shared secret. Rotating a secret
+already managed by this configuration affects every integration on the domain.
+
+Managed SIP provisioning generates and synchronizes the secret automatically.
+Existing managed domains need their provisioning refreshed before upgrading.
+Configurations without a secret cannot start outbound calls. No provider settings
+are changed merely by loading the app or receiving a webhook.
+
+Keep the domain's `cdr-endpoint` pointed at your HTTPS
+`/api/v1/telephony/cloudonix/cdr` endpoint, and ensure your reverse proxy forwards
+`Authorization`. Secret synchronization does not replace your existing CDR or
+session endpoints. Confirm authenticated inbound, outbound completion, CDR and
+transfer delivery in a provider test environment before production rollout.
+
 ## Estimated price
 
 Cloudonix connects Menace Voice to SIP infrastructure; it is not the source of

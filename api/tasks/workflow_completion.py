@@ -1,3 +1,4 @@
+from arq import Retry
 from loguru import logger
 from pipecat.utils.run_context import set_current_run_id
 
@@ -29,19 +30,19 @@ async def process_workflow_completion(
 
     logger.info(f"Processing workflow completion for run {workflow_run_id}")
 
+    # Persist billing first. If PostgreSQL is unavailable, retry before any
+    # external integration can be repeated. Actual billing is a separate task.
+    try:
+        await report_completed_workflow_run_platform_usage(workflow_run_id)
+    except Exception as exc:
+        logger.error("Could not persist platform usage for run {}", workflow_run_id)
+        raise Retry(defer=30) from exc
+
     # Run integrations including QA analysis (after uploads are complete)
     try:
         await run_integrations_post_workflow_run(_ctx, workflow_run_id)
     except Exception as e:
         logger.error(f"Error running integrations for workflow {workflow_run_id}: {e}")
-
-    # Notify MPS after completion. MPS owns credit accounting.
-    try:
-        await report_completed_workflow_run_platform_usage(workflow_run_id)
-    except Exception as e:
-        logger.error(
-            f"Error reporting platform usage for workflow {workflow_run_id}: {e}"
-        )
 
     # Deliberately last. The write-back reads the run's gathered context to
     # resolve the workflow's mapped lead fields, and on an abrupt hangup the

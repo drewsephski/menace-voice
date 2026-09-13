@@ -26,5 +26,7 @@ async def stripe_webhook(
         raise
     except Exception as exc:
         logger.exception("Stripe webhook handler failed")
-        raise HTTPException(status_code=500, detail="Webhook processing failed") from exc
+        raise HTTPException(
+            status_code=500, detail="Webhook processing failed"
+        ) from exc
     return {"status": "ok"}

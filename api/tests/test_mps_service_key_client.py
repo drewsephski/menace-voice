@@ -740,6 +740,7 @@ async def test_report_platform_usage_uses_hosted_secret_auth(monkeypatch):
                 "Content-Type": "application/json",
                 "X-Secret-Key": "mps-secret",
                 "X-Organization-Id": "42",
+                "Idempotency-Key": "dograh-platform-usage:42:123",
             },
         )
     ]
@@ -792,6 +793,7 @@ async def test_report_platform_usage_sends_duration_without_correlation(monkeypa
                 "Content-Type": "application/json",
                 "X-Secret-Key": "mps-secret",
                 "X-Organization-Id": "42",
+                "Idempotency-Key": "dograh-platform-usage:42:123",
             },
         )
     ]

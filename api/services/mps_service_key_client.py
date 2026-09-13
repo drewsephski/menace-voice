@@ -653,6 +653,14 @@ class MPSServiceKeyClient:
         if workflow_run_id is not None:
             payload["workflow_run_id"] = workflow_run_id
 
+        headers = self._get_headers(organization_id=organization_id)
+        if workflow_run_id is not None:
+            # Stable across retries and ambiguous responses. The outbox still
+            # gates unsafe retries until receiver-side deduplication is verified.
+            headers["Idempotency-Key"] = (
+                f"dograh-platform-usage:{organization_id}:{workflow_run_id}"
+            )
+
         max_attempts = max(1, max_attempts)
         last_response: httpx.Response | None = None
         async with httpx.AsyncClient(timeout=self.timeout) as client:
@@ -663,7 +671,7 @@ class MPSServiceKeyClient:
                         f"{organization_id}/platform-usage"
                     ),
                     json=payload,
-                    headers=self._get_headers(organization_id=organization_id),
+                    headers=headers,
                 )
                 last_response = response
 

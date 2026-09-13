@@ -6,6 +6,8 @@ When a server-minted MPS correlation id exists, MPS uses model-service usage
 as the canonical duration. Otherwise Dograh reports the completed run duration.
 """
 
+import math
+import os
 from typing import Any
 
 from loguru import logger
@@ -14,7 +16,6 @@ from api.constants import DEPLOYMENT_MODE
 from api.db import db_client
 from api.enums import WorkflowRunMode
 from api.services.managed_model_services import get_mps_correlation_id
-from api.services.mps_service_key_client import mps_service_key_client
 
 
 def _workflow_run_organization_id(workflow_run) -> int | None:
@@ -25,19 +26,18 @@ def _workflow_run_organization_id(workflow_run) -> int | None:
 def _duration_seconds_from_usage_info(workflow_run) -> float | None:
     usage_info: dict[str, Any] = getattr(workflow_run, "usage_info", None) or {}
     duration = usage_info.get("call_duration_seconds")
+    if duration is None:
+        return None
     try:
         duration_seconds = float(duration)
     except (TypeError, ValueError):
         return None
 
-    return duration_seconds if duration_seconds > 0 else None
-
-
-def _is_usage_not_ready_error(exc: Exception) -> bool:
-    response = getattr(exc, "response", None)
-    if getattr(response, "status_code", None) != 409:
-        return False
-    return "usage_not_ready" in (getattr(response, "text", "") or "")
+    return (
+        duration_seconds
+        if math.isfinite(duration_seconds) and duration_seconds > 0
+        else None
+    )
 
 
 async def report_workflow_run_platform_usage(workflow_run) -> None:
@@ -79,45 +79,46 @@ async def report_workflow_run_platform_usage(workflow_run) -> None:
         )
         return
 
-    try:
-        result = await mps_service_key_client.report_platform_usage(
-            organization_id=organization_id,
-            correlation_id=correlation_id,
-            duration_seconds=duration_seconds,
-            workflow_run_id=workflow_run.id,
-            metadata={
+    delivery = await db_client.create_platform_usage_delivery(
+        workflow_run_id=workflow_run.id,
+        organization_id=organization_id,
+        payload={
+            "correlation_id": correlation_id,
+            "duration_seconds": duration_seconds,
+            "workflow_run_id": workflow_run.id,
+            "metadata": {
                 "source": "workflow_run_completion",
                 "workflow_id": getattr(workflow_run, "workflow_id", None),
-                "duration_source": (
-                    "mps_correlation" if correlation_id else "dograh_usage_info"
-                ),
+                "duration_source": "mps_correlation"
+                if correlation_id
+                else "dograh_usage_info",
             },
-        )
-        logger.info(
-            "Reported platform usage for workflow run {} to MPS: {}",
-            workflow_run.id,
-            result,
-        )
-    except Exception as e:
-        if _is_usage_not_ready_error(e):
-            # A run can start and receive an MPS correlation id, then fail or end
-            # before billable STT usage is recorded. MPS returns usage_not_ready
-            # for that no-platform-fee path, so keep it out of error alerts.
+        },
+        retry_safe=os.getenv(
+            "MPS_PLATFORM_USAGE_IDEMPOTENCY_CONFIRMED", "false"
+        ).lower()
+        == "true",
+    )
+    # Persistence errors intentionally propagate: completion must not claim
+    # success when its billing obligation was never recorded. Redis failures
+    # are recoverable because the periodic sweeper reads the committed outbox.
+    if delivery.status == "pending":
+        from api.tasks.arq import enqueue_job
+        from api.tasks.function_names import FunctionNames
+
+        try:
+            await enqueue_job(FunctionNames.DELIVER_PLATFORM_USAGE, delivery.id)
+        except Exception:  # noqa: BLE001 - committed reports survive enqueue errors
             logger.warning(
-                "Failed to report platform usage for workflow run {}: {}",
-                workflow_run.id,
-                e,
-            )
-        else:
-            logger.error(
-                "Failed to report platform usage for workflow run {}: {}",
-                workflow_run.id,
-                e,
+                "Platform usage delivery {} persisted; enqueue failed, awaiting sweep",
+                delivery.id,
             )
 
 
 async def report_completed_workflow_run_platform_usage(workflow_run_id: int) -> None:
-    """Load a completed workflow run and report platform usage to MPS."""
+    """Load a completed workflow run and persist its platform usage report."""
+    if DEPLOYMENT_MODE == "oss":
+        return
     workflow_run = await db_client.get_workflow_run_by_id(workflow_run_id)
     if not workflow_run:
         logger.warning(

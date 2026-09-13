@@ -6,12 +6,12 @@ import pytest
 from fastapi.testclient import TestClient
 
 from api.schemas.agent_setup import OnboardingSetup
+from api.services.workflow.onboarding_prompt import ONBOARDING_EXECUTION_MARKER
 from api.services.workflow.onboarding_revision import (
     preserve_launch_configuration,
     recover_agent_setup,
     revision_resources,
 )
-from api.services.workflow.onboarding_prompt import ONBOARDING_EXECUTION_MARKER
 from api.tests.onboarding_fixtures import draft, setup_for
 from api.tests.test_workflow_create_route import _make_test_app
 
@@ -54,7 +54,9 @@ def test_legacy_recovery_reports_source_without_inventing_a_new_brief():
 
 def test_revision_preserves_connections_without_sending_them_to_generation():
     original = draft()
-    next(node for node in original["nodes"] if node["type"] == "startCall")["data"].update(
+    next(node for node in original["nodes"] if node["type"] == "startCall")[
+        "data"
+    ].update(
         pre_call_fetch_url="https://private.example",
         pre_call_fetch_credential_uuid="credential-1",
     )
@@ -72,7 +74,10 @@ def test_revision_preserves_connections_without_sending_them_to_generation():
         original, draft(("Check library", "Explain API"))
     )
     assert (
-        next(node for node in result["nodes"] if node["type"] == "startCall")["data"]["pre_call_fetch_credential_uuid"] == "credential-1"
+        next(node for node in result["nodes"] if node["type"] == "startCall")["data"][
+            "pre_call_fetch_credential_uuid"
+        ]
+        == "credential-1"
     )
     assert result["nodes"][-1] == hook
     assert original == before
@@ -82,9 +87,13 @@ def test_revision_preserves_connections_without_sending_them_to_generation():
 def test_revision_refuses_to_silently_drop_manual_configuration(kind):
     original = draft()
     if kind == "extraction":
-        next(node for node in original["nodes"] if node["type"] == "agentNode")["data"]["extraction_enabled"] = True
+        next(node for node in original["nodes"] if node["type"] == "agentNode")["data"][
+            "extraction_enabled"
+        ] = True
     elif kind == "recording":
-        next(node for node in original["nodes"] if node["type"] == "startCall")["data"]["greeting_recording_id"] = 12
+        next(node for node in original["nodes"] if node["type"] == "startCall")["data"][
+            "greeting_recording_id"
+        ] = 12
     else:
         original["nodes"].append({"id": "integration", "type": "custom", "data": {}})
         original["edges"].append({"source": "integration", "target": "start"})

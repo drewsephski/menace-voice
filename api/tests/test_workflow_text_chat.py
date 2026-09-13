@@ -1738,43 +1738,96 @@ async def test_text_chat_append_rejects_quota_without_mutating_session(
 
 @pytest.mark.asyncio
 async def test_generated_agent_waits_after_question_instead_of_running_transition(
-    db_session, async_session, test_client_factory,
+    db_session,
+    async_session,
+    test_client_factory,
 ):
     definition = {
         "nodes": [
-            {"id": "start", "type": "startCall", "position": {"x": 0, "y": 0},
-             "data": {"name": "Welcome", "prompt": "ONBOARDING EXECUTION CONTRACT\nAsk why the caller called.",
-                      "greeting_type": "text", "greeting": "How can I help?"}},
-            {"id": "details", "type": "agentNode", "position": {"x": 0, "y": 200},
-             "data": {"name": "Collect details", "prompt": "Collect a demo request."}},
+            {
+                "id": "start",
+                "type": "startCall",
+                "position": {"x": 0, "y": 0},
+                "data": {
+                    "name": "Welcome",
+                    "prompt": "ONBOARDING EXECUTION CONTRACT\nAsk why the caller called.",
+                    "greeting_type": "text",
+                    "greeting": "How can I help?",
+                },
+            },
+            {
+                "id": "details",
+                "type": "agentNode",
+                "position": {"x": 0, "y": 200},
+                "data": {
+                    "name": "Collect details",
+                    "prompt": "Collect a demo request.",
+                },
+            },
         ],
-        "edges": [{"id": "route", "source": "start", "target": "details",
-                   "data": {"label": "collect_details", "condition": "The caller has answered."}}],
+        "edges": [
+            {
+                "id": "route",
+                "source": "start",
+                "target": "details",
+                "data": {
+                    "label": "collect_details",
+                    "condition": "The caller has answered.",
+                },
+            }
+        ],
     }
     user, workflow = await _create_user_and_workflow(
-        db_session, async_session, workflow_definition=definition, suffix="wait-after-question",
+        db_session,
+        async_session,
+        workflow_definition=definition,
+        suffix="wait-after-question",
     )
     responses = [
         MockLLMService(mock_steps=[], chunk_delay=0.001),
-        MockLLMService(mock_steps=[
-            MockLLMService.create_mixed_chunks("What is your name?", "collect_details", {}, tool_call_id="premature"),
-            MockLLMService.create_text_chunks("Thanks, [Customer Name]. What company are you with?"),
-        ], chunk_delay=0.001),
+        MockLLMService(
+            mock_steps=[
+                MockLLMService.create_mixed_chunks(
+                    "What is your name?",
+                    "collect_details",
+                    {},
+                    tool_call_id="premature",
+                ),
+                MockLLMService.create_text_chunks(
+                    "Thanks, [Customer Name]. What company are you with?"
+                ),
+            ],
+            chunk_delay=0.001,
+        ),
     ]
     async with test_client_factory(user) as client:
         with (
-            patch("api.services.workflow.text_chat_runner.create_llm_service", side_effect=responses),
-            patch("api.services.workflow.text_chat_runner.db_client.has_active_recordings", new=AsyncMock(return_value=False)),
+            patch(
+                "api.services.workflow.text_chat_runner.create_llm_service",
+                side_effect=responses,
+            ),
+            patch(
+                "api.services.workflow.text_chat_runner.db_client.has_active_recordings",
+                new=AsyncMock(return_value=False),
+            ),
         ):
-            created = await client.post(f"/api/v1/workflow/{workflow.id}/text-chat/sessions", json={})
+            created = await client.post(
+                f"/api/v1/workflow/{workflow.id}/text-chat/sessions", json={}
+            )
             assert created.status_code == 200
             session = created.json()
             response = await client.post(
                 f"/api/v1/workflow/{workflow.id}/text-chat/sessions/{session['workflow_run_id']}/messages",
-                json={"text": "I would like a demo.", "expected_revision": session["revision"]},
+                json={
+                    "text": "I would like a demo.",
+                    "expected_revision": session["revision"],
+                },
             )
             assert response.status_code == 200
     result = response.json()
     assert result["checkpoint"]["current_node_id"] == "start"
-    assert result["session_data"]["turns"][1]["assistant_message"]["text"] == "What is your name?"
+    assert (
+        result["session_data"]["turns"][1]["assistant_message"]["text"]
+        == "What is your name?"
+    )
     assert result["session_data"]["status"] == "idle"

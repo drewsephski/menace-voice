@@ -21,11 +21,13 @@ from api.services.telephony.registry import ProviderSetupChecklist
 
 MANAGED_CREDENTIALS = {
     "bearer_token": "domain-bearer",
+    "webhook_secret": "configured-webhook-secret-for-tests",
     "domain_id": "oss-dograh-1111.cloudonix.net",
     "managed_by": MANAGED_BY,
 }
 SELF_SERVE_CREDENTIALS = {
     "bearer_token": "own-bearer",
+    "webhook_secret": "configured-webhook-secret-for-tests",
     "domain_id": "acme.cloudonix.net",
 }
 

@@ -125,15 +125,12 @@ async def _validate_and_extract_workflow_run_id(
     return int(run_id_str)
 
 
-async def _authorize_and_get_workflow_run(
-    run_id: Optional[int], user, require_workflow_run: bool = True
-) -> Optional[Any]:
+async def _authorize_and_get_workflow_run(run_id: Optional[int], user) -> Optional[Any]:
     """Authorize access to workflow run and retrieve it.
 
     Args:
         run_id: Workflow run ID (can be None for special paths)
         user: Current user from auth
-        require_workflow_run: If True, raises exception when run not found
 
     Returns:
         WorkflowRunModel or None
@@ -142,6 +139,10 @@ async def _authorize_and_get_workflow_run(
         HTTPException: If access is denied
     """
     if run_id is None:
+        # Legacy voicemail keys contain no verifiable organization/run owner.
+        # These debugging artifacts are therefore restricted to superusers.
+        if not user.is_superuser:
+            raise HTTPException(status_code=403, detail="Access denied")
         return None
 
     workflow_run = None
@@ -150,7 +151,7 @@ async def _authorize_and_get_workflow_run(
         workflow_run = await db_client.get_workflow_run(
             run_id, organization_id=user.selected_organization_id
         )
-        if not workflow_run and require_workflow_run:
+        if not workflow_run:
             raise HTTPException(
                 status_code=403, detail="Access denied for this workflow run"
             )
@@ -187,7 +188,7 @@ async def get_signed_url(
       org_id against the requesting user's organization.
     * Legacy keys (``recordings/{run_id}.wav``, ``transcripts/{run_id}.txt``)
       are authorized via the workflow run they belong to.
-    * Superusers can request any key.
+    * Superusers can request supported org-scoped and legacy keys.
     """
 
     # ------------------------------------------------------------------
@@ -250,7 +251,7 @@ async def get_file_metadata(
     """Get file metadata including creation timestamp for debugging.
 
     Access Control:
-    * Superusers can request any key.
+    * Superusers can request supported legacy and voicemail keys.
     * Regular users can only request resources belonging to **their** workflow runs.
     """
 
@@ -258,9 +259,7 @@ async def get_file_metadata(
     run_id = await _validate_and_extract_workflow_run_id(key, allow_special_paths=True)
 
     # Authorize and get workflow run (for special paths, run_id might be None)
-    workflow_run = await _authorize_and_get_workflow_run(
-        run_id, user, require_workflow_run=False
-    )
+    workflow_run = await _authorize_and_get_workflow_run(run_id, user)
 
     # ------------------------------------------------------------------
     # 3. Get file metadata using the correct storage backend

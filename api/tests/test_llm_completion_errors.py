@@ -33,7 +33,9 @@ def test_format_llm_completion_error_strips_html_403():
 
 
 def test_format_llm_completion_error_maps_dograh_403_to_quota_message(monkeypatch):
-    monkeypatch.setattr("api.services.pipecat.llm_completion_errors.DEPLOYMENT_MODE", "hosted")
+    monkeypatch.setattr(
+        "api.services.pipecat.llm_completion_errors.DEPLOYMENT_MODE", "hosted"
+    )
     exc = _FakeAPIError("forbidden", status_code=403)
 
     message = format_llm_completion_error(exc, provider="dograh")

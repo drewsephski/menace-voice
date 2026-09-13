@@ -6,13 +6,13 @@ import json
 import re
 from typing import Any
 
+from api.constants import DEPLOYMENT_MODE
 from api.errors.failure import extract_http_status
 from api.services.quota_service import (
     HOSTED_QUOTA_EXCEEDED_MESSAGE,
     OSS_HOSTED_KEY_QUOTA_EXCEEDED_MESSAGE,
     OSS_QUOTA_EXCEEDED_MESSAGE,
 )
-from api.constants import DEPLOYMENT_MODE
 
 _HTML_TITLE_RE = re.compile(r"<title>\s*([^<]+)\s*</title>", re.I)
 
@@ -96,7 +96,9 @@ def format_llm_completion_error(
             "Check your model configuration."
         )
     if status == 429:
-        return "The LLM provider rate-limited this request (HTTP 429). Try again shortly."
+        return (
+            "The LLM provider rate-limited this request (HTTP 429). Try again shortly."
+        )
 
     if parsed_detail:
         return parsed_detail

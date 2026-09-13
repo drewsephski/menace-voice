@@ -433,7 +433,7 @@ async def _authorize_hosted_workflow_run_start(
             error_message="Could not verify Menace Voice credits. Please try again.",
         )
     logger.info(
-            "Menace Voice run authorization passed for org {}: {:.2f} credits remaining",
+        "Menace Voice run authorization passed for org {}: {:.2f} credits remaining",
         organization_id,
         remaining,
     )

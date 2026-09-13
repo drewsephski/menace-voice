@@ -4,16 +4,16 @@ from __future__ import annotations
 
 from openai import AsyncStream
 from openai.types.chat import ChatCompletionChunk
-from pipecat.frames.frames import ErrorFrame
-from pipecat.processors.frame_processor import FrameDirection
-from pipecat.processors.aggregators.llm_context import LLMContext
-from pipecat.services.openai.llm import OpenAILLMService
-from pipecat.services.openrouter.llm import OpenRouterLLMService
 
 from api.services.pipecat.llm_completion_errors import (
     format_llm_completion_error,
     is_fatal_llm_completion_error,
 )
+from pipecat.frames.frames import ErrorFrame
+from pipecat.processors.aggregators.llm_context import LLMContext
+from pipecat.processors.frame_processor import FrameDirection
+from pipecat.services.openai.llm import OpenAILLMService
+from pipecat.services.openrouter.llm import OpenRouterLLMService
 
 
 class LLMCompletionErrorMixin:

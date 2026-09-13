@@ -203,7 +203,8 @@ async def complete_text_chat_session(
     workflow_run = text_session.workflow_run
     if workflow_run.is_completed:
         # Preserve the existing idempotent behavior for repeated end requests.
-        await _enqueue_text_chat_completion(run_id)
+        if not (getattr(text_session, "session_data", None) or {}).get("regression"):
+            await _enqueue_text_chat_completion(run_id)
         return await _reload_text_chat_session(run_id)
 
     completed_session_data = normalize_text_chat_session_data(text_session.session_data)
@@ -249,7 +250,8 @@ async def complete_text_chat_session(
         ) from e
 
     await _upload_text_chat_transcript(run_id, feedback_events)
-    await _enqueue_text_chat_completion(run_id)
+    if not (getattr(text_session, "session_data", None) or {}).get("regression"):
+        await _enqueue_text_chat_completion(run_id)
 
     return await _reload_text_chat_session(run_id)
 
@@ -341,7 +343,8 @@ async def execute_pending_text_chat_turn(
 
     if execution.is_completed:
         await _upload_text_chat_transcript(run_id, feedback_events)
-        await _enqueue_text_chat_completion(run_id)
+        if not (getattr(text_session, "session_data", None) or {}).get("regression"):
+            await _enqueue_text_chat_completion(run_id)
     else:
         await db_client.update_workflow_run(
             run_id,

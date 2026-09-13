@@ -1,5 +1,6 @@
 """Provision the Cloudonix telephony configuration created during org signup."""
 
+import hmac
 from typing import Any
 
 from loguru import logger
@@ -12,9 +13,9 @@ from api.services.mps_service_key_client import mps_service_key_client
 
 from . import _preprocess_credentials_on_save
 from .config import (
+    LEGACY_MANAGED_CONFIGURATION_NAMES,
     MANAGED_BY,
     MANAGED_CONFIGURATION_NAME,
-    LEGACY_MANAGED_CONFIGURATION_NAMES,
     normalize_cloudonix_domain,
 )
 
@@ -70,6 +71,15 @@ async def ensure_managed_cloudonix_configuration(
         "managed_by": MANAGED_BY,
         "provisioning_id": provisioning["provisioning_id"],
     }
+    if not credentials.get("webhook_secret"):
+        # Derive a separate purpose-bound secret so retries after remote sync
+        # but before local persistence converge on the same value. The API
+        # bearer token itself is never sent to customer callback endpoints.
+        credentials["webhook_secret"] = hmac.new(
+            credentials["bearer_token"].encode(),
+            f"menace-cloudonix-webhook-v1:{credentials['domain_uuid']}".encode(),
+            "sha256",
+        ).hexdigest()
     credentials = await _preprocess_credentials_on_save(credentials)
 
     if existing is not None:
