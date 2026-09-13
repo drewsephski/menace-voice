@@ -1,0 +1,42 @@
+---
+title: "Drafts, versions, and publishing"
+description: "Understand which definition runs in tests and production, and release changes safely."
+---
+
+## Two versions serve different purposes
+
+The editor saves a **draft** so you can iterate without replacing the production conversation. Publishing validates the draft and promotes it to the version used by production runtime. A draft can be incomplete while you edit; a successful save is not a successful publication.
+
+| Operation | Behavior |
+| --- | --- |
+| Save an edit | Updates the working draft |
+| Editor Web Call or text test | Uses the draft and applicable test context |
+| Publish | Validates the definition, graph, and trigger conflicts before release |
+| Production phone or website call | Uses the published runtime definition |
+| Create draft | Starts from the published version, or returns the existing draft |
+
+## Release a change
+
+1. Read the existing agent and confirm you are in the correct workspace.
+2. Make the smallest complete change. Keep node IDs, tool contracts, and context names stable unless the change requires otherwise.
+3. Test the expected path and relevant failure paths. For speech changes, run a Web Call as well as a text test.
+4. Review the definition and configuration, then publish.
+5. Run a controlled production call and check the definition ID on its run record.
+
+Publishing does not replace credentials, configure the carrier, or verify downstream business actions for you.
+
+## Version history and recovery
+
+Use version history to inspect earlier definitions and compare the behavior you intended to ship. To undo a bad release, restore the reviewed behavior into a draft, test it, and publish that draft. Do not assume an already-running call changes when you publish.
+
+<Warning>
+Workflow names and other workflow-level metadata can update outside the draft lifecycle. Review those changes separately; do not assume every setting is isolated until Publish.
+</Warning>
+
+## API operations
+
+- `GET /api/v1/workflow/{workflow_id}/versions` lists history; `limit` and `offset` support pagination.
+- `POST /api/v1/workflow/{workflow_id}/create-draft` creates or returns the draft.
+- `POST /api/v1/workflow/{workflow_id}/publish` publishes the current draft.
+
+See the [API catalog](/api-reference/catalog) for generated request and response reference.

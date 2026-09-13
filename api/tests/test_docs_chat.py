@@ -1,3 +1,5 @@
+import json
+from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, Mock
 
@@ -125,7 +127,10 @@ def test_retrieval_uses_shared_docs():
         service.retrieve_docs("How does the MCP bridge work?", "overview")[0]["slug"]
         == "mcp-bridge"
     )
-    assert len(service.articles()) == 11
+    source = Path(__file__).resolve().parents[2] / "ui/src/lib/docs/articles.json"
+    shared = json.loads(source.read_text())
+    expected = [article for pages in shared.values() for article in pages]
+    assert service.articles() == expected
 
 
 class ModelStream:

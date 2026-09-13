@@ -1,0 +1,38 @@
+---
+title: "Subscriptions, credits, and provider costs"
+description: "Understand feature access, managed inference balance, and external provider charges."
+---
+
+## Four separate costs
+
+| Category | What it covers | Where to inspect it |
+| --- | --- | --- |
+| Menace Voice subscription | Workspace features and configured limits | Billing |
+| Managed inference credits | Model usage billed through the Service Key owner | Credits and Usage |
+| BYOK inference | Usage on your model-provider account | Provider dashboard and Menace run usage |
+| Telephony | Numbers, dialing, and carrier services | Carrier dashboard |
+
+A subscription does not replace your model credentials. Buying inference credits does not by itself enable telephony or campaigns. Carrier charges are separate from managed inference credits.
+
+## Check your current access
+
+Open **Billing** in the workspace you intend to use. The subscription response reports whether Stripe billing is enabled, your effective plan, trial or billing-period dates, limits, and current workflow usage. Use that response and the checkout page for current availability and pricing.
+
+When subscription enforcement is enabled, the Free tier supports building and browser testing; Starter adds telephony; Pro adds campaigns. Exact limits and commercial terms come from the current deployment's plan catalog. Self-hosted deployments may run without Stripe subscription enforcement.
+
+## Manage a subscription
+
+Use the Billing page to open checkout or the customer portal when those actions are available. After returning, refresh the subscription status. Access changes depend on the server's billing state and payment-event processing, not just a successful browser redirect.
+
+## Managed inference
+
+A **Service Key** authenticates managed model usage. It is distinct from an **API key**, which authenticates your application's REST and workspace MCP requests. Confirm which account owns the Service Key before attributing usage or buying credits.
+
+## Resolve billing errors
+
+- If a request returns `402`, read its detail and check the feature entitlement or usage balance involved.
+- If checkout is unavailable, check `stripe_enabled` and the deployment configuration.
+- If access did not update after checkout, retain the transaction reference and contact the operator; avoid creating duplicate purchases.
+- If BYOK calls fail, check the provider account's credentials, quota, and billing separately.
+
+See [models and costs](/handbook/builders/model-setup), [API keys](/configurations/api-keys), and [reports](/operations/reports).

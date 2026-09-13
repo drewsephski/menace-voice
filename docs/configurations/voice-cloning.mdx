@@ -1,0 +1,31 @@
+---
+title: "Voice cloning"
+description: "Create, preview, and assign an authorized voice sample to an agent."
+---
+
+## Prerequisites
+
+Voice cloning requires an ElevenLabs connection supplied by the deployment or your organization's ElevenLabs TTS configuration. Check availability in the voice library before uploading a sample. You must have permission to use the speaker's voice and affirm consent during creation.
+
+## Create a voice
+
+1. Record one speaker in a quiet room. Use 30 seconds to 3 minutes of clear audio; 1–2 minutes is a useful target.
+2. Open the voice library, name the voice, provide the sample, and confirm consent. The upload limit is 20 MB.
+3. Wait for creation to finish. If the provider times out, inspect the library before retrying because the provider may have completed the request.
+4. Preview the voice with a short, representative sentence.
+5. Assign it to the intended agent, test the draft with a Web Call, and publish the reviewed configuration.
+
+The backend normalizes the sample using FFmpeg. Self-hosted operators must have audio processing available in the API runtime.
+
+## Troubleshoot
+
+| Symptom | Next check |
+| --- | --- |
+| Cloning unavailable | Verify the ElevenLabs connection in Models or ask the operator to enable it |
+| Sample rejected | Check file size, supported audio encoding, and duration |
+| Another operation is running | Wait for the workspace voice operation to finish |
+| Preview differs from a call | Check the agent's effective model configuration and published version |
+
+Remove assignments before deleting a voice that agents depend on. Treat deletion as a provider-backed operation and verify its result in the library.
+
+See [Voice](/configurations/voice) for standard TTS selection and the [API catalog](/api-reference/catalog) for voice-clone endpoints.

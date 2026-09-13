@@ -75,6 +75,11 @@ jobs:
         with:
           node-version: "22"
 
+      - name: Install FFmpeg for voice-cloning audio tests
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes --no-install-recommends ffmpeg
+
       - name: Create Python virtual environment
         run: |
           python -m venv .venv

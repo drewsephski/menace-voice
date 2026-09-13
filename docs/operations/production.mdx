@@ -1,0 +1,32 @@
+---
+title: "Production readiness"
+description: "Release an agent with evidence across the conversation, channel, and downstream systems."
+---
+
+## Before you publish
+
+- Verify the agent's purpose, fallback language, end conditions, and escalation path.
+- Review required model, voice, transcriber, embedding, and tool credentials in the production workspace.
+- Exercise the happy path, corrections, interruptions, silence, missing data, and tool failures.
+- Check that prompts use real runtime context and never expose secrets.
+- Confirm the intended published definition and any workflow-level settings.
+
+## Verify the delivery channel
+
+For inbound calls, dial the number from a separate phone and verify that it reaches the intended agent. For outbound calls, use a permitted test destination and verify dialing, caller ID, media, completion, and the run record. For websites, test the actual production origin and its allowed-origin configuration.
+
+A successful call-initiation response proves that the request was accepted. It does not prove that the caller answered or that the media connected.
+
+## Close the data loop
+
+Check the transcript and gathered outcomes, then verify the external record created by the tool or webhook. Test duplicate delivery and downstream failure. Make sure the team can identify a run by `workflow_run_id` when investigating a report.
+
+## Launch a controlled pilot
+
+Start with a small group of test calls and an explicit review owner. Watch answer and completion behavior, failure reasons, tool accuracy, latency, and cost. Increase campaign concurrency only after the earlier calls produce consistent results.
+
+## Keep a recovery path
+
+Record the known-good agent version. For self-hosting, retain the previous application image, environment configuration, and a restorable database backup. A documentation deployment, a product deployment, and an agent publication are separate releases.
+
+Use [run review](/operations/run-review), [reports](/operations/reports), and [troubleshooting](/operations/troubleshooting) during the pilot.

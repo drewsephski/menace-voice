@@ -1,0 +1,251 @@
+---
+title: "API catalog"
+description: "Browse the complete application API by resource, generated from the checked-in FastAPI schema."
+---
+
+This catalog covers 173 application operations in the checked-in schema. The specialized guides explain multi-step workflows; each endpoint page supplies its request and response contract. Provider callbacks, superuser administration, and local authentication routes remain in the full OpenAPI file and are not promoted as application APIs here.
+
+## Agents and runs
+
+- [Validate Workflow](/api-reference/endpoints/post-workflow-workflow-id-validate) — `POST /api/v1/workflow/{workflow_id}/validate`
+- [Create Workflow](/api-reference/endpoints/post-workflow-create-definition) — `POST /api/v1/workflow/create/definition`
+- [Create Workflow From Template](/api-reference/endpoints/post-workflow-create-template) — `POST /api/v1/workflow/create/template`
+- [Get Workflow Count](/api-reference/endpoints/get-workflow-count) — `GET /api/v1/workflow/count`
+- [Get Workflows](/api-reference/endpoints/get-workflow-fetch) — `GET /api/v1/workflow/fetch`
+- [Get Workflow](/api-reference/endpoints/get-workflow-fetch-workflow-id) — `GET /api/v1/workflow/fetch/{workflow_id}`
+- [Get Agent Setup](/api-reference/endpoints/get-workflow-workflow-id-agent-setup) — `GET /api/v1/workflow/{workflow_id}/agent-setup`
+- [Preview Agent](/api-reference/endpoints/post-workflow-workflow-id-agent-preview) — `POST /api/v1/workflow/{workflow_id}/agent-preview`
+- [Get Workflow Versions](/api-reference/endpoints/get-workflow-workflow-id-versions) — `GET /api/v1/workflow/{workflow_id}/versions`
+- [Publish Workflow](/api-reference/endpoints/post-workflow-workflow-id-publish) — `POST /api/v1/workflow/{workflow_id}/publish`
+- [Create Workflow Draft](/api-reference/endpoints/post-workflow-workflow-id-create-draft) — `POST /api/v1/workflow/{workflow_id}/create-draft`
+- [Get Workflows Summary](/api-reference/endpoints/get-workflow-summary) — `GET /api/v1/workflow/summary`
+- [Update Workflow Status](/api-reference/endpoints/put-workflow-workflow-id-status) — `PUT /api/v1/workflow/{workflow_id}/status`
+- [Move Workflow To Folder](/api-reference/endpoints/put-workflow-workflow-id-folder) — `PUT /api/v1/workflow/{workflow_id}/folder`
+- [Update Workflow](/api-reference/endpoints/put-workflow-workflow-id) — `PUT /api/v1/workflow/{workflow_id}`
+- [Duplicate Workflow Endpoint](/api-reference/endpoints/post-workflow-workflow-id-duplicate) — `POST /api/v1/workflow/{workflow_id}/duplicate`
+- [Create Workflow Run](/api-reference/endpoints/post-workflow-workflow-id-runs) — `POST /api/v1/workflow/{workflow_id}/runs`
+- [Get Workflow Runs](/api-reference/endpoints/get-workflow-workflow-id-runs) — `GET /api/v1/workflow/{workflow_id}/runs`
+- [Get Workflow Run](/api-reference/endpoints/get-workflow-workflow-id-runs-run-id) — `GET /api/v1/workflow/{workflow_id}/runs/{run_id}`
+- [Download Workflow Report](/api-reference/endpoints/get-workflow-workflow-id-report) — `GET /api/v1/workflow/{workflow_id}/report`
+- [Get Workflow Templates](/api-reference/endpoints/get-workflow-templates) — `GET /api/v1/workflow/templates`
+- [Duplicate Workflow Template](/api-reference/endpoints/post-workflow-templates-duplicate) — `POST /api/v1/workflow/templates/duplicate`
+- [Get a presigned URL to upload a custom ambient noise audio file](/api-reference/endpoints/post-workflow-ambient-noise-upload-url) — `POST /api/v1/workflow/ambient-noise/upload-url`
+- [Get Pilot Review](/api-reference/endpoints/get-workflow-workflow-id-pilot-review) — `GET /api/v1/workflow/{workflow_id}/pilot-review`
+
+## API keys
+
+- [Get Api Keys](/api-reference/endpoints/get-user-api-keys) — `GET /api/v1/user/api-keys`
+- [Create Api Key](/api-reference/endpoints/post-user-api-keys) — `POST /api/v1/user/api-keys`
+- [Archive Api Key](/api-reference/endpoints/delete-user-api-keys-api-key-id) — `DELETE /api/v1/user/api-keys/{api_key_id}`
+- [Reactivate Api Key](/api-reference/endpoints/put-user-api-keys-api-key-id-reactivate) — `PUT /api/v1/user/api-keys/{api_key_id}/reactivate`
+
+## Billing and usage
+
+- [Get Subscription Status](/api-reference/endpoints/get-organizations-billing-subscription) — `GET /api/v1/organizations/billing/subscription`
+- [Create Subscription Checkout](/api-reference/endpoints/post-organizations-billing-subscription-checkout) — `POST /api/v1/organizations/billing/subscription/checkout`
+- [Create Subscription Portal](/api-reference/endpoints/post-organizations-billing-subscription-portal) — `POST /api/v1/organizations/billing/subscription/portal`
+- [Get Current Period Usage](/api-reference/endpoints/get-organizations-usage-current-period) — `GET /api/v1/organizations/usage/current-period`
+- [Get Billing Credits](/api-reference/endpoints/get-organizations-billing-credits) — `GET /api/v1/organizations/billing/credits`
+- [Create Mps Credit Purchase Url](/api-reference/endpoints/post-organizations-usage-mps-credits-purchase-url) — `POST /api/v1/organizations/usage/mps-credits/purchase-url`
+- [Get Usage History](/api-reference/endpoints/get-organizations-usage-runs) — `GET /api/v1/organizations/usage/runs`
+- [Download Usage Runs Report](/api-reference/endpoints/get-organizations-usage-runs-report) — `GET /api/v1/organizations/usage/runs/report`
+- [Get Daily Usage Breakdown](/api-reference/endpoints/get-organizations-usage-daily-breakdown) — `GET /api/v1/organizations/usage/daily-breakdown`
+
+## Campaigns
+
+- [Create Campaign](/api-reference/endpoints/post-campaign-create) — `POST /api/v1/campaign/create`
+- [Get Campaigns](/api-reference/endpoints/get-campaign) — `GET /api/v1/campaign/`
+- [Get Campaign](/api-reference/endpoints/get-campaign-campaign-id) — `GET /api/v1/campaign/{campaign_id}`
+- [Update Campaign](/api-reference/endpoints/patch-campaign-campaign-id) — `PATCH /api/v1/campaign/{campaign_id}`
+- [Start Campaign](/api-reference/endpoints/post-campaign-campaign-id-start) — `POST /api/v1/campaign/{campaign_id}/start`
+- [Pause Campaign](/api-reference/endpoints/post-campaign-campaign-id-pause) — `POST /api/v1/campaign/{campaign_id}/pause`
+- [Get Campaign Runs](/api-reference/endpoints/get-campaign-campaign-id-runs) — `GET /api/v1/campaign/{campaign_id}/runs`
+- [Redial Campaign](/api-reference/endpoints/post-campaign-campaign-id-redial) — `POST /api/v1/campaign/{campaign_id}/redial`
+- [Resume Campaign](/api-reference/endpoints/post-campaign-campaign-id-resume) — `POST /api/v1/campaign/{campaign_id}/resume`
+- [Get Campaign Progress](/api-reference/endpoints/get-campaign-campaign-id-progress) — `GET /api/v1/campaign/{campaign_id}/progress`
+- [Get Campaign Source Download Url](/api-reference/endpoints/get-campaign-campaign-id-source-download-url) — `GET /api/v1/campaign/{campaign_id}/source-download-url`
+- [Download Campaign Report](/api-reference/endpoints/get-campaign-campaign-id-report) — `GET /api/v1/campaign/{campaign_id}/report`
+
+## Credentials
+
+- [List Credentials](/api-reference/endpoints/get-credentials) — `GET /api/v1/credentials/`
+- [Create Credential](/api-reference/endpoints/post-credentials) — `POST /api/v1/credentials/`
+- [Get Credential](/api-reference/endpoints/get-credentials-credential-uuid) — `GET /api/v1/credentials/{credential_uuid}`
+- [Update Credential](/api-reference/endpoints/put-credentials-credential-uuid) — `PUT /api/v1/credentials/{credential_uuid}`
+- [Delete Credential](/api-reference/endpoints/delete-credentials-credential-uuid) — `DELETE /api/v1/credentials/{credential_uuid}`
+
+## Documentation assistant
+
+- [Docs Chat](/api-reference/endpoints/post-docs-chat) — `POST /api/v1/docs/chat`
+
+## Folders
+
+- [List Folders](/api-reference/endpoints/get-folder) — `GET /api/v1/folder/`
+- [Create Folder](/api-reference/endpoints/post-folder) — `POST /api/v1/folder/`
+- [Rename Folder](/api-reference/endpoints/put-folder-folder-id) — `PUT /api/v1/folder/{folder_id}`
+- [Delete Folder](/api-reference/endpoints/delete-folder-folder-id) — `DELETE /api/v1/folder/{folder_id}`
+
+## Health
+
+- [Health](/api-reference/endpoints/get-health) — `GET /api/v1/health`
+- [Active Calls](/api-reference/endpoints/get-health-active-calls) — `GET /api/v1/health/active-calls`
+- [Autoscale Metric](/api-reference/endpoints/get-health-autoscale-metric) — `GET /api/v1/health/autoscale-metric`
+
+## Knowledge base
+
+- [Get presigned URL for document upload](/api-reference/endpoints/post-knowledge-base-upload-url) — `POST /api/v1/knowledge-base/upload-url`
+- [Trigger document processing](/api-reference/endpoints/post-knowledge-base-process-document) — `POST /api/v1/knowledge-base/process-document`
+- [List documents](/api-reference/endpoints/get-knowledge-base-documents) — `GET /api/v1/knowledge-base/documents`
+- [Get document details](/api-reference/endpoints/get-knowledge-base-documents-document-uuid) — `GET /api/v1/knowledge-base/documents/{document_uuid}`
+- [Delete document](/api-reference/endpoints/delete-knowledge-base-documents-document-uuid) — `DELETE /api/v1/knowledge-base/documents/{document_uuid}`
+- [Search for similar chunks](/api-reference/endpoints/post-knowledge-base-search) — `POST /api/v1/knowledge-base/search`
+
+## Node schemas
+
+- [List Node Types](/api-reference/endpoints/get-node-types) — `GET /api/v1/node-types`
+- [Get Node Type](/api-reference/endpoints/get-node-types-name) — `GET /api/v1/node-types/{name}`
+
+## Outbound calls
+
+- [Initiate Call](/api-reference/endpoints/post-telephony-initiate-call) — `POST /api/v1/telephony/initiate-call`
+
+## Public calls and artifacts
+
+- [Initiate Call](/api-reference/endpoints/post-public-agent-uuid) — `POST /api/v1/public/agent/{uuid}`
+- [Initiate Call Test](/api-reference/endpoints/post-public-agent-test-uuid) — `POST /api/v1/public/agent/test/{uuid}`
+- [Initiate Call By Workflow Uuid](/api-reference/endpoints/post-public-agent-workflow-workflow-uuid) — `POST /api/v1/public/agent/workflow/{workflow_uuid}`
+- [Initiate Call Test By Workflow Uuid](/api-reference/endpoints/post-public-agent-test-workflow-workflow-uuid) — `POST /api/v1/public/agent/test/workflow/{workflow_uuid}`
+- [Download Workflow Artifact](/api-reference/endpoints/get-public-download-workflow-token-artifact-type) — `GET /api/v1/public/download/workflow/{token}/{artifact_type}`
+
+## Recordings
+
+- [Get presigned URLs for recording uploads](/api-reference/endpoints/post-workflow-recordings-upload-url) — `POST /api/v1/workflow-recordings/upload-url`
+- [Create recording records after upload](/api-reference/endpoints/post-workflow-recordings) — `POST /api/v1/workflow-recordings/`
+- [List recordings](/api-reference/endpoints/get-workflow-recordings) — `GET /api/v1/workflow-recordings/`
+- [Delete a recording](/api-reference/endpoints/delete-workflow-recordings-recording-id) — `DELETE /api/v1/workflow-recordings/{recording_id}`
+- [Update a recording's Recording ID](/api-reference/endpoints/patch-workflow-recordings-id) — `PATCH /api/v1/workflow-recordings/{id}`
+- [Transcribe an audio file](/api-reference/endpoints/post-workflow-recordings-transcribe) — `POST /api/v1/workflow-recordings/transcribe`
+
+## Reports
+
+- [Get Daily Report](/api-reference/endpoints/get-organizations-reports-daily) — `GET /api/v1/organizations/reports/daily`
+- [Get Workflow Options](/api-reference/endpoints/get-organizations-reports-workflows) — `GET /api/v1/organizations/reports/workflows`
+- [Get Daily Runs Detail](/api-reference/endpoints/get-organizations-reports-daily-runs) — `GET /api/v1/organizations/reports/daily/runs`
+
+## Service Keys
+
+- [Get Service Keys](/api-reference/endpoints/get-user-service-keys) — `GET /api/v1/user/service-keys`
+- [Create Service Key](/api-reference/endpoints/post-user-service-keys) — `POST /api/v1/user/service-keys`
+- [Archive Service Key](/api-reference/endpoints/delete-user-service-keys-service-key-id) — `DELETE /api/v1/user/service-keys/{service_key_id}`
+- [Reactivate Service Key](/api-reference/endpoints/put-user-service-keys-service-key-id-reactivate) — `PUT /api/v1/user/service-keys/{service_key_id}/reactivate`
+
+## Storage
+
+- [Generate a signed S3 URL](/api-reference/endpoints/get-s3-signed-url) — `GET /api/v1/s3/signed-url`
+- [Get file metadata for debugging](/api-reference/endpoints/get-s3-file-metadata) — `GET /api/v1/s3/file-metadata`
+- [Generate a presigned URL for direct CSV upload](/api-reference/endpoints/post-s3-presigned-upload-url) — `POST /api/v1/s3/presigned-upload-url`
+
+## Telephony configuration
+
+- [Get Telephony Providers Metadata](/api-reference/endpoints/get-organizations-telephony-providers-metadata) — `GET /api/v1/organizations/telephony-providers/metadata`
+- [Get Telephony Config Warnings](/api-reference/endpoints/get-organizations-telephony-config-warnings) — `GET /api/v1/organizations/telephony-config-warnings`
+- [List Telephony Configurations](/api-reference/endpoints/get-organizations-telephony-configs) — `GET /api/v1/organizations/telephony-configs`
+- [Create Telephony Configuration](/api-reference/endpoints/post-organizations-telephony-configs) — `POST /api/v1/organizations/telephony-configs`
+- [Get Telephony Configuration By Id](/api-reference/endpoints/get-organizations-telephony-configs-config-id) — `GET /api/v1/organizations/telephony-configs/{config_id}`
+- [Update Telephony Configuration](/api-reference/endpoints/put-organizations-telephony-configs-config-id) — `PUT /api/v1/organizations/telephony-configs/{config_id}`
+- [Delete Telephony Configuration](/api-reference/endpoints/delete-organizations-telephony-configs-config-id) — `DELETE /api/v1/organizations/telephony-configs/{config_id}`
+- [Set Default Outbound](/api-reference/endpoints/post-organizations-telephony-configs-config-id-set-default-outbound) — `POST /api/v1/organizations/telephony-configs/{config_id}/set-default-outbound`
+- [Reactivate Telephony Configuration](/api-reference/endpoints/post-organizations-telephony-configs-config-id-reactivate) — `POST /api/v1/organizations/telephony-configs/{config_id}/reactivate`
+- [List Telephony Trunks](/api-reference/endpoints/get-organizations-telephony-configs-config-id-trunks) — `GET /api/v1/organizations/telephony-configs/{config_id}/trunks`
+- [Create Telephony Trunk](/api-reference/endpoints/post-organizations-telephony-configs-config-id-trunks) — `POST /api/v1/organizations/telephony-configs/{config_id}/trunks`
+- [Update Telephony Trunk](/api-reference/endpoints/put-organizations-telephony-configs-config-id-trunks-trunk-id) — `PUT /api/v1/organizations/telephony-configs/{config_id}/trunks/{trunk_id}`
+- [Delete Telephony Trunk](/api-reference/endpoints/delete-organizations-telephony-configs-config-id-trunks-trunk-id) — `DELETE /api/v1/organizations/telephony-configs/{config_id}/trunks/{trunk_id}`
+- [List Phone Numbers](/api-reference/endpoints/get-organizations-telephony-configs-config-id-phone-numbers) — `GET /api/v1/organizations/telephony-configs/{config_id}/phone-numbers`
+- [Create Phone Number](/api-reference/endpoints/post-organizations-telephony-configs-config-id-phone-numbers) — `POST /api/v1/organizations/telephony-configs/{config_id}/phone-numbers`
+- [Get Phone Number](/api-reference/endpoints/get-organizations-telephony-configs-config-id-phone-numbers-phone-number-id) — `GET /api/v1/organizations/telephony-configs/{config_id}/phone-numbers/{phone_number_id}`
+- [Update Phone Number](/api-reference/endpoints/put-organizations-telephony-configs-config-id-phone-numbers-phone-number-id) — `PUT /api/v1/organizations/telephony-configs/{config_id}/phone-numbers/{phone_number_id}`
+- [Delete Phone Number](/api-reference/endpoints/delete-organizations-telephony-configs-config-id-phone-numbers-phone-number-id) — `DELETE /api/v1/organizations/telephony-configs/{config_id}/phone-numbers/{phone_number_id}`
+- [Set Default Caller Id](/api-reference/endpoints/post-organizations-telephony-configs-config-id-phone-numbers-phone-number-id-set-default-caller) — `POST /api/v1/organizations/telephony-configs/{config_id}/phone-numbers/{phone_number_id}/set-default-caller`
+
+## Text chat and scenarios
+
+- [Create Text Chat Session](/api-reference/endpoints/post-workflow-workflow-id-text-chat-sessions) — `POST /api/v1/workflow/{workflow_id}/text-chat/sessions`
+- [Get Text Chat Session](/api-reference/endpoints/get-workflow-workflow-id-text-chat-sessions-run-id) — `GET /api/v1/workflow/{workflow_id}/text-chat/sessions/{run_id}`
+- [Append Text Chat Message](/api-reference/endpoints/post-workflow-workflow-id-text-chat-sessions-run-id-messages) — `POST /api/v1/workflow/{workflow_id}/text-chat/sessions/{run_id}/messages`
+- [End Text Chat Session](/api-reference/endpoints/post-workflow-workflow-id-text-chat-sessions-run-id-end) — `POST /api/v1/workflow/{workflow_id}/text-chat/sessions/{run_id}/end`
+- [Rewind Text Chat Session](/api-reference/endpoints/post-workflow-workflow-id-text-chat-sessions-run-id-rewind) — `POST /api/v1/workflow/{workflow_id}/text-chat/sessions/{run_id}/rewind`
+- [List Text Scenarios](/api-reference/endpoints/get-workflow-workflow-id-text-chat-scenarios) — `GET /api/v1/workflow/{workflow_id}/text-chat/scenarios`
+- [Save Text Scenario](/api-reference/endpoints/put-workflow-workflow-id-text-chat-scenarios-run-id) — `PUT /api/v1/workflow/{workflow_id}/text-chat/scenarios/{run_id}`
+- [Delete Text Scenario](/api-reference/endpoints/delete-workflow-workflow-id-text-chat-scenarios-run-id) — `DELETE /api/v1/workflow/{workflow_id}/text-chat/scenarios/{run_id}`
+- [Replay Text Scenario](/api-reference/endpoints/post-workflow-workflow-id-text-chat-scenarios-run-id-replay) — `POST /api/v1/workflow/{workflow_id}/text-chat/scenarios/{run_id}/replay`
+
+## Tools
+
+- [List Tools](/api-reference/endpoints/get-tools) — `GET /api/v1/tools/`
+- [Create Tool](/api-reference/endpoints/post-tools) — `POST /api/v1/tools/`
+- [Get Tool](/api-reference/endpoints/get-tools-tool-uuid) — `GET /api/v1/tools/{tool_uuid}`
+- [Update Tool](/api-reference/endpoints/put-tools-tool-uuid) — `PUT /api/v1/tools/{tool_uuid}`
+- [Delete Tool](/api-reference/endpoints/delete-tools-tool-uuid) — `DELETE /api/v1/tools/{tool_uuid}`
+- [Refresh Mcp Tools](/api-reference/endpoints/post-tools-tool-uuid-mcp-refresh) — `POST /api/v1/tools/{tool_uuid}/mcp/refresh`
+- [Test Tool](/api-reference/endpoints/post-tools-tool-uuid-test) — `POST /api/v1/tools/{tool_uuid}/test`
+- [Unarchive Tool](/api-reference/endpoints/post-tools-tool-uuid-unarchive) — `POST /api/v1/tools/{tool_uuid}/unarchive`
+
+## TURN
+
+- [Get Turn Credentials](/api-reference/endpoints/get-turn-credentials) — `GET /api/v1/turn/credentials`
+
+## User configuration
+
+- [Get Default Configurations](/api-reference/endpoints/get-user-configurations-defaults) — `GET /api/v1/user/configurations/defaults`
+- [Get Auth User](/api-reference/endpoints/get-user-auth-user) — `GET /api/v1/user/auth/user`
+- [Get User Configurations](/api-reference/endpoints/get-user-configurations-user) — `GET /api/v1/user/configurations/user`
+- [Update User Configurations](/api-reference/endpoints/put-user-configurations-user) — `PUT /api/v1/user/configurations/user`
+- [Get User Onboarding State](/api-reference/endpoints/get-user-onboarding-state) — `GET /api/v1/user/onboarding-state`
+- [Update User Onboarding State](/api-reference/endpoints/put-user-onboarding-state) — `PUT /api/v1/user/onboarding-state`
+- [Validate User Configurations](/api-reference/endpoints/get-user-configurations-user-validate) — `GET /api/v1/user/configurations/user/validate`
+- [Get Voices](/api-reference/endpoints/get-user-configurations-voices-provider) — `GET /api/v1/user/configurations/voices/{provider}`
+
+## Voice cloning
+
+- [Voice Clone Capabilities](/api-reference/endpoints/get-voice-clones-capabilities) — `GET /api/v1/voice-clones/capabilities`
+- [List Voice Clones](/api-reference/endpoints/get-voice-clones) — `GET /api/v1/voice-clones`
+- [Create Voice Clone](/api-reference/endpoints/post-voice-clones) — `POST /api/v1/voice-clones`
+- [List Voice Clone Agents](/api-reference/endpoints/get-voice-clones-agents) — `GET /api/v1/voice-clones/agents`
+- [Assign Voice Clone](/api-reference/endpoints/put-voice-clones-agents-workflow-id) — `PUT /api/v1/voice-clones/agents/{workflow_id}`
+- [Preview Voice Clone](/api-reference/endpoints/post-voice-clones-clone-id-preview) — `POST /api/v1/voice-clones/{clone_id}/preview`
+- [Delete Voice Clone](/api-reference/endpoints/delete-voice-clones-clone-id) — `DELETE /api/v1/voice-clones/{clone_id}`
+
+## Website embeds
+
+- [Initialize Embed Session](/api-reference/endpoints/post-public-embed-init) — `POST /api/v1/public/embed/init`
+- [Options Init](/api-reference/endpoints/options-public-embed-init) — `OPTIONS /api/v1/public/embed/init`
+- [Options Embed Config](/api-reference/endpoints/options-public-embed-config-token) — `OPTIONS /api/v1/public/embed/config/{token}`
+- [Get Embed Config](/api-reference/endpoints/get-public-embed-config-token) — `GET /api/v1/public/embed/config/{token}`
+- [Get Public Turn Credentials](/api-reference/endpoints/get-public-embed-turn-credentials-session-token) — `GET /api/v1/public/embed/turn-credentials/{session_token}`
+- [Options Turn Credentials](/api-reference/endpoints/options-public-embed-turn-credentials-session-token) — `OPTIONS /api/v1/public/embed/turn-credentials/{session_token}`
+- [Get Public Chat Session](/api-reference/endpoints/get-public-embed-chat-session-token) — `GET /api/v1/public/embed/chat/{session_token}`
+- [Options Public Chat Session](/api-reference/endpoints/options-public-embed-chat-session-token) — `OPTIONS /api/v1/public/embed/chat/{session_token}`
+- [End Public Chat Session](/api-reference/endpoints/post-public-embed-chat-session-token-end) — `POST /api/v1/public/embed/chat/{session_token}/end`
+- [Options Public Chat End](/api-reference/endpoints/options-public-embed-chat-session-token-end) — `OPTIONS /api/v1/public/embed/chat/{session_token}/end`
+- [Post Public Chat Message](/api-reference/endpoints/post-public-embed-chat-session-token-messages) — `POST /api/v1/public/embed/chat/{session_token}/messages`
+- [Options Public Chat Messages](/api-reference/endpoints/options-public-embed-chat-session-token-messages) — `OPTIONS /api/v1/public/embed/chat/{session_token}/messages`
+- [Create Or Update Embed Token](/api-reference/endpoints/post-workflow-workflow-id-embed-token) — `POST /api/v1/workflow/{workflow_id}/embed-token`
+- [Get Embed Token](/api-reference/endpoints/get-workflow-workflow-id-embed-token) — `GET /api/v1/workflow/{workflow_id}/embed-token`
+- [Deactivate Embed Token](/api-reference/endpoints/delete-workflow-workflow-id-embed-token) — `DELETE /api/v1/workflow/{workflow_id}/embed-token`
+
+## Workspace configuration
+
+- [Get Current Organization Context](/api-reference/endpoints/get-organizations-context) — `GET /api/v1/organizations/context`
+- [Get Model Configuration V2 Defaults](/api-reference/endpoints/get-organizations-model-configurations-v2-defaults) — `GET /api/v1/organizations/model-configurations/v2/defaults`
+- [Get Model Configuration V2](/api-reference/endpoints/get-organizations-model-configurations-v2) — `GET /api/v1/organizations/model-configurations/v2`
+- [Save Model Configuration V2](/api-reference/endpoints/put-organizations-model-configurations-v2) — `PUT /api/v1/organizations/model-configurations/v2`
+- [Get Model Configuration Pricing](/api-reference/endpoints/get-organizations-model-configurations-v2-pricing) — `GET /api/v1/organizations/model-configurations/v2/pricing`
+- [Preview Model Configuration V2 Migration](/api-reference/endpoints/get-organizations-model-configurations-v2-migration-preview) — `GET /api/v1/organizations/model-configurations/v2/migration-preview`
+- [Migrate Model Configuration V2](/api-reference/endpoints/post-organizations-model-configurations-v2-migrate) — `POST /api/v1/organizations/model-configurations/v2/migrate`
+- [Get Disposition Codes](/api-reference/endpoints/get-organizations-disposition-codes) — `GET /api/v1/organizations/disposition-codes`
+- [Get Preferences](/api-reference/endpoints/get-organizations-preferences) — `GET /api/v1/organizations/preferences`
+- [Save Preferences](/api-reference/endpoints/put-organizations-preferences) — `PUT /api/v1/organizations/preferences`
+- [Get Langfuse Credentials](/api-reference/endpoints/get-organizations-langfuse-credentials) — `GET /api/v1/organizations/langfuse-credentials`
+- [Save Langfuse Credentials](/api-reference/endpoints/post-organizations-langfuse-credentials) — `POST /api/v1/organizations/langfuse-credentials`
+- [Delete Langfuse Credentials](/api-reference/endpoints/delete-organizations-langfuse-credentials) — `DELETE /api/v1/organizations/langfuse-credentials`
+- [Get Campaign Defaults](/api-reference/endpoints/get-organizations-campaign-defaults) — `GET /api/v1/organizations/campaign-defaults`

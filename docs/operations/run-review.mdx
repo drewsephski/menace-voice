@@ -1,0 +1,33 @@
+---
+title: "Review calls and runs"
+description: "Trace a conversation from runtime inputs to the final outcome and downstream delivery."
+---
+
+## Start with one run
+
+Open the agent's run history and select a call by time, destination, or run ID. Confirm the workflow, definition ID, call mode, and direction before investigating the transcript. A run from an editor test may use different context and a different definition from a production call.
+
+## Inspect the evidence
+
+| Surface | What to check |
+| --- | --- |
+| Transcript | What the caller actually said and what the agent promised |
+| Recording | Recognition mistakes, interruptions, silence, and audio quality when a recording exists |
+| Node transitions | Whether the conversation followed the intended pathways |
+| Tools | Selected function, arguments, response, failure handling, and external outcome |
+| `initial_context` | Values supplied before the conversation |
+| `gathered_context` | Extracted outputs and call disposition |
+| QA annotations | Results produced by configured QA analysis |
+| Usage and cost | Components reported for this run and any unavailable data |
+
+## Separate call state from business outcome
+
+A completed call can still fail its business purpose. Compare `call_status`, raw `call_disposition`, and `mapped_call_disposition` with the transcript and external system. See [call dispositions](/developer/call-dispositions) for the data contract.
+
+## Share artifacts carefully
+
+Recording and transcript download links can carry access through a signed token. Share them only with the people who need the content. Availability depends on the run, storage, and deployment configuration; a missing artifact is not evidence that a call never happened.
+
+## Turn findings into a tested edit
+
+Classify the failure: prompt, pathway, context, tool, model, telephony, or infrastructure. Fix the smallest responsible part, replay a relevant scenario, run a Web Call if speech changed, and publish after review.

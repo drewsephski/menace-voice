@@ -17,13 +17,7 @@ Menace Voice exposes an [MCP (Model Context Protocol)](https://modelcontextproto
 The endpoint is also shown in **Platform Settings → MCP Server** inside the Menace Voice UI.
 
 <Note>
-If you deployed Menace Voice to a remote server using [`setup_remote.sh`](/deployment/docker#option-2%3A-remote-server-deployment), your endpoint is served with a self-signed SSL certificate. Claude Code will refuse MCP connections to it unless you start the CLI with TLS verification disabled:
-
-```bash
-NODE_TLS_REJECT_UNAUTHORIZED=0 claude
-```
-
-This is only required for self-signed certificates. If you have set up a [custom domain](/deployment/custom-domain) with Let's Encrypt certificates via Certbot, no extra flag is needed.
+Use an HTTPS endpoint with a certificate trusted by your MCP client. For self-hosting, configure a [custom domain](/deployment/custom-domain) before connecting remote clients.
 </Note>
 
 ## Claude Code

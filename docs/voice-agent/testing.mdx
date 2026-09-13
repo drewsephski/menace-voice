@@ -1,0 +1,40 @@
+---
+title: "Test voice and chat"
+description: "Use text scenarios, replay, and Web Calls to prove the parts of an agent that changed."
+---
+
+## Prerequisites
+
+Save a draft with a complete conversation path and working model configuration. If it calls external tools, prepare test records and a destination where you can inspect the result.
+
+## Text chat
+
+Text chat is useful for prompts, pathways, context, and tools. Start a session from the editor, send the expected caller messages, and inspect the resulting replies and transitions. You can edit or replay user turns to explore a different branch without manually re-entering the entire conversation.
+
+Rewinding a conversation does not undo actions already performed by an external tool. Use test records and duplicate protection when repeating a booking, payment request, or other mutation.
+
+## Saved scenarios
+
+Save representative conversations as scenarios and replay them against a fixed definition snapshot after relevant changes. Include a successful request, a missing required value, an explicit correction, and a request outside the agent's scope. Assertions can check visited nodes and reply text.
+
+Saved regression replay accepts conversation-only workflows. It rejects tools, remote MCP, transfers, pre-call fetch, integration nodes, webhook nodes, and QA nodes, and skips completion integrations. Supply required context in the scenario. Test actual tools separately through a controlled editor or live call.
+
+Compare the result to a written expected outcome; completion alone is not a quality score.
+
+## Web Calls
+
+Web Calls exercise microphone input, speech recognition, model replies, speech synthesis, interruption, and media connectivity. Browser voice tests default to inbound behavior. If your prompt needs outbound behavior, set the test context `direction` to `outbound`.
+
+Verify microphone permissions and the selected audio devices. If a session connects without audio, check [TURN and WebRTC troubleshooting](/getting-started/troubleshooting) on self-hosted installations.
+
+## What each test proves
+
+| Check | Evidence |
+| --- | --- |
+| Definition validation | The draft has an accepted structure |
+| Text scenario | The tested messages produce the reviewed responses and transitions |
+| Web Call | The speech pipeline works in the tested browser and network |
+| Phone call | Carrier routing, dialing, and media work for that number |
+| Downstream record | The intended tool or webhook created the expected business result |
+
+Finish with [run review](/operations/run-review) and [production checks](/operations/production).

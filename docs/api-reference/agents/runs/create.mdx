@@ -4,4 +4,4 @@ description: "Execute a workflow without placing a real phone call"
 openapi: "POST /api/v1/workflow/{workflow_id}/runs"
 ---
 
-Creates a test execution of the workflow. No outbound call is placed — this is useful for validating agent behavior, checking prompt outputs, and testing tool integrations before going live.
+Creates the run record used by an editor chat or voice session, using the current draft and test context. This request does not itself complete a conversation or establish the media connection. Use the editor or the appropriate session transport to run the test, then inspect its results.
