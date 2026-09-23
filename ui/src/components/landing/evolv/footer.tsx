@@ -11,6 +11,7 @@ function getGroups(navigation: LandingNavigation) {
         { label: "Use cases", href: "#use-cases" },
         { label: "Walkthrough", href: "#product-walkthrough" },
         { label: "Pricing", href: "#pricing" },
+        { label: "Done-for-you setup", href: "#dfy-setup" },
       ],
     },
     {
