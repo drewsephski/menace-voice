@@ -6,6 +6,7 @@ import { Hero } from "./hero";
 import { Integrations } from "./integrations";
 import type { LandingNavigation } from "./landing-links";
 import { Platform } from "./platform";
+import { DfySetup } from "./dfy-setup";
 import { Pricing } from "./pricing";
 import { Statement } from "./statement";
 import styles from "./template.module.css";
@@ -28,6 +29,7 @@ export default function EvolvAiTemplate({
         <UseCases navigation={navigation} />
         <Integrations navigation={navigation} />
         <Pricing navigation={navigation} />
+        <DfySetup />
         <Faq />
         <Footer navigation={navigation} />
       </main>
